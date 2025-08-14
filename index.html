@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>WebsiteOrganiser - Your Keywords, Organized</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="application-name" content="WebsiteOrganiser">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="WebsiteOrganiser">
+    <meta name="description" content="Save and organize your favorite websites and keywords with smart categorization and cloud sync.">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="msapplication-config" content="/browserconfig.xml">
+    <meta name="msapplication-TileColor" content="#7b2cbf">
+    <meta name="msapplication-tap-highlight" content="no">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=2">
+    <link rel="manifest" href="manifest.json">
+    <link rel="dns-prefetch" href="//www.google.com">
+    <link rel="preconnect" href="https://www.google.com" crossorigin>
+    <meta name="theme-color" content="#7b2cbf">
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#7b2cbf">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#121212">
+    <meta name="color-scheme" content="light dark">
+    <link rel="icon" type="image/png" href="media/logo.PNG">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="media/logo.PNG">
+    <link rel="apple-touch-icon" sizes="152x152" href="icon-192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="icon-192.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="icon-192.png">
+
+</head>
+<body>
+
+    <header>
+        <div class="header-row">
+            <div class="header-left">
+                <img src="media/logo.PNG" alt="WebsiteSaver Logo" class="site-logo" style="height:40px;width:auto;margin-right:12px;vertical-align:middle;">
+                <h1>WebsiteOrganiser</h1>
+            </div>
+            <div class="header-center">
+                <div class="search-container">
+                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><line x1="16.018" y1="16.485" x2="21" y2="21.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    <input type="search" id="search-input" placeholder="Search groups or keywords..." autocomplete="off" enterkeyhint="search" aria-label="Search groups or keywords">
+                </div>
+            </div>
+            <div class="header-right">
+                <button id="export-btn" class="btn holo-btn">Export</button>
+                <button id="import-btn" class="btn holo-btn">Import</button>
+                <button id="cache-btn" class="btn holo-btn" title="Cache Management">💾</button>
+                <button id="theme-toggle-btn" class="btn icon-btn holo-btn"><img src="media/theme.png" alt="Theme" class="theme-icon"></button>
+                <button id="login-btn" class="btn holo-btn">
+                  <img id="profile-pic" src="" alt="Profile" style="display:none;width:32px;height:32px;border-radius:50%;vertical-align:middle;object-fit:cover;" />
+                  <img id="google-login-icon" src="media/GoogleLogin.png" alt="Google Login" style="width:32px;height:32px;vertical-align:middle;display:inline-block;" />
+                  <span id="login-text" style="display:none;">Google Login</span>
+                </button>
+            </div>
+            <input type="file" id="import-file-input" accept=".json" style="display: none;">
+        </div>
+    </header>
+
+    <!-- PWA Installation Prompt -->
+    <div id="pwa-install-prompt" class="pwa-prompt" style="display: none;">
+        <div class="pwa-prompt-content">
+            <div class="pwa-prompt-header">
+                <img src="media/logo.PNG" alt="WebsiteOrganiser" class="pwa-prompt-icon">
+                <div>
+                    <h3>Install WebsiteOrganiser</h3>
+                    <p>Add to home screen for quick access</p>
+                </div>
+            </div>
+            <div class="pwa-prompt-actions">
+                <button id="pwa-install-btn" class="btn holo-btn">Install</button>
+                <button id="pwa-dismiss-btn" class="btn btn-secondary">Not Now</button>
+            </div>
+        </div>
+    </div>
+
+
+
+    <main class="container">
+        
+        <div id="groups-container" class="groups-grid">
+            <!-- Keyword groups will be dynamically inserted here -->
+        </div>
+    </main>
+
+    <button id="add-fab" class="fab">+</button>
+
+    <!-- Modal for adding/editing a group -->
+    <div id="group-modal" class="modal-container">
+        <div class="modal-content">
+            <h2 id="group-modal-title">Create New Group</h2>
+            <input type="text" id="group-name-input" placeholder="Enter group name...">
+            <div class="modal-actions">
+                <button id="save-group-btn" class="btn">Save</button>
+                <button id="cancel-group-btn" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for managing keywords -->
+    <div id="keyword-modal" class="modal-container">
+        <div class="modal-content">
+            <div class="modal-header-controls">
+                <h2 id="keyword-modal-title">Manage Keywords</h2>
+            </div>
+            <div class="keyword-input-container hidden">
+                <input type="text" id="keyword-input" placeholder="Add a new keyword...">
+                <button id="add-keyword-btn" class="btn">Add</button>
+            </div>
+            <ul id="keyword-list" class="keyword-list"></ul>
+            <div class="modal-actions keyword-modal-actions">
+                <button id="close-keyword-modal-btn" class="btn btn-secondary">Close</button>
+                <span style="flex:1"></span>
+                <button id="add-keyword-modal-fab" class="btn fab">+</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase App (compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <!-- Firebase Auth (compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <!-- Firebase Firestore (compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script>
+      // Your Firebase config
+      const firebaseConfig = {
+        apiKey: "AIzaSyCN7vKA-NuMyutT2BVwFBIItagfs5Ff2FU",
+        authDomain: "websitesaver.firebaseapp.com",
+        databaseURL: "https://websitesaver-default-rtdb.firebaseio.com",
+        projectId: "websitesaver",
+        storageBucket: "websitesaver.firebasestorage.app",
+        messagingSenderId: "245819644575",
+        appId: "1:245819644575:web:c1badc07903330ad71e0aa",
+        measurementId: "G-ZYSS4SCM25"
+      };
+      firebase.initializeApp(firebaseConfig);
+    </script>
+
+    <script>
+      // Register service worker for offline caching on Android (and others)
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('/sw.js').catch(function(err){
+            console.warn('SW registration failed', err);
+          });
+        });
+      }
+    </script>
+    <script src="script.js?v=2"></script>
+    <div id="toast-container"></div>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Round Buttons</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        
+        .test-button {
+            background: #7b2cbf;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            margin: 10px;
+            border-radius: 30px !important;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
+        .test-button:hover {
+            background: #9d4edd;
+        }
+        
+        .header-right {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .btn {
+            background: rgba(255,255,255,0.22);
+            border: 1.5px solid rgba(123,44,191,0.18);
+            border-radius: 30px !important;
+            padding: 12px 24px;
+            color: #333;
+            cursor: pointer;
+        }
+        
+        .holo-btn {
+            border-radius: 30px !important;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test Round Buttons</h1>
+    
+    <div class="header-right">
+        <button class="btn holo-btn">Export</button>
+        <button class="btn holo-btn">Import</button>
+        <button class="btn holo-btn">💾</button>
+        <button class="btn holo-btn">Theme</button>
+        <button class="btn holo-btn">Login</button>
+    </div>
+    
+    <div>
+        <button class="test-button">Test Button</button>
+    </div>
+    
+    <p>If you see round buttons above, the CSS is working correctly.</p>
+</body>
+</html>
