@@ -1,0 +1,11 @@
+# Local configuration
+firebase-config.js
+
+# Firebase cache and logs
+.firebase/
+firebase-debug.log*
+firestore-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db

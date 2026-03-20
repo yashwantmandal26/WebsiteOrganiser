@@ -55,6 +55,8 @@ A professional, high-performance Progressive Web Application (PWA) designed to o
 ```text
 WebsiteOrganiser/
 ├── index.html              # Main application shell
+├── firebase-config.js      # (Local Only) Your Firebase credentials
+├── firebase-config.example.js # Template for your Firebase credentials
 ├── script.js               # Core logic, Firebase integration, and UI handlers
 ├── sw.js                   # Service Worker for offline support
 ├── style.css               # Base styles and theme variables
@@ -76,8 +78,9 @@ WebsiteOrganiser/
 
 ### Local Development
 1. Clone the repository.
-2. Update the Firebase configuration in `script.js` with your own project credentials (found in the Firebase Console).
-3. Open `index.html` in a local development server (e.g., Live Server in VS Code).
+2. Create a file named `firebase-config.js` in the root directory.
+3. Copy the content from `firebase-config.example.js` and update it with your own Firebase project credentials (found in the Firebase Console).
+4. Open `index.html` in a local development server (e.g., Live Server in VS Code).
 
 ### Firebase Deployment
 1. Install Firebase CLI: `npm install -g firebase-tools`
