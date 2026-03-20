@@ -1,0 +1,21 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Shared data collection for WebsiteOrganiser
+    match /sharedData/groups {
+      allow read: if true;
+      allow write: if request.resource.data.keys().hasAll(['data', 'updatedAt'])
+                   && request.resource.data.data is list;
+    }
+
+    match /sharedData/clickCounts {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Default read access for other docs in sharedData
+    match /sharedData/{document=**} {
+      allow read: if true;
+    }
+  }
+}

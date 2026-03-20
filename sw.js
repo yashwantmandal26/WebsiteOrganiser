@@ -1,9 +1,18 @@
-const CACHE_NAME = 'ws-cache-v1';
-const OFFLINE_URLS = [
+// Fast-loading service worker with precache + stale-while-revalidate
+// Caches the app shell for instant loads and updates in background
+
+const VERSION = 'v40';
+const STATIC_CACHE = `wo-static-${VERSION}`;
+const RUNTIME_CACHE = `wo-runtime-${VERSION}`;
+
+// App shell files to precache (same-origin only)
+const PRECACHE_URLS = [
   '/',
   '/index.html',
-  '/style.css',
-  '/script.js?v=2',
+  '/style.css?v=49',
+  '/script.js?v=33',
+  '/add-keyword-modal.css?v=15',
+  '/search-bar-update.css?v=25',
   '/manifest.json',
   '/media/logo.PNG',
   '/icon-192.png',
@@ -11,57 +20,104 @@ const OFFLINE_URLS = [
 ];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(async (cache) => {
-      await Promise.all(
-        OFFLINE_URLS.map(async (url) => {
-          try { await cache.add(url); } catch (e) { /* ignore missing */ }
-        })
-      );
-    })
-  );
   self.skipWaiting();
+  event.waitUntil(
+    caches.open(STATIC_CACHE).then((cache) => cache.addAll(PRECACHE_URLS)).catch(() => {})
+  );
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => Promise.all(
-      keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
-    ))
+    (async () => {
+      const keys = await caches.keys();
+      await Promise.all(
+        keys.map((key) => {
+          if (key !== STATIC_CACHE && key !== RUNTIME_CACHE) {
+            return caches.delete(key);
+          }
+        })
+      );
+      await self.clients.claim();
+    })()
   );
-  self.clients.claim();
 });
 
-// Network-first for HTML, cache-first for static assets
+function isSameOrigin(url) {
+  try {
+    const u = new URL(url, self.location.href);
+    return u.origin === self.location.origin;
+  } catch (e) {
+    return false;
+  }
+}
+
+// Stale-while-revalidate for runtime requests (favicons, media)
+async function staleWhileRevalidate(request) {
+  const cache = await caches.open(RUNTIME_CACHE);
+  const cached = await cache.match(request);
+  const networkPromise = fetch(request).then((response) => {
+    if (response && response.status === 200) {
+      cache.put(request, response.clone());
+    }
+    return response;
+  }).catch(() => undefined);
+
+  return cached || networkPromise || Promise.reject('network-failed');
+}
+
 self.addEventListener('fetch', (event) => {
   const { request } = event;
-  const url = new URL(request.url);
+  const url = request.url;
 
+  // Only handle GET requests
+  if (request.method !== 'GET') return;
+
+  // Navigation requests: serve cached shell for instant load, update in background
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request).then((resp) => {
-        const copy = resp.clone();
-        caches.open(CACHE_NAME).then((c) => c.put('/', copy)).catch(() => {});
-        return resp;
-      }).catch(async () => {
-        const cached = await caches.match('/', { ignoreSearch: true });
-        return cached || caches.match('/index.html');
-      })
+      (async () => {
+        const cache = await caches.open(STATIC_CACHE);
+        const cached = await cache.match('/index.html');
+        const network = fetch(request).then((response) => {
+          if (response && response.status === 200) {
+            cache.put('/index.html', response.clone());
+          }
+          return response;
+        }).catch(() => cached);
+        return cached || network;
+      })()
     );
     return;
   }
 
-  if (url.origin === location.origin) {
+  // Same-origin static assets: cache-first
+  if (isSameOrigin(url)) {
     event.respondWith(
-      caches.match(request, { ignoreSearch: true }).then((cached) => {
-        return cached || fetch(request).then((resp) => {
-          const copy = resp.clone();
-          caches.open(CACHE_NAME).then((c) => c.put(request, copy)).catch(() => {});
-          return resp;
-        }).catch(() => cached);
-      })
+      (async () => {
+        const cache = await caches.open(STATIC_CACHE);
+        const cached = await cache.match(request);
+        if (cached) return cached;
+        try {
+          const response = await fetch(request);
+          if (response && response.status === 200) {
+            cache.put(request, response.clone());
+          }
+          return response;
+        } catch (e) {
+          // Fallback: return any cached shell if available
+          const shell = await cache.match('/index.html');
+          return shell || new Response('Offline', { status: 503 });
+        }
+      })()
     );
+    return;
   }
+
+  // External resources (e.g., Google favicons): stale-while-revalidate
+  if (/www\.google\.com\/s2\/favicons/.test(url)) {
+    event.respondWith(staleWhileRevalidate(request));
+    return;
+  }
+
+  // Default: let the network handle it
 });
-
-

@@ -1,0 +1,119 @@
+/* Add keyword modal styles */
+#add-keyword-modal.modal-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    background: rgba(0, 0, 0, 0.35);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+}
+
+/* When visible class is added, show the modal */
+#add-keyword-modal.modal-container.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+#add-keyword-modal .modal-content {
+    background: var(--modal-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--modal-border);
+    color: var(--text-color);
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    padding: 30px;
+    width: 90%;
+    max-width: 500px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    transform: scale(0.95);
+    transition: transform 0.3s;
+}
+
+#add-keyword-modal.visible .modal-content {
+    transform: scale(1);
+}
+
+#add-keyword-modal input {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--input-border);
+    font-size: 1rem;
+    margin-bottom: 0;
+    background: var(--input-bg);
+    color: var(--text-color);
+    box-sizing: border-box;
+    transition: border-color 0.3s, background 0.3s;
+}
+
+#add-keyword-modal input:focus {
+    outline: none;
+    border-color: var(--search-focus-border);
+    box-shadow: 0 0 0 2px var(--search-focus-shadow);
+    background: rgba(0, 0, 0, 0.3);
+}
+
+#add-keyword-modal .modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+/* Mobile-specific styles for add keyword modal */
+@media (max-width: 600px) {
+    #add-keyword-modal .modal-content {
+        min-width: unset;
+        width: calc(100vw - 32px);
+        max-width: 400px;
+        padding: 20px;
+        margin: 16px;
+        border-radius: 18px;
+    }
+
+    #add-keyword-modal h2 {
+        font-size: 1.3rem;
+        margin: 0 0 4px 0;
+    }
+
+    #add-keyword-modal input {
+        font-size: 16px;
+        /* Prevents iOS zoom on focus */
+        padding: 12px;
+        min-height: 44px;
+    }
+
+    #add-keyword-modal .modal-actions {
+        flex-direction: row;
+        /* Keep row even on mobile for better space usage, if buttons fit */
+        justify-content: stretch;
+    }
+
+    #add-keyword-modal .modal-actions .btn {
+        flex: 1;
+        min-height: 44px;
+        justify-content: center;
+        border-radius: 12px;
+    }
+}
+
+/* Touch device optimizations */
+@media (pointer: coarse) {
+    #add-keyword-modal input {
+        min-height: 44px;
+    }
+
+    #add-keyword-modal .modal-actions .btn {
+        min-height: 44px;
+        padding: 10px 20px;
+    }
+}
