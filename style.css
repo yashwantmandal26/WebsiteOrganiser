@@ -4344,12 +4344,12 @@ body[data-theme="light"] .keyword-tooltip::after {
 
   /* Allow site-title gradient animation even with reduced motion */
   .site-title {
-    background: linear-gradient(90deg, #FF7F00, #FFD700, #FF7F00);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    background-size: 100% auto;
-    filter: saturate(1.8) contrast(1.25) drop-shadow(0 0 2px rgba(255, 215, 0, 0.2));
+    background: none;
+    -webkit-background-clip: initial;
+    -webkit-text-fill-color: initial;
+    background-clip: initial;
+    background-size: initial;
+    filter: none;
   }
 }
 
