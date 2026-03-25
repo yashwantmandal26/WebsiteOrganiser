@@ -152,13 +152,12 @@ body[data-theme="light"] .search-bar-wrapper:focus-within {
   font-size: clamp(1.4rem, 2.5vw, 1.9rem);
   font-weight: 800;
   white-space: nowrap;
-  background: linear-gradient(90deg, #ff0080, #ff00ff, #8000ff, #0080ff, #00ffff, #ff0080, #ff6600, #ffcc00, #ff0080);
+  background: linear-gradient(90deg, #FF8C00, #FFD700, #FF8C00);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  background-size: 400% auto;
-  animation: gradientShift 70s linear infinite;
-  filter: saturate(1.3) contrast(1.15);
+  background-size: 100% auto;
+  filter: saturate(1.4) contrast(1.1);
 }
 
 @keyframes gradientShift {
@@ -231,14 +230,12 @@ body[data-theme="light"] .search-bar-wrapper:focus-within {
   .site-title {
     display: block;
     font-size: 1.6rem;
-    background: linear-gradient(90deg, #ff0080, #ff00ff, #8000ff, #0080ff, #00ffff, #ff0080, #ff6600, #ffcc00, #ff0080);
+    background: linear-gradient(90deg, #FF8C00, #FFD700, #FF8C00);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    background-size: 400% auto;
-    animation: gradientShift 160s linear infinite !important;
-    animation-duration: 160s !important;
-    filter: saturate(1.3) contrast(1.15);
+    background-size: 100% auto;
+    filter: saturate(1.4) contrast(1.1);
   }
   
   .search-bar-container {
@@ -340,14 +337,12 @@ body[data-theme="light"] .search-bar-wrapper:focus-within {
   
   .site-title {
     font-size: 1.45rem;
-    background: linear-gradient(90deg, #ff0080, #ff00ff, #8000ff, #0080ff, #00ffff, #ff0080, #ff6600, #ffcc00, #ff0080);
+    background: linear-gradient(90deg, #FF8C00, #FFD700, #FF8C00);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    background-size: 400% auto;
-    animation: gradientShift 170s linear infinite !important;
-    animation-duration: 170s !important;
-    filter: saturate(1.3) contrast(1.15);
+    background-size: 100% auto;
+    filter: saturate(1.4) contrast(1.1);
   }
   
   .search-bar-container {
@@ -416,14 +411,12 @@ body[data-theme="light"] .search-bar-wrapper:focus-within {
   .site-title {
     font-size: 1.35rem;
     letter-spacing: -0.02em;
-    background: linear-gradient(90deg, #ff0080, #ff00ff, #8000ff, #0080ff, #00ffff, #ff0080, #ff6600, #ffcc00, #ff0080);
+    background: linear-gradient(90deg, #FF8C00, #FFD700, #FF8C00);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    background-size: 400% auto;
-    animation: gradientShift 165s linear infinite !important;
-    animation-duration: 165s !important;
-    filter: saturate(1.3) contrast(1.15);
+    background-size: 100% auto;
+    filter: saturate(1.4) contrast(1.1);
   }
   
   .search-bar-container {
@@ -538,14 +531,12 @@ body[data-theme="light"] .search-bar-wrapper:focus-within {
   .site-title {
     font-size: 1.25rem;
     letter-spacing: -0.01em;
-    background: linear-gradient(90deg, #ff0080, #ff00ff, #8000ff, #0080ff, #00ffff, #ff0080, #ff6600, #ffcc00, #ff0080);
+    background: linear-gradient(90deg, #FF8C00, #FFD700, #FF8C00);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    background-size: 400% auto;
-    animation: gradientShift 165s linear infinite !important;
-    animation-duration: 165s !important;
-    filter: saturate(1.3) contrast(1.15);
+    background-size: 100% auto;
+    filter: saturate(1.4) contrast(1.1);
   }
 
   .site-logo {
@@ -635,14 +626,12 @@ body[data-theme="light"] .search-bar-wrapper:focus-within {
   
   .site-title {
     font-size: 1.3rem;
-    background: linear-gradient(90deg, #ff0080, #ff00ff, #8000ff, #0080ff, #00ffff, #ff0080, #ff6600, #ffcc00, #ff0080);
+    background: linear-gradient(90deg, #FF8C00, #FFD700, #FF8C00);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    background-size: 400% auto;
-    animation: gradientShift 150s linear infinite !important;
-    animation-duration: 150s !important;
-    filter: saturate(1.3) contrast(1.15);
+    background-size: 100% auto;
+    filter: saturate(1.4) contrast(1.1);
   }
   
   .search-bar-container {

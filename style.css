@@ -4344,8 +4344,11 @@ body[data-theme="light"] .keyword-tooltip::after {
 
   /* Allow site-title gradient animation even with reduced motion */
   .site-title {
-    animation-duration: 160s !important;
-    animation-iteration-count: infinite !important;
+    background: linear-gradient(90deg, #FF8C00, #FFD700, #FF8C00);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    background-size: 100% auto;
   }
 }
 
