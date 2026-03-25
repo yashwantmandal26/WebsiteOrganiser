@@ -581,39 +581,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const editCommentOption = document.createElement('div');
         editCommentOption.className = 'context-menu-item edit-comment-option';
-        editCommentOption.textContent = '💬 Edit Comment';
+        editCommentOption.innerHTML = '<img src="media/comment.png" style="width:20px;height:20px;margin-right:10px;vertical-align:middle;">Edit Comment';
         editCommentOption.style.cssText = `
             padding: 10px 16px;
             cursor: pointer;
             transition: background 0.2s;
             color: #4a90e2;
             font-weight: 500;
+            display: flex;
+            align-items: center;
         `;
         editCommentOption.addEventListener('mouseenter', () => editCommentOption.style.background = '#2d2d2d');
         editCommentOption.addEventListener('mouseleave', () => editCommentOption.style.background = 'transparent');
 
         const renameOption = document.createElement('div');
         renameOption.className = 'context-menu-item rename-option';
-        renameOption.textContent = '✏️ Rename';
+        renameOption.innerHTML = '<img src="media/rename.png" style="width:20px;height:20px;margin-right:10px;vertical-align:middle;">Rename';
         renameOption.style.cssText = `
             padding: 10px 16px;
             cursor: pointer;
             transition: background 0.2s;
             color: #7b2cbf;
             font-weight: 500;
+            display: flex;
+            align-items: center;
         `;
         renameOption.addEventListener('mouseenter', () => renameOption.style.background = '#2d2d2d');
         renameOption.addEventListener('mouseleave', () => renameOption.style.background = 'transparent');
 
         const deleteOption = document.createElement('div');
         deleteOption.className = 'context-menu-item delete-option';
-        deleteOption.textContent = '🗑️ Delete';
+        deleteOption.innerHTML = '<img src="media/delete.png" style="width:20px;height:20px;margin-right:10px;vertical-align:middle;">Delete';
         deleteOption.style.cssText = `
             padding: 10px 16px;
             cursor: pointer;
             transition: background 0.2s;
             color: #ff4d4f;
             font-weight: 500;
+            display: flex;
+            align-items: center;
         `;
         deleteOption.addEventListener('mouseenter', () => deleteOption.style.background = '#2d2d2d');
         deleteOption.addEventListener('mouseleave', () => deleteOption.style.background = 'transparent');
@@ -718,7 +724,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update modal title and input states
         const modalTitle = document.getElementById('rename-modal-title');
         if (modalTitle) {
-            modalTitle.textContent = commentOnly ? '💬 Edit Comment' : '✏️ Edit Keyword';
+            modalTitle.innerHTML = commentOnly ? 
+                '<img src="media/comment.png" style="width:24px;height:24px;margin-right:10px;vertical-align:middle;">Edit Comment' : 
+                '<img src="media/rename.png" style="width:24px;height:24px;margin-right:10px;vertical-align:middle;">Edit Keyword';
         }
 
         if (commentOnly) {

@@ -28,9 +28,9 @@
   <link rel="dns-prefetch" href="//www.gstatic.com">
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=56">
-  <link rel="stylesheet" href="add-keyword-modal.css?v=22">
-  <link rel="stylesheet" href="search-bar-update.css?v=32">
+  <link rel="stylesheet" href="style.css?v=58">
+  <link rel="stylesheet" href="add-keyword-modal.css?v=24">
+  <link rel="stylesheet" href="search-bar-update.css?v=34">
   <link rel="manifest" href="manifest.json">
   <link rel="dns-prefetch" href="//www.google.com">
   <link rel="preconnect" href="https://www.google.com" crossorigin>
@@ -121,7 +121,7 @@
   <!-- Modal for adding a keyword to a group -->
   <div id="add-keyword-modal" class="modal-container">
     <div class="modal-content">
-      <h2>Add Keyword</h2>
+      <h2><img src="media/rename.png" style="width:24px;height:24px;margin-right:10px;vertical-align:middle;">Add Keyword</h2>
       <input type="text" id="add-keyword-input" placeholder="Enter name or link...">
       <input type="text" id="add-keyword-desc-input" placeholder="Give a comment..." style="margin-top: 10px;">
       <div class="modal-actions">
@@ -135,7 +135,7 @@
   <!-- Modal for adding/editing a group -->
   <div id="group-modal" class="modal-container">
     <div class="modal-content">
-      <h2 id="group-modal-title">Create New Group</h2>
+      <h2 id="group-modal-title"><img src="media/rename.png" style="width:24px;height:24px;margin-right:10px;vertical-align:middle;">Create New Group</h2>
       <input type="text" id="group-name-input" placeholder="Enter group name...">
       <div class="modal-actions">
         <button id="save-group-btn" class="btn" onclick="if(window.saveGroup)window.saveGroup()">Save</button>
@@ -211,7 +211,7 @@
       });
     }
   </script>
-  <script src="script.js?v=39"></script>
+  <script src="script.js?v=41"></script>
   <div id="toast-container"></div>
 </body>
 
