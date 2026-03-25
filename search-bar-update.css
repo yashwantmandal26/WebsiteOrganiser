@@ -152,12 +152,12 @@ body[data-theme="light"] .search-bar-wrapper:focus-within {
   font-size: clamp(1.4rem, 2.5vw, 1.9rem);
   font-weight: 800;
   white-space: nowrap;
-  background: linear-gradient(90deg, #FF8C00, #FFD700, #FF8C00);
+  background: linear-gradient(90deg, #ff0303, #57ac12, #FF7F00);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   background-size: 100% auto;
-  filter: saturate(1.4) contrast(1.1);
+  filter: saturate(1.8) contrast(1.25) drop-shadow(0 0 2px rgba(255, 215, 0, 0.2));
 }
 
 @keyframes gradientShift {
@@ -230,12 +230,12 @@ body[data-theme="light"] .search-bar-wrapper:focus-within {
   .site-title {
     display: block;
     font-size: 1.6rem;
-    background: linear-gradient(90deg, #FF8C00, #FFD700, #FF8C00);
+    background: linear-gradient(90deg, #FF7F00, #FFD700, #FF7F00);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     background-size: 100% auto;
-    filter: saturate(1.4) contrast(1.1);
+    filter: saturate(1.8) contrast(1.25) drop-shadow(0 0 2px rgba(255, 215, 0, 0.2));
   }
   
   .search-bar-container {
@@ -337,12 +337,12 @@ body[data-theme="light"] .search-bar-wrapper:focus-within {
   
   .site-title {
     font-size: 1.45rem;
-    background: linear-gradient(90deg, #FF8C00, #FFD700, #FF8C00);
+    background: linear-gradient(90deg, #FF7F00, #FFD700, #FF7F00);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     background-size: 100% auto;
-    filter: saturate(1.4) contrast(1.1);
+    filter: saturate(1.8) contrast(1.25) drop-shadow(0 0 2px rgba(255, 215, 0, 0.2));
   }
   
   .search-bar-container {
@@ -411,12 +411,12 @@ body[data-theme="light"] .search-bar-wrapper:focus-within {
   .site-title {
     font-size: 1.35rem;
     letter-spacing: -0.02em;
-    background: linear-gradient(90deg, #FF8C00, #FFD700, #FF8C00);
+    background: linear-gradient(90deg, #FF7F00, #FFD700, #FF7F00);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     background-size: 100% auto;
-    filter: saturate(1.4) contrast(1.1);
+    filter: saturate(1.8) contrast(1.25) drop-shadow(0 0 2px rgba(255, 215, 0, 0.2));
   }
   
   .search-bar-container {
@@ -531,12 +531,12 @@ body[data-theme="light"] .search-bar-wrapper:focus-within {
   .site-title {
     font-size: 1.25rem;
     letter-spacing: -0.01em;
-    background: linear-gradient(90deg, #FF8C00, #FFD700, #FF8C00);
+    background: linear-gradient(90deg, #FF7F00, #FFD700, #FF7F00);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     background-size: 100% auto;
-    filter: saturate(1.4) contrast(1.1);
+    filter: saturate(1.8) contrast(1.25) drop-shadow(0 0 2px rgba(255, 215, 0, 0.2));
   }
 
   .site-logo {
@@ -626,12 +626,12 @@ body[data-theme="light"] .search-bar-wrapper:focus-within {
   
   .site-title {
     font-size: 1.3rem;
-    background: linear-gradient(90deg, #FF8C00, #FFD700, #FF8C00);
+    background: linear-gradient(90deg, #FF7F00, #FFD700, #FF7F00);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     background-size: 100% auto;
-    filter: saturate(1.4) contrast(1.1);
+    filter: saturate(1.8) contrast(1.25) drop-shadow(0 0 2px rgba(255, 215, 0, 0.2));
   }
   
   .search-bar-container {
