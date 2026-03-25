@@ -227,6 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const renameCancelBtn = document.getElementById('rename-cancel-btn');
     let renameTargetGroupIndex = null;
     let renameTargetKeywordIndex = null;
+    let isCommentOnlyMode = false;
 
     // Add Keyword Modal Elements
     const addKeywordModal = document.getElementById('add-keyword-modal');
@@ -578,8 +579,21 @@ document.addEventListener('DOMContentLoaded', () => {
             min-width: 150px;
         `;
 
+        const editCommentOption = document.createElement('div');
+        editCommentOption.className = 'context-menu-item edit-comment-option';
+        editCommentOption.textContent = '💬 Edit Comment';
+        editCommentOption.style.cssText = `
+            padding: 10px 16px;
+            cursor: pointer;
+            transition: background 0.2s;
+            color: #4a90e2;
+            font-weight: 500;
+        `;
+        editCommentOption.addEventListener('mouseenter', () => editCommentOption.style.background = '#2d2d2d');
+        editCommentOption.addEventListener('mouseleave', () => editCommentOption.style.background = 'transparent');
+
         const renameOption = document.createElement('div');
-        renameOption.className = 'context-menu-item';
+        renameOption.className = 'context-menu-item rename-option';
         renameOption.textContent = '✏️ Rename';
         renameOption.style.cssText = `
             padding: 10px 16px;
@@ -592,7 +606,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renameOption.addEventListener('mouseleave', () => renameOption.style.background = 'transparent');
 
         const deleteOption = document.createElement('div');
-        deleteOption.className = 'context-menu-item';
+        deleteOption.className = 'context-menu-item delete-option';
         deleteOption.textContent = '🗑️ Delete';
         deleteOption.style.cssText = `
             padding: 10px 16px;
@@ -604,6 +618,7 @@ document.addEventListener('DOMContentLoaded', () => {
         deleteOption.addEventListener('mouseenter', () => deleteOption.style.background = '#2d2d2d');
         deleteOption.addEventListener('mouseleave', () => deleteOption.style.background = 'transparent');
 
+        contextMenu.appendChild(editCommentOption);
         contextMenu.appendChild(renameOption);
         contextMenu.appendChild(deleteOption);
         document.body.appendChild(contextMenu);
@@ -644,18 +659,35 @@ document.addEventListener('DOMContentLoaded', () => {
         menu.style.left = safeX + 'px';
         menu.style.top = safeY + 'px';
 
-        const renameOption = menu.querySelector('.context-menu-item:first-child');
-        const deleteOption = menu.querySelector('.context-menu-item:last-child');
+        const editCommentOption = menu.querySelector('.edit-comment-option');
+        const renameOption = menu.querySelector('.rename-option');
+        const deleteOption = menu.querySelector('.delete-option');
 
-        renameOption.onclick = () => {
+        // Everyone can edit comments
+        editCommentOption.style.display = 'block';
+        editCommentOption.onclick = () => {
             hideContextMenu();
-            renameKeyword(groupIndex, keywordIndex, keyword);
+            renameKeyword(groupIndex, keywordIndex, keyword, true); // true = comment only mode
         };
 
-        deleteOption.onclick = () => {
-            hideContextMenu();
-            deleteKeyword(groupIndex, keywordIndex);
-        };
+        // Only admin can rename or delete
+        if (adminLoggedIn) {
+            renameOption.style.display = 'block';
+            deleteOption.style.display = 'block';
+            
+            renameOption.onclick = () => {
+                hideContextMenu();
+                renameKeyword(groupIndex, keywordIndex, keyword, false); // false = full edit mode
+            };
+
+            deleteOption.onclick = () => {
+                hideContextMenu();
+                deleteKeyword(groupIndex, keywordIndex);
+            };
+        } else {
+            renameOption.style.display = 'none';
+            deleteOption.style.display = 'none';
+        }
     }
 
     function hideContextMenu() {
@@ -668,30 +700,57 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('click', hideContextMenu);
     document.addEventListener('scroll', hideContextMenu);
 
-    async function renameKeyword(groupIndex, keywordIndex, oldKeyword) {
-        // Admin check
-        if (!adminLoggedIn) {
+    async function renameKeyword(groupIndex, keywordIndex, oldKeyword, commentOnly = false) {
+        // Admin check for renaming (not for comment editing)
+        if (!adminLoggedIn && !commentOnly) {
             alert('Admin access is required to rename keywords.');
             return;
         }
+
+        // Set mode
+        isCommentOnlyMode = commentOnly;
+
         // Show rename modal instead of prompt
         renameTargetGroupIndex = groupIndex;
         renameTargetKeywordIndex = keywordIndex;
         renameKeywordInput.value = oldKeyword;
         
+        // Update modal title and input states
+        const modalTitle = document.getElementById('rename-modal-title');
+        if (modalTitle) {
+            modalTitle.textContent = commentOnly ? '💬 Edit Comment' : '✏️ Edit Keyword';
+        }
+
+        if (commentOnly) {
+            renameKeywordInput.setAttribute('readonly', 'true');
+            renameKeywordInput.style.opacity = '0.7';
+            renameKeywordInput.style.cursor = 'not-allowed';
+            renameKeywordInput.title = 'Only admins can change the keyword name';
+        } else {
+            renameKeywordInput.removeAttribute('readonly');
+            renameKeywordInput.style.opacity = '1';
+            renameKeywordInput.style.cursor = 'text';
+            renameKeywordInput.title = '';
+        }
+
         // Pre-fill description
         const encodedKeyword = encodeURIComponent(oldKeyword).replace(/\./g, '%2E');
         renameKeywordDescInput.value = keywordDescriptions[encodedKeyword] || '';
         
         toggleModal(renameModal, true);
-        renameKeywordInput.focus();
-        renameKeywordInput.select();
+        
+        if (commentOnly) {
+            renameKeywordDescInput.focus();
+        } else {
+            renameKeywordInput.focus();
+            renameKeywordInput.select();
+        }
     }
 
     // Rename modal save handler (will be connected after toggleModal is defined)
     async function saveRename() {
         // Double-check admin (in case session changed)
-        if (!adminLoggedIn) {
+        if (!adminLoggedIn && !isCommentOnlyMode) {
             alert('Admin access is required to rename keywords.');
             toggleModal(renameModal, false);
             return;
@@ -700,22 +759,37 @@ document.addEventListener('DOMContentLoaded', () => {
         const newDescription = renameKeywordDescInput.value.trim();
         if (!newKeyword) return;
 
+        const oldKeyword = groups[renameTargetGroupIndex].keywords[renameTargetKeywordIndex];
+
+        // Ensure name didn't change if not admin
+        if (!adminLoggedIn && newKeyword !== oldKeyword) {
+            alert('Only admins can change the keyword name.');
+            toggleModal(renameModal, false);
+            return;
+        }
+
         // Adult content filter
         if (containsBlockedContent(newKeyword)) {
             showToast('⛔ Inappropriate content not allowed', 3000);
             return;
         }
 
-        const oldKeyword = groups[renameTargetGroupIndex].keywords[renameTargetKeywordIndex];
         const oldEncoded = encodeURIComponent(oldKeyword).replace(/\./g, '%2E');
         const newEncoded = encodeURIComponent(newKeyword).replace(/\./g, '%2E');
 
-        // Handle description update
+        // Handle description update (always allowed if name hasn't changed)
         if (newKeyword === oldKeyword) {
             // Only update description if name hasn't changed
             await saveKeywordDescription(newKeyword, newDescription);
             toggleModal(renameModal, false);
             renderGroups();
+            return;
+        }
+
+        // Full rename logic (only for admins)
+        if (!adminLoggedIn) {
+            alert('Admin access is required to rename keywords.');
+            toggleModal(renameModal, false);
             return;
         }
 
@@ -1468,6 +1542,11 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     async function addKeywordToGroup(index) {
+        // Admin check
+        if (!adminLoggedIn) {
+            alert('Admin access is required to add keywords.');
+            return;
+        }
         const group = groups[index];
         if (!group) {
             // Toast removed
@@ -1637,7 +1716,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const addKeywordBtnBg = darkenColor(groupColor, 0.45);
 
                 // Create button using innerHTML for maximum reliability
-                const addKeywordBtnHTML = `
+                const addKeywordBtnHTML = adminLoggedIn ? `
                     <button 
                         type="button"
                         class="icon-btn icon-btn--add-keyword"
@@ -1648,7 +1727,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         onclick="event.stopPropagation(); window.addKeywordToGroup(${originalIndex}); return false;">
                         <span class="icon-plus">＋</span>
                     </button>
-                `;
+                ` : '';
 
                 actions.innerHTML = addKeywordBtnHTML;
 
@@ -1711,11 +1790,16 @@ document.addEventListener('DOMContentLoaded', () => {
                             const clickCount = globalClickCounts[encodedKeyword] || 0;
                             const description = keywordDescriptions[encodedKeyword];
                             
+                            // Log description status for debugging
+                            if (description) {
+                                console.log(`Rendering tooltip for "${displayText}":`, description);
+                            }
+                            
                             previewItem.innerHTML = `
                                 <div class="keyword-grid-icon">${getFaviconOrEmoji(keyword, emoji)}</div>
                                 <div class="keyword-grid-text">${displayText}</div>
                                 <div class="keyword-click-counter">${clickCount}</div>
-                                ${description ? `<div class="keyword-tooltip">${description}</div>` : ''}
+                                ${description ? `<div class="keyword-tooltip" data-description="${encodeURIComponent(description)}">${description}</div>` : ''}
                             `;
                             previewItem.setAttribute('aria-label', displayText);
 
@@ -1796,7 +1880,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 ${getFaviconOrEmoji(keyword, emoji)}
                                 <span class="keyword-text">${displayText}</span>
                                 <div class="keyword-click-counter">${clickCount}</div>
-                                ${description ? `<div class="keyword-tooltip">${description}</div>` : ''}
+                                ${description ? `<div class="keyword-tooltip" data-description="${encodeURIComponent(description)}">${description}</div>` : ''}
                             `;
                             li.style.cursor = 'default';
                             li.dataset.keywordValue = keyword;
@@ -2201,7 +2285,7 @@ document.addEventListener('DOMContentLoaded', () => {
         exportBtn.addEventListener('click', () => {
             const dataToExport = {
                 exportDate: new Date().toISOString(),
-                version: '1.0',
+                version: '1.1',
                 groups: groups
             };
             const jsonString = JSON.stringify(dataToExport, null, 2);
