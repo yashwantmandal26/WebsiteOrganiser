@@ -1209,7 +1209,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function attachKeywordActivation(triggerElement, url, groupIndex, keyword, highlightTarget = triggerElement) {
         if (!triggerElement) return;
 
-        const activate = () => {
+        const activate = (inNewTab = false) => {
             // Click sound feedback
             playClickSound();
 
@@ -1224,7 +1224,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             highlightTarget.classList.add('keyword-clicked');
-            openURLWithBrowser(url);
+            openURLWithBrowser(url, inNewTab);
             
             // Force remove focus to prevent sticky hover/zoom on mobile
             if (document.activeElement) {
@@ -1245,7 +1245,17 @@ document.addEventListener('DOMContentLoaded', () => {
         triggerElement.addEventListener('click', (event) => {
             event.preventDefault();
             event.stopPropagation();
-            activate();
+            // Check for Ctrl/Meta key to open in new tab
+            const inNewTab = event.ctrlKey || event.metaKey;
+            activate(inNewTab);
+        });
+
+        triggerElement.addEventListener('auxclick', (event) => {
+            if (event.button === 1) { // Middle click
+                event.preventDefault();
+                event.stopPropagation();
+                openURLWithBrowser(url, true); // Open in new tab
+            }
         });
 
         triggerElement.addEventListener('keydown', (event) => {
@@ -1623,6 +1633,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const actions = document.createElement('div');
                 actions.className = 'group-actions';
 
+                // Determine button background (darker shade of group color)
+                const addKeywordBtnBg = darkenColor(groupColor, 0.45);
+
                 // Create button using innerHTML for maximum reliability
                 const addKeywordBtnHTML = `
                     <button 
@@ -1630,7 +1643,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         class="icon-btn icon-btn--add-keyword"
                         data-action="add-keyword"
                         data-group-index="${originalIndex}"
-                        style="cursor:pointer; z-index:10; pointer-events:auto; user-select:none;"
+                        style="cursor:pointer; z-index:10; pointer-events:auto; user-select:none; background: ${addKeywordBtnBg} !important;"
                         aria-label="Add keyword to ${group.name}"
                         onclick="event.stopPropagation(); window.addKeywordToGroup(${originalIndex}); return false;">
                         <span class="icon-plus">＋</span>
@@ -1723,7 +1736,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                 incrementKeywordClick(originalIndex, keyword);
 
                                 previewItem.classList.add('keyword-clicked');
-                                openURLWithBrowser(targetUrl);
+                                // Check for Ctrl/Meta key to open in new tab
+                                const inNewTab = event.ctrlKey || event.metaKey;
+                                openURLWithBrowser(targetUrl, inNewTab);
 
                                 // Force remove focus to prevent sticky hover/zoom on mobile
                                 if (document.activeElement) {
@@ -1734,6 +1749,15 @@ document.addEventListener('DOMContentLoaded', () => {
                                 setTimeout(() => {
                                     previewItem.classList.remove('keyword-clicked');
                                 }, 800);
+                            });
+
+                            // Middle-click support
+                            previewItem.addEventListener('auxclick', (event) => {
+                                if (event.button === 1) { // Middle click
+                                    event.preventDefault();
+                                    event.stopPropagation();
+                                    openURLWithBrowser(targetUrl, true); // Open in new tab
+                                }
                             });
 
                             // Add context menu support (right-click/long-press)
@@ -2302,11 +2326,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Enhanced URL opening with browser preference
-    function openURLWithBrowser(url) {
+    function openURLWithBrowser(url, inNewTab = false) {
         resetIOSZoom();
-        // Use noopener for security and performance
-        const w = window.open(url, '_blank', 'noopener');
-        if (w) { try { w.opener = null; } catch (e) { } }
+        if (inNewTab) {
+            // Use noopener for security and performance
+            const w = window.open(url, '_blank', 'noopener');
+            if (w) { try { w.opener = null; } catch (e) { } }
+        } else {
+            // Open in same tab
+            window.location.href = url;
+        }
     }
 
     // On touch devices, disable HTML5 drag-and-drop to prevent jank while scrolling
@@ -2591,7 +2620,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Perform Google search
-    function performGoogleSearch(query) {
+    function performGoogleSearch(query, inNewTab = false) {
         if (!query || query.trim().length === 0) return;
 
         const trimmedQuery = query.trim();
@@ -2599,9 +2628,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Save to history
         saveSearchToHistory(trimmedQuery);
 
-        // Open Google search in new tab
+        // Open Google search
         const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(trimmedQuery)}`;
-        window.open(searchUrl, '_blank', 'noopener');
+        openURLWithBrowser(searchUrl, inNewTab);
 
         // Clear input and hide suggestions
         searchInput.value = '';
@@ -2644,13 +2673,15 @@ document.addEventListener('DOMContentLoaded', () => {
         searchInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
+                // Check for Ctrl/Meta key to open in new tab
+                const inNewTab = e.ctrlKey || e.metaKey;
 
                 if (selectedSuggestionIndex >= 0 && selectedSuggestionIndex < currentSuggestions.length) {
                     // Use selected suggestion
-                    performGoogleSearch(currentSuggestions[selectedSuggestionIndex]);
+                    performGoogleSearch(currentSuggestions[selectedSuggestionIndex], inNewTab);
                 } else {
                     // Use current input
-                    performGoogleSearch(searchInput.value);
+                    performGoogleSearch(searchInput.value, inNewTab);
                 }
             } else if (e.key === 'ArrowDown') {
                 e.preventDefault();
