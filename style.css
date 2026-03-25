@@ -720,11 +720,11 @@ body[data-theme="dark"] .search-bar-wrapper:focus-within {
 }
 
 .search-icon {
-  width: 20px;
-  height: 20px;
-  color: var(--icon-color);
+  width: 24px;
+  height: 24px;
   flex-shrink: 0;
   margin-right: 12px;
+  object-fit: contain;
 }
 
 .google-search-input {
@@ -1261,11 +1261,13 @@ li[draggable="true"][data-keyword-index]:active {
   color: var(--text-color);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 50%;
-  font-size: 2rem;
+  font-size: 2.2rem;
   font-weight: bold;
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 0 0 5px 0; /* Add 5px bottom padding to push + up */
+  line-height: 1;
   box-shadow:
     0 10px 25px rgba(0, 0, 0, 0.3),
     0 15px 35px rgba(0, 0, 0, 0.2),
@@ -1280,22 +1282,21 @@ li[draggable="true"][data-keyword-index]:active {
 @media (hover: hover) {
   .fab:hover {
     background: rgba(255, 255, 255, 0.2);
-    transform: scale(1.04) translateY(-3px);
+    transform: scale(1.08) translateY(-5px);
+    border: 2.5px solid #ff3131 !important; /* Bright Red Border */
     box-shadow:
+      0 0 25px rgba(255, 49, 49, 0.7), /* Red Shadow */
       0 20px 40px rgba(0, 0, 0, 0.3),
-      0 0 40px var(--btn-glow-color),
-      0 0 70px var(--btn-glow-color),
       inset 0 2px 4px rgba(255, 255, 255, 0.2),
       inset 0 -2px 6px rgba(0, 0, 0, 0.1);
-    border: 1.5px solid var(--btn-border-hover);
-    animation: fabGlow 2s ease-in-out infinite alternate;
+    animation: none !important; /* Remove any conflicting glow animations */
   }
 
   body[data-theme="dark"] .fab:hover {
+    border: 2.5px solid #ff3131 !important;
     box-shadow:
+      0 0 30px rgba(255, 49, 49, 0.8), /* Red Shadow */
       0 25px 50px rgba(0, 0, 0, 0.6),
-      0 0 50px var(--btn-glow-color),
-      0 0 80px var(--btn-glow-color),
       inset 0 2px 4px rgba(255, 255, 255, 0.15),
       inset 0 -2px 6px rgba(0, 0, 0, 0.3);
   }
@@ -1328,7 +1329,7 @@ body[data-theme="light"] #add-keyword-modal-fab {
 /* Dark theme FAB styles */
 body[data-theme="dark"] .fab,
 body[data-theme="dark"] #add-keyword-modal-fab {
-  background: #000000;
+  background: #333333; /* Grey in dark mode */
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: #ffffff;
   box-shadow:
@@ -1342,33 +1343,31 @@ body[data-theme="dark"] #add-keyword-modal-fab {
 body[data-theme="light"] .fab:hover,
 body[data-theme="light"] #add-keyword-modal-fab:hover {
   background: linear-gradient(145deg, rgba(240, 240, 240, 1), rgba(230, 230, 230, 1));
-  transform: translateY(-5px) scale(1.05);
+  transform: translateY(-5px) scale(1.08);
   box-shadow:
+    0 0 25px rgba(255, 49, 49, 0.7), /* Red Shadow */
     0 20px 50px rgba(0, 0, 0, 0.25),
     0 25px 60px rgba(0, 0, 0, 0.2),
     0 10px 20px rgba(0, 0, 0, 0.2),
-    0 0 30px rgba(123, 44, 191, 0.4),
-    0 0 50px rgba(123, 44, 191, 0.25),
     inset 0 4px 6px rgba(255, 255, 255, 0.9),
     inset 0 -4px 8px rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(123, 44, 191, 0.4);
-  animation: fabGlow 2s ease-in-out infinite alternate;
+  border: 2.5px solid #ff3131 !important; /* Bright Red Border */
+  animation: none !important;
 }
 
 body[data-theme="dark"] .fab:hover,
 body[data-theme="dark"] #add-keyword-modal-fab:hover {
-  background: #111111;
-  transform: translateY(-5px) scale(1.05);
+  background: #444444; /* Slightly lighter grey on hover */
+  transform: translateY(-5px) scale(1.08);
   box-shadow:
+    0 0 30px rgba(255, 49, 49, 0.8), /* Red Shadow */
     0 20px 50px rgba(0, 0, 0, 0.6),
     0 25px 60px rgba(0, 0, 0, 0.5),
     0 10px 20px rgba(0, 0, 0, 0.5),
-    0 0 30px rgba(179, 136, 255, 0.6),
-    0 0 50px rgba(179, 136, 255, 0.4),
     inset 0 3px 5px rgba(255, 255, 255, 0.25),
     inset 0 -3px 7px rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(179, 136, 255, 0.6);
-  animation: fabGlowDark 2s ease-in-out infinite alternate;
+  border: 2.5px solid #ff3131 !important; /* Bright Red Border */
+  animation: none !important;
 }
 
 body[data-theme="dark"] .fab:active,
@@ -3526,19 +3525,23 @@ body[data-theme="dark"] #close-keyword-modal-btn:hover {
   color: #fff;
   border: none;
   border-radius: 50%;
-  font-size: 2rem;
+  font-size: 2.2rem;
+  font-weight: bold;
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 0 0 5px 0; /* Add 5px bottom padding to push + up */
+  line-height: 1;
   transition: box-shadow 0.22s, background 0.18s, transform 0.18s;
 }
 
 .fab:hover,
 #add-keyword-modal-fab:hover {
-  box-shadow: 0 8px 32px 0 #b388ff99, 0 12px 48px 0 #7b2cbf55;
   background: linear-gradient(135deg, #b388ff 40%, #7b2cbf 100%);
   transform: scale(1.12);
   filter: brightness(1.08) saturate(1.15);
+  border: 2.5px solid #ff3131 !important; /* Bright Red Border */
+  box-shadow: 0 0 25px rgba(255, 49, 49, 0.7), 0 8px 32px 0 #b388ff99; /* Red Shadow + existing */
 }
 
 /* --- COOL KEYWORD INPUT & ADD BUTTON --- */
@@ -3965,6 +3968,11 @@ body.is-touch .group-card[draggable="true"] {
     font-size: 2.2rem;
     bottom: 20px;
     right: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0 0 5px 0; /* Add 5px bottom padding to push + up */
+    line-height: 1;
     box-shadow:
       0 8px 25px rgba(0, 0, 0, 0.35),
       0 4px 15px rgba(0, 0, 0, 0.25);
@@ -4153,6 +4161,11 @@ body.is-touch .group-card[draggable="true"] {
     width: 56px;
     height: 56px;
     font-size: 1.8rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0 0 5px 0; /* Add 5px bottom padding to push + up */
+    line-height: 1;
   }
 }
 
@@ -4483,6 +4496,11 @@ body[data-theme="light"] .keyword-tooltip::after {
   .fab {
     bottom: max(20px, env(safe-area-inset-bottom, 20px));
     right: max(16px, env(safe-area-inset-right, 16px));
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0 0 5px 0; /* Add 5px bottom padding to push + up */
+    line-height: 1;
   }
 
   header {

@@ -11,61 +11,61 @@ A professional, high-performance Progressive Web Application (PWA) designed to o
 - **Dynamic Visuals**: 
   - 3D-enhanced floating buttons and keyword cards.
   - Interactive hover states with icon glowing effects and saturation boosts.
-  - 15px backdrop-blur overlays for a modern, focused feel.
-- **Smart Icons**:
-  - Automatic high-quality favicon fetching via Google's API.
-  - Hash-generated gradient letter icons (40 unique combinations) for search-based keywords.
-- **Responsive Mastery**: Tailored for all viewports, from 4K desktops to smartphones, with touch-optimized targets (68px FAB, 52px inputs).
+  - Premium **3D Glass** aesthetic with 15px backdrop-blur overlays.
+- **Custom Iconography**: Integrated professional PNG icons for key actions like editing comments, renaming, and deleting.
+- **Responsive Mastery**: Tailored for all viewports, from 4K desktops to modern tall smartphones (19.5:9 aspect ratio).
+
+### ⌨️ Keyboard Power User Tools
+- **Type-to-Focus**: Modals automatically focus the primary input field as soon as you start typing—no clicking required.
+- **Enter-to-Save**: Instantly save or submit forms across the entire site by pressing the `Enter` key.
+- **Escape-to-Close**: Quickly dismiss any open modal with the `Escape` key.
 
 ### ☁️ Intelligent Synchronization
 - **Real-time Firestore Sync**: Instant updates across all devices using Google Firebase.
+- **Public Contributions**: Anyone can add or modify keyword **Comments**, fostering a collaborative environment.
+- **Protected Management**: Structural changes (adding/renaming/deleting keywords and groups) are strictly reserved for **Admins**.
 - **Offline-First Resilience**: Full functionality without internet access, powered by robust local storage caching and Service Workers.
-- **Atomic Operations**: Reliable data updates with atomic increments for conflict-free multi-device usage.
 
 ### 📱 PWA Excellence
 - **Fully Installable**: Experience it as a standalone app with no browser chrome.
 - **Fast Performance**: Aggressive caching of assets (JS, CSS, images) for near-instant load times.
 - **App Shortcuts**: Quick-access actions directly from your device's home screen.
 
-### 🔐 Security & Content Integrity
-- **Admin-Gated Actions**: Critical operations (Delete, Rename, Import/Export) require admin authentication.
-- **Adult Content Shield**: Integrated filtering system to block inappropriate content and keywords.
-- **Session Persistence**: Stays logged in securely even after browser refreshes.
-
-### 🎯 Smart Organization
-- **Dynamic Groups**: Create, reorder (drag-and-drop), and color-code categories.
-- **Duplicate Shield**: Real-time detection of duplicate links or keywords across all groups.
-- **Global Search**: Instantly find keywords or groups using the smart search bar.
-- **Interactive Audio**: Custom-generated WAV feedback for clicks and hovers (can be toggled).
-
 ---
 
-## 🛠️ Technology Stack
+## 🛠️ Technology Stacks
 
+### 1. Main Project (Firebase Edition)
+*Located in the root directory.*
 - **Frontend Core**: Vanilla JavaScript (ES6+), HTML5, CSS3.
 - **Database**: Firebase Firestore (NoSQL Cloud Storage).
 - **PWA Engine**: Service Workers, Web App Manifest.
 - **Hosting**: Firebase Hosting with optimized cache headers.
-- **API Integrations**: Google Favicon API, Google Fonts (Inter).
+
+### 2. MERN Edition (Full-Stack)
+*Located in the `MERN-Project/` folder.*
+- **Frontend**: React.js with Vite and Tailwind CSS for rapid, modern styling.
+- **Backend**: Node.js and Express.js API.
+- **Database**: MongoDB (Mongoose) for flexible data modeling.
+- **Security**: JWT-based authentication and secure password hashing.
 
 ---
 
-## 📂 Project Architecture
+## 📂 Project Architecture (Main)
 
 ```text
 WebsiteOrganiser/
 ├── index.html              # Main application shell
 ├── firebase-config.js      # (Local Only) Your Firebase credentials
-├── firebase-config.example.js # Template for your Firebase credentials
 ├── script.js               # Core logic, Firebase integration, and UI handlers
 ├── sw.js                   # Service Worker for offline support
-├── style.css               # Base styles and theme variables
+├── style.css               # Base styles and 3D glass theme
 ├── add-keyword-modal.css   # Specific styles for modal interactions
 ├── search-bar-update.css   # Styles for the enhanced search interface
 ├── manifest.json           # PWA configuration and metadata
-├── firebase.json           # Deployment and caching configuration
 ├── firestore.rules         # Security rules for cloud data
-└── media/                 # Static assets and UI icons
+├── media/                 # Custom PNG icons and branding assets
+└── MERN-Project/          # Complete MERN stack alternative implementation
 ```
 
 ---
@@ -73,32 +73,26 @@ WebsiteOrganiser/
 ## ⚙️ Getting Started
 
 ### Prerequisites
-- A Firebase project (for cloud sync and hosting).
-- A modern web browser (Chrome, Safari, Edge, or Firefox).
+- A Firebase project (for the main version).
+- Node.js and npm (for the MERN version).
 
-### Local Development
+### Local Development (Main Version)
 1. Clone the repository.
-2. Create a file named `firebase-config.js` in the root directory.
-3. Copy the content from `firebase-config.example.js` and update it with your own Firebase project credentials (found in the Firebase Console).
-4. Open `index.html` in a local development server (e.g., Live Server in VS Code).
+2. Create `firebase-config.js` and add your credentials.
+3. Open `index.html` in a local development server.
 
-### Firebase Deployment
-1. Install Firebase CLI: `npm install -g firebase-tools`
-2. Login: `firebase login`
-3. Initialize project: `firebase init`
-4. Deploy: `firebase deploy`
+### Running the MERN Version
+1. Navigate to `MERN-Project/server` and run `npm install` then `npm start`.
+2. Navigate to `MERN-Project/client` and run `npm install` then `npm run dev`.
 
 ---
 
 ## 🔐 Admin Access
-By default, administrative actions are protected. 
-- **Default Password**: `yashman911` (Encoded as `eWFzaG1hbjkxMQ==` in `script.js`).
-- To change the password, update the `_p` variable in `script.js` with your new Base64 encoded password.
+Administrative actions are protected to maintain organization integrity.
+- **Default Password**: `yashman911` (Base64 encoded in `script.js`).
+- **Permissions**: 
+  - **Everyone**: Read keywords, click keywords (counters), and **Edit Comments**.
+  - **Admin Only**: Add keywords, Rename keywords, Delete keywords/groups, and Import/Export data.
 
 ---
-
-## 📄 License
-Distributed under the MIT License. See `LICENSE` for more information.
-
----
-*Created with ❤️ for better web organization.*
+*Created with ❤️ for a more organized and productive web experience.*

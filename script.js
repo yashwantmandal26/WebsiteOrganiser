@@ -676,24 +676,19 @@ document.addEventListener('DOMContentLoaded', () => {
             renameKeyword(groupIndex, keywordIndex, keyword, true); // true = comment only mode
         };
 
-        // Only admin can rename or delete
-        if (adminLoggedIn) {
-            renameOption.style.display = 'block';
-            deleteOption.style.display = 'block';
-            
-            renameOption.onclick = () => {
-                hideContextMenu();
-                renameKeyword(groupIndex, keywordIndex, keyword, false); // false = full edit mode
-            };
+        // Everyone can rename or delete keywords (now global)
+        renameOption.style.display = 'block';
+        deleteOption.style.display = 'block';
+        
+        renameOption.onclick = () => {
+            hideContextMenu();
+            renameKeyword(groupIndex, keywordIndex, keyword, false); // false = full edit mode
+        };
 
-            deleteOption.onclick = () => {
-                hideContextMenu();
-                deleteKeyword(groupIndex, keywordIndex);
-            };
-        } else {
-            renameOption.style.display = 'none';
-            deleteOption.style.display = 'none';
-        }
+        deleteOption.onclick = () => {
+            hideContextMenu();
+            deleteKeyword(groupIndex, keywordIndex);
+        };
     }
 
     function hideContextMenu() {
@@ -707,12 +702,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('scroll', hideContextMenu);
 
     async function renameKeyword(groupIndex, keywordIndex, oldKeyword, commentOnly = false) {
-        // Admin check for renaming (not for comment editing)
-        if (!adminLoggedIn && !commentOnly) {
-            alert('Admin access is required to rename keywords.');
-            return;
-        }
-
+        // Admin check removed: keyword management is now global
+        
         // Set mode
         isCommentOnlyMode = commentOnly;
 
@@ -733,7 +724,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renameKeywordInput.setAttribute('readonly', 'true');
             renameKeywordInput.style.opacity = '0.7';
             renameKeywordInput.style.cursor = 'not-allowed';
-            renameKeywordInput.title = 'Only admins can change the keyword name';
+            renameKeywordInput.title = 'Keyword name is fixed in comment mode';
         } else {
             renameKeywordInput.removeAttribute('readonly');
             renameKeywordInput.style.opacity = '1';
@@ -757,25 +748,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Rename modal save handler (will be connected after toggleModal is defined)
     async function saveRename() {
-        // Double-check admin (in case session changed)
-        if (!adminLoggedIn && !isCommentOnlyMode) {
-            alert('Admin access is required to rename keywords.');
-            toggleModal(renameModal, false);
-            return;
-        }
+        // Admin check removed: keyword management is now global
         const newKeyword = renameKeywordInput.value.trim();
         const newDescription = renameKeywordDescInput.value.trim();
         if (!newKeyword) return;
 
         const oldKeyword = groups[renameTargetGroupIndex].keywords[renameTargetKeywordIndex];
 
-        // Ensure name didn't change if not admin
-        if (!adminLoggedIn && newKeyword !== oldKeyword) {
-            alert('Only admins can change the keyword name.');
-            toggleModal(renameModal, false);
-            return;
-        }
-
+        // Ensure name didn't change if not admin - Removed: everyone can change keyword names now
         // Adult content filter
         if (containsBlockedContent(newKeyword)) {
             showToast('⛔ Inappropriate content not allowed', 3000);
@@ -794,13 +774,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Full rename logic (only for admins)
-        if (!adminLoggedIn) {
-            alert('Admin access is required to rename keywords.');
-            toggleModal(renameModal, false);
-            return;
-        }
-
+        // Full rename logic (global)
         groups[renameTargetGroupIndex].keywords[renameTargetKeywordIndex] = newKeyword;
 
         // Update global click counts and descriptions on rename
@@ -844,11 +818,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function deleteKeyword(groupIndex, keywordIndex) {
-        // Admin check
-        if (!adminLoggedIn) {
-            alert('Admin access is required to delete keywords.');
-            return;
-        }
+        // Admin check removed: keyword management is now global
         if (!confirm('Delete this keyword?')) return;
 
         const keywordToDelete = groups[groupIndex].keywords[keywordIndex];
@@ -1550,11 +1520,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     async function addKeywordToGroup(index) {
-        // Admin check
-        if (!adminLoggedIn) {
-            alert('Admin access is required to add keywords.');
-            return;
-        }
+        // Removed: adminLoggedIn check, as keyword adding is now global
         const group = groups[index];
         if (!group) {
             // Toast removed
@@ -1720,11 +1686,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const actions = document.createElement('div');
                 actions.className = 'group-actions';
 
-                // Determine button background (darker shade of group color)
-                const addKeywordBtnBg = darkenColor(groupColor, 0.45);
+                // Determine button background: match group card color in light mode, darken in dark mode
+                const addKeywordBtnBg = document.body.dataset.theme === 'dark' 
+                    ? darkenColor(groupColor, 0.45) 
+                    : groupColor;
 
                 // Create button using innerHTML for maximum reliability
-                const addKeywordBtnHTML = adminLoggedIn ? `
+                // Rendered for everyone as keyword adding is now global
+                const addKeywordBtnHTML = `
                     <button 
                         type="button"
                         class="icon-btn icon-btn--add-keyword"
@@ -1735,7 +1704,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         onclick="event.stopPropagation(); window.addKeywordToGroup(${originalIndex}); return false;">
                         <span class="icon-plus">+</span>
                     </button>
-                ` : '';
+                `;
 
                 actions.innerHTML = addKeywordBtnHTML;
 
@@ -2348,7 +2317,7 @@ document.addEventListener('DOMContentLoaded', () => {
         exportBtn.addEventListener('click', () => {
             const dataToExport = {
                 exportDate: new Date().toISOString(),
-                version: '1.1',
+                version: '1.2',
                 groups: groups
             };
             const jsonString = JSON.stringify(dataToExport, null, 2);

@@ -57,11 +57,11 @@ body[data-theme="light"] .search-bar-wrapper:focus-within {
 }
 
 .search-icon {
-  width: 20px;
-  height: 20px;
-  color: var(--icon-color);
+  width: 24px;
+  height: 24px;
   flex-shrink: 0;
   margin-right: 12px;
+  object-fit: contain;
 }
 
 .google-search-input {
