@@ -13,6 +13,11 @@ service cloud.firestore {
       allow write: if true;
     }
 
+    match /sharedData/keywordDescriptions {
+      allow read: if true;
+      allow write: if true;
+    }
+
     // Default read access for other docs in sharedData
     match /sharedData/{document=**} {
       allow read: if true;

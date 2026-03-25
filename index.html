@@ -28,9 +28,9 @@
   <link rel="dns-prefetch" href="//www.gstatic.com">
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=54">
-  <link rel="stylesheet" href="add-keyword-modal.css?v=20">
-  <link rel="stylesheet" href="search-bar-update.css?v=30">
+  <link rel="stylesheet" href="style.css?v=56">
+  <link rel="stylesheet" href="add-keyword-modal.css?v=22">
+  <link rel="stylesheet" href="search-bar-update.css?v=32">
   <link rel="manifest" href="manifest.json">
   <link rel="dns-prefetch" href="//www.google.com">
   <link rel="preconnect" href="https://www.google.com" crossorigin>
@@ -123,7 +123,7 @@
     <div class="modal-content">
       <h2>Add Keyword</h2>
       <input type="text" id="add-keyword-input" placeholder="Enter name or link...">
-      <input type="text" id="add-keyword-desc-input" placeholder="Enter short intro (optional)..." style="margin-top: 10px;">
+      <input type="text" id="add-keyword-desc-input" placeholder="Give a comment..." style="margin-top: 10px;">
       <div class="modal-actions">
         <button id="add-keyword-save-btn" class="btn" onclick="if(window.saveNewKeyword)saveNewKeyword()">Add</button>
         <button id="add-keyword-cancel-btn" class="btn btn-secondary"
@@ -167,7 +167,7 @@
     <div class="modal-content">
       <h2 id="rename-modal-title">Edit Keyword</h2>
       <input type="text" id="rename-keyword-input" placeholder="Enter new name or link...">
-      <input type="text" id="rename-keyword-desc-input" placeholder="Enter short intro (optional)..." style="margin-top: 10px;">
+      <input type="text" id="rename-keyword-desc-input" placeholder="Give a comment..." style="margin-top: 10px;">
       <div class="modal-actions">
         <button id="rename-save-btn" class="btn">Save</button>
         <button id="rename-cancel-btn" class="btn btn-secondary">Cancel</button>
@@ -211,7 +211,7 @@
       });
     }
   </script>
-  <script src="script.js?v=37"></script>
+  <script src="script.js?v=39"></script>
   <div id="toast-container"></div>
 </body>
 

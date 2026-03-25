@@ -669,7 +669,7 @@ body[data-theme="dark"] .icon-btn--add-keyword:hover {
   transform: none;
   font-weight: 700;
   color: inherit;
-  margin-top: -1px;
+  margin: 0;
 }
 
 /* ===================================

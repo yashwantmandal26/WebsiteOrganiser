@@ -1725,7 +1725,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         style="cursor:pointer; z-index:10; pointer-events:auto; user-select:none; background: ${addKeywordBtnBg} !important;"
                         aria-label="Add keyword to ${group.name}"
                         onclick="event.stopPropagation(); window.addKeywordToGroup(${originalIndex}); return false;">
-                        <span class="icon-plus">＋</span>
+                        <span class="icon-plus">+</span>
                     </button>
                 ` : '';
 
@@ -2279,6 +2279,61 @@ document.addEventListener('DOMContentLoaded', () => {
             setViewMode(nextMode);
         });
     }
+
+    // --- Global Modal Key Handling (Type-to-Focus & Enter-to-Save) ---
+    document.addEventListener('keydown', (e) => {
+        const activeModal = document.querySelector('.modal-container.visible');
+        if (!activeModal) return;
+
+        // 1. Handle Enter to Save/Submit
+        if (e.key === 'Enter') {
+            // Find the primary save button for the active modal
+            const saveBtn = activeModal.querySelector('.btn:not(.btn-secondary), #admin-login-btn, #save-group-btn, #rename-save-btn, #add-keyword-save-btn');
+            if (saveBtn) {
+                e.preventDefault();
+                saveBtn.click();
+            }
+            return;
+        }
+
+        // 2. Handle Escape to Close
+        if (e.key === 'Escape') {
+            toggleModal(activeModal, false);
+            return;
+        }
+
+        // 3. Handle character typing to auto-focus primary input
+        // Check if user is typing a character (a single char, not a control/cmd key)
+        const isControlKey = e.ctrlKey || e.metaKey || e.altKey;
+        const isSpecialKey = e.key.length > 1; // e.g., Shift, Tab, Arrow keys, etc.
+        const isAlreadyInInput = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA';
+
+        if (!isControlKey && !isSpecialKey && !isAlreadyInInput) {
+            // Identify the primary input for each modal
+            let targetInput;
+            
+            if (activeModal.id === 'rename-modal') {
+                // For rename modal, focus the description/comment field if in comment mode
+                targetInput = isCommentOnlyMode ? renameKeywordDescInput : renameKeywordInput;
+            } else if (activeModal.id === 'admin-modal') {
+                // For admin login, focus ID first, then password
+                targetInput = (adminIdInput.value === '') ? adminIdInput : adminPasswordInput;
+            } else if (activeModal.id === 'add-keyword-modal') {
+                targetInput = addKeywordInput;
+            } else if (activeModal.id === 'group-modal') {
+                targetInput = groupNameInput;
+            } else {
+                // General fallback: first visible non-readonly input
+                targetInput = activeModal.querySelector('input:not([readonly]):not([type="hidden"])');
+            }
+
+            if (targetInput) {
+                targetInput.focus();
+                // We DON'T call e.preventDefault() here so the browser naturally
+                // types the character into the newly focused input.
+            }
+        }
+    });
 
     // Export button - download groups as JSON file
     if (exportBtn) {
