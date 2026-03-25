@@ -1,7 +1,7 @@
 // Fast-loading service worker with precache + stale-while-revalidate
 // Caches the app shell for instant loads and updates in background
 
-const VERSION = 'v48';
+const VERSION = 'v49';
 const STATIC_CACHE = `wo-static-${VERSION}`;
 const RUNTIME_CACHE = `wo-runtime-${VERSION}`;
 
@@ -9,12 +9,12 @@ const RUNTIME_CACHE = `wo-runtime-${VERSION}`;
 const PRECACHE_URLS = [
   '/',
   '/index.html',
-  '/style.css?v=58',
-  '/script.js?v=41',
-  '/add-keyword-modal.css?v=24',
-  '/search-bar-update.css?v=34',
+  '/style.css?v=59',
+  '/script.js?v=42',
+  '/add-keyword-modal.css?v=25',
+  '/search-bar-update.css?v=35',
   '/manifest.json',
-  '/media/logo.PNG',
+  '/media/logo.png',
   '/icon-192.png',
   '/icon-512.png'
 ];
