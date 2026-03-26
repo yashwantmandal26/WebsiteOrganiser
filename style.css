@@ -117,13 +117,9 @@ body {
   width: 100%;
 }
 
-/* Global Scrollbar Removal */
-*::-webkit-scrollbar {
-    display: none;
-}
-* {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+/* Hide scrollbar for Chrome, Safari and Opera */
+body::-webkit-scrollbar {
+  display: none;
 }
 
 /* Prevent sticky hover effects on touch devices */
@@ -334,10 +330,27 @@ body.modal-open {
 /* Ensure page can always scroll on desktop */
 html {
   overflow-y: scroll; /* Use scroll to prevent layout shift */
-
+  scrollbar-gutter: stable; /* Modern way to prevent layout shift */
 }
 
+/* Custom Scrollbar for modern look */
+::-webkit-scrollbar {
+  width: 10px;
+}
 
+::-webkit-scrollbar-track {
+  background: var(--bg-color);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--button-bg);
+  border-radius: 5px;
+  border: 2px solid var(--bg-color);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--button-hover-bg);
+}
 
 /* Container */
 .container {
@@ -929,7 +942,23 @@ body[data-theme="light"] .search-suggestions {
   font-size: 14px;
 }
 
+/* Scrollbar for suggestions */
+.search-suggestions::-webkit-scrollbar {
+  width: 8px;
+}
 
+.search-suggestions::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.search-suggestions::-webkit-scrollbar-thumb {
+  background: var(--button-bg);
+  border-radius: 4px;
+}
+
+.search-suggestions::-webkit-scrollbar-thumb:hover {
+  background: var(--button-hover-bg);
+}
 
 /* Groups Grid */
 .groups-grid {
@@ -2607,7 +2636,38 @@ body[data-theme="dark"] .keyword-list-empty {
   }
 }
 
+/* Modern Scrollbar Styles */
+.keyword-list,
+.modal-content,
+.keyword-grid-preview.is-scrollable,
+.keyword-list-preview {
+  scrollbar-width: thin;
+  scrollbar-color: #b388ff #f3e8ff;
+}
 
+.keyword-list::-webkit-scrollbar,
+.modal-content::-webkit-scrollbar,
+.keyword-grid-preview.is-scrollable::-webkit-scrollbar,
+.keyword-list-preview::-webkit-scrollbar {
+  width: 8px;
+  background: transparent;
+}
+
+.keyword-list::-webkit-scrollbar-thumb,
+.modal-content::-webkit-scrollbar-thumb,
+.keyword-grid-preview.is-scrollable::-webkit-scrollbar-thumb,
+.keyword-list-preview::-webkit-scrollbar-thumb {
+  background: #b388ff;
+  border-radius: 8px;
+  min-height: 40px;
+}
+
+.keyword-list::-webkit-scrollbar-track,
+.modal-content::-webkit-scrollbar-track,
+.keyword-grid-preview.is-scrollable::-webkit-scrollbar-track,
+.keyword-list-preview::-webkit-scrollbar-track {
+  background: transparent;
+}
 
 /* Global scrollbar for Webkit browsers */
 ::-webkit-scrollbar {
