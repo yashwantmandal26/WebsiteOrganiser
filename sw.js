@@ -14,7 +14,7 @@ const PRECACHE_URLS = [
   '/add-keyword-modal.css?v=28',
   '/search-bar-update.css?v=38',
   '/manifest.json',
-  '/media/logo.png',
+  '/media/logo.svg',
   '/icon-192.png',
   '/icon-512.png'
 ];
