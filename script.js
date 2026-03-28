@@ -22,11 +22,24 @@ window.onerror = function (msg, url, lineNo, columnNo, error) {
 };
 
 // Global reset for zoom and animation states
-function resetKeywordStates() {
+let lastZoomTime = 0;
+
+function resetKeywordStates(force = false) {
+    // If a zoom just started (less than 20 seconds ago), ignore unexpected resets 
+    // unless explicitly forced (like the logo click or pageshow).
+    const timeSinceZoom = Date.now() - lastZoomTime;
+    if (!force && timeSinceZoom < 20000 && document.body.classList.contains('is-zooming')) {
+        console.log('Reset ignored - Zoom protection active');
+        return;
+    }
+
     // 1. Immediately clear the body-level blocking class
     document.body.classList.remove('is-zooming');
 
-    // 2. Remove classes from elements (using a broader selector to catch any stuck states)
+    // 2. Remove any cloned icons or backdrops from the DOM
+    document.querySelectorAll('.cloned-zoom-icon, .cinematic-backdrop').forEach(el => el.remove());
+
+    // 3. Remove classes from elements
     const elementsToReset = document.querySelectorAll('.keyword-clicked, .parent-of-clicked');
     elementsToReset.forEach(el => {
         el.classList.remove('keyword-clicked');
@@ -43,11 +56,11 @@ function resetKeywordStates() {
         }
     });
 
-    // 3. Force scroll unlock
+    // 4. Force scroll unlock
     document.body.style.overflow = '';
     document.documentElement.style.overflow = '';
 
-    // 4. Force blur anything that might be focused/hovered
+    // 5. Force blur anything that might be focused/hovered
     if (document.activeElement && document.activeElement !== document.body) {
         document.activeElement.blur();
     }
@@ -56,22 +69,24 @@ function resetKeywordStates() {
 // Attach reset listeners as early as possible (outside DOMContentLoaded)
 window.addEventListener('pageshow', (event) => {
     // Reset state whenever page is shown (initial load, back navigation, or tab switch)
-    resetKeywordStates();
+    // We use force=true because pageshow means the user is definitely back on the page
+    resetKeywordStates(true);
 });
 
-window.addEventListener('load', resetKeywordStates);
+window.addEventListener('load', () => resetKeywordStates(true));
 
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
-        resetKeywordStates();
+        resetKeywordStates(); // No force here, let zoom protection handle it
     }
 });
 
 // Catch back button / history navigation
-window.addEventListener('popstate', resetKeywordStates);
+window.addEventListener('popstate', () => resetKeywordStates(true));
 
 // Prevent caching the page in a "zoomed" state
 window.addEventListener('beforeunload', () => {
+    // Don't call full resetKeywordStates, just remove the body class
     document.body.classList.remove('is-zooming');
 });
 
@@ -1855,19 +1870,37 @@ document.addEventListener('DOMContentLoaded', () => {
                             event.preventDefault();
                             event.stopPropagation();
 
-                            // Clean any existing states first (aggressive reset)
+                            // Clean any existing states first
                             resetKeywordStates();
 
-                            // Instant visual feedback
-                            previewItem.classList.add('keyword-clicked');
-                            document.body.classList.add('is-zooming');
-                            const parentGroupCard = previewItem.closest('.group-card');
-                            if (parentGroupCard) {
-                                parentGroupCard.classList.add('parent-of-clicked');
-                            }
+                            // 1. CAPTURE POSITION FIRST (Crucial: before hiding UI)
+                            const originalIcon = previewItem.querySelector('.keyword-grid-icon');
+                            const rect = originalIcon.getBoundingClientRect();
 
-                            // Calculate distance to screen center for the zoom effect
-                            const rect = previewItem.querySelector('.keyword-grid-icon').getBoundingClientRect();
+                            // 2. SET LOCK AND HIDE UI
+                            lastZoomTime = Date.now();
+                            document.body.classList.add('is-zooming');
+
+                            // 3. Create a physical backdrop to ensure absolute hiding
+                            const backdrop = document.createElement('div');
+                            backdrop.className = 'cinematic-backdrop';
+                            document.body.appendChild(backdrop);
+
+                            // 4. Create a clone for the cinematic zoom
+                            const clonedIcon = originalIcon.cloneNode(true);
+                            clonedIcon.classList.add('cloned-zoom-icon');
+                            
+                            // Set initial position of clone to match original exactly
+                            clonedIcon.style.position = 'fixed';
+                            clonedIcon.style.left = rect.left + 'px';
+                            clonedIcon.style.top = rect.top + 'px';
+                            clonedIcon.style.width = rect.width + 'px';
+                            clonedIcon.style.height = rect.height + 'px';
+                            clonedIcon.style.margin = '0';
+                            clonedIcon.style.zIndex = '10000000';
+                            clonedIcon.style.pointerEvents = 'none';
+
+                            // 5. Calculate translation to center
                             const centerX = window.innerWidth / 2;
                             const centerY = window.innerHeight / 2;
                             const iconCenterX = rect.left + rect.width / 2;
@@ -1875,42 +1908,41 @@ document.addEventListener('DOMContentLoaded', () => {
                             const translateX = centerX - iconCenterX;
                             const translateY = centerY - iconCenterY;
                             
-                            // Apply translation variables to the clicked icon
-                            const iconElement = previewItem.querySelector('.keyword-grid-icon');
-                            iconElement.style.setProperty('--tx', `${translateX}px`);
-                            iconElement.style.setProperty('--ty', `${translateY}px`);
+                            clonedIcon.style.setProperty('--tx', `${translateX}px`);
+                            clonedIcon.style.setProperty('--ty', `${translateY}px`);
+
+                            // 6. Add clone to body
+                            document.body.appendChild(clonedIcon);
                             
-                            // Vibration feedback for mobile devices (minimal duration for speed feel)
+                            // 7. Trigger the animation in the next frame
+                            requestAnimationFrame(() => {
+                                clonedIcon.classList.add('animate-to-center');
+                            });
+
+                            // Vibration feedback
                             if (navigator.vibrate) {
                                 navigator.vibrate(10);
                             }
 
-                            // Increment click count (don't await this, it's async)
+                            // Increment click count
                             incrementKeywordClick(originalIndex, keyword);
 
-                            // Check for Ctrl/Meta key to open in new tab
                             const inNewTab = event.ctrlKey || event.metaKey;
 
-                            // Small delay for same-tab navigation to let zoom animation show
                             if (!inNewTab) {
-                                // Dynamic delay: 1.5s for mobile, 1.2s for desktop
                                 const navDelay = window.innerWidth <= 600 ? 1500 : 1200;
                                 setTimeout(() => {
                                     openURLWithBrowser(targetUrl, false);
                                 }, navDelay);
                                 
-                                // SAFETY CLEANUP: Even for same-tab, we eventually remove classes 
-                                // in case the navigation fails or the user clicks "Back" very quickly.
-                                setTimeout(() => {
-                                    resetKeywordStates();
-                                }, navDelay + 2000); 
+                                // NO SAFETY CLEANUP for same-tab. 
+                                // The UI will stay hidden until the page navigates away.
+                                // If the user hits "Back", pageshow/popstate will reset it.
                             } else {
                                 openURLWithBrowser(targetUrl, true);
-                                
-                                // For new-tab, remove classes after a short delay so current page stays usable
                                 setTimeout(() => {
                                     resetKeywordStates();
-                                }, 600);
+                                }, 800);
                             }
                         });
 

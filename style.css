@@ -1827,136 +1827,97 @@ li[draggable="true"][data-keyword-index]:active {
   opacity: 1 !important;
 }
 
-/* Ensure the parent group card and all ancestors allow the zoom to overflow */
+/* 
+   ===================================
+   CINEMATIC ZOOM ANIMATION (V3)
+   ===================================
+*/
+
+/* 1. Body & App Hiding Logic */
 body.is-zooming {
-  overflow: hidden !important; /* Prevent scroll while zooming */
+  overflow: hidden !important;
+  background: var(--bg-color) !important;
 }
 
-body.is-zooming .groups-grid,
-body.is-zooming main.container,
-body.is-zooming .group-card,
-body.is-zooming .keyword-grid-preview,
-body.is-zooming .keyword-grid {
-  overflow: visible !important;
-}
-
-/* Fade out non-participating UI for a clean full-screen transition */
-body.is-zooming header,
-body.is-zooming .group-card:not(.parent-of-clicked),
-body.is-zooming #add-fab,
-body.is-zooming .search-bar-container {
+/* Hide neon background pseudo-elements */
+body.is-zooming::before,
+body.is-zooming::after {
+  display: none !important;
   opacity: 0 !important;
-  pointer-events: none !important;
-  transition: opacity 0.3s ease !important;
 }
 
-.parent-of-clicked {
-  z-index: 999998 !important;
-  visibility: hidden !important; /* Hide the entire card container and its content */
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
+/* Physical backdrop for absolute cinematic coverage */
+.cinematic-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: var(--bg-color);
+  z-index: 9999999 !important; /* Below the cloned icon (10000000) */
+  pointer-events: none;
 }
 
-/* Force the clicked keyword and its icon to remain visible */
-.parent-of-clicked .keyword-clicked,
-.parent-of-clicked .keyword-clicked .keyword-grid-icon {
-  visibility: visible !important;
+[data-theme="light"] .cinematic-backdrop {
+  background: #f8f9fa !important;
 }
 
-/* Hide everything inside the parent group except the expanding keyword icon */
-.parent-of-clicked .group-card-header,
-.parent-of-clicked .keyword-grid-preview-item:not(.keyword-clicked),
-.parent-of-clicked .keyword-grid-preview-more,
-.parent-of-clicked .keyword-grid-empty,
-.parent-of-clicked .keyword-grid-item:not(.keyword-clicked),
-.keyword-clicked .keyword-grid-text,
-.keyword-clicked .keyword-text {
+[data-theme="dark"] .cinematic-backdrop,
+[data-theme="solid-dark"] .cinematic-backdrop {
+  background: #0a0a0a !important;
+}
+
+/* Hide the entire app UI instantly with extreme measures */
+body.is-zooming header,
+body.is-zooming main.container,
+body.is-zooming #add-fab,
+body.is-zooming #toast-container,
+body.is-zooming .search-suggestions {
+  display: none !important;
   opacity: 0 !important;
   pointer-events: none !important;
   visibility: hidden !important;
+  position: fixed !important;
+  top: -10000vh !important;
+  left: -10000vw !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  z-index: -100 !important;
 }
 
-.parent-of-clicked::before,
-.parent-of-clicked::after {
-  display: none !important;
-  content: none !important;
+/* 2. Cloned Zoom Icon */
+.cloned-zoom-icon {
+  position: fixed;
+  z-index: 10000000;
+  pointer-events: none;
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
 }
 
-.keyword-clicked .keyword-text {
-  text-decoration: underline;
-  color: #7b2cbf;
-  font-weight: 600;
+.cloned-zoom-icon.animate-to-center {
+  animation: keywordMoveToCenter 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
-.keyword-grid-preview-item.keyword-new {
-  animation: keywordNewPulse 1.3s ease;
-  box-shadow: 0 0 0 0 rgba(123, 44, 191, 0.4), 0 0 24px 8px rgba(123, 44, 191, 0.25);
-}
-
-.group-card li.keyword-new {
-  animation: keywordNewGlow 1.3s ease;
-  background: rgba(123, 44, 191, 0.14);
-  border-radius: 12px;
-  box-shadow: 0 0 0 0 rgba(123, 44, 191, 0.25);
-}
-
-[data-theme="dark"] .group-card li.keyword-new , [data-theme="solid-dark"] .group-card li.keyword-new {
-  background: rgba(123, 44, 191, 0.28);
-}
-
-@keyframes keywordNewPulse {
-  0% {
-    transform: scale(0.98);
-    box-shadow: 0 0 0 0 rgba(123, 44, 191, 0.45);
-  }
-
-  45% {
-    transform: scale(1.05);
-    box-shadow: 0 0 26px 10px rgba(123, 44, 191, 0.35);
-  }
-
-  100% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(123, 44, 191, 0.0);
-  }
-}
-
-@keyframes keywordNewGlow {
-  0% {
-    background: rgba(123, 44, 191, 0.22);
-    box-shadow: 0 0 0 0 rgba(123, 44, 191, 0.32);
-  }
-
-  50% {
-    background: rgba(123, 44, 191, 0.35);
-    box-shadow: 0 0 18px 6px rgba(123, 44, 191, 0.28);
-  }
-
-  100% {
-    background: rgba(123, 44, 191, 0.14);
-    box-shadow: 0 0 0 0 rgba(123, 44, 191, 0.0);
-  }
-}
-
+/* 3. Animation Keyframes */
 @keyframes keywordMoveToCenter {
   0% {
     transform: translate(0, 0) scale(1);
     opacity: 1;
     filter: brightness(1);
-    border-radius: 22px;
   }
 
-  /* Movement to center with moderate scaling - the end state */
   100% {
     transform: translate(var(--tx, 0), var(--ty, 0)) scale(2.8);
     opacity: 1;
-    background: var(--bg-color);
-    border-radius: 12px;
-    box-shadow: 0 0 30px rgba(123, 44, 191, 0.4);
+    background: transparent;
   }
+}
+
+/* Old rules cleanup - below can be removed in a future pass */
+.parent-of-clicked {
+  display: none !important;
 }
 
 .keyword-item .icon-btn {
