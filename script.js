@@ -206,7 +206,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Theme Toggle Button
     const themeToggleBtn = document.getElementById('theme-toggle-btn');
     const adminBtn = document.getElementById('admin-btn');
-    const viewToggleBtn = document.getElementById('view-toggle-btn');
     const exportBtn = document.getElementById('export-btn');
     const importBtn = document.getElementById('import-btn');
     const importFileInput = document.getElementById('import-file-input');
@@ -283,7 +282,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let groupModalMode = 'add'; // 'add' or 'edit'
     let draggedItemIndex = null; // To track the index of the dragged group
     let adminLoggedIn = false;
-    let viewMode = 'grid';
     let lastAddedKeyword = null;
     let lastAddedGroupIndex = null;
 
@@ -317,22 +315,6 @@ document.addEventListener('DOMContentLoaded', () => {
         adminOnlyButtons.forEach(btn => {
             btn.style.display = adminLoggedIn ? 'inline-flex' : 'none';
         });
-    }
-
-    function updateViewToggleButton() {
-        if (!viewToggleBtn) return;
-        viewToggleBtn.textContent = viewMode === 'grid' ? 'List View' : 'Grid View';
-    }
-
-    function setViewMode(mode) {
-        const previousMode = viewMode;
-        viewMode = mode;
-        document.body.dataset.keywordView = mode;
-        updateViewToggleButton();
-        if (previousMode === mode) {
-            return;
-        }
-        renderGroups();
     }
 
     // Default groups for new users
@@ -974,7 +956,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // THEME TOGGLE FUNCTIONALITY
     const THEME_STORAGE_KEY = 'wo-theme';
 
-    const getSavedTheme = () => {
+    function getSavedTheme() {
         try {
             const stored = localStorage.getItem(THEME_STORAGE_KEY);
             if (stored === 'dark' || stored === 'light' || stored === 'solid-dark') return stored;
@@ -985,17 +967,17 @@ document.addEventListener('DOMContentLoaded', () => {
             return 'dark';
         }
         return 'light';
-    };
+    }
 
-    const persistTheme = (theme) => {
+    function persistTheme(theme) {
         try {
             localStorage.setItem(THEME_STORAGE_KEY, theme);
         } catch (e) {
             /* ignore */
         }
-    };
+    }
 
-    const setTheme = (theme, { persist = true } = {}) => {
+    function setTheme(theme, { persist = true } = {}) {
         document.documentElement.dataset.theme = theme;
         if (persist) {
             persistTheme(theme);
@@ -1024,7 +1006,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             modalContent.style.color = '#222';
         }
-    };
+    }
 
     // HELPER: Generate a random HSL color (unique per call)
     const getRandomColor = () => {
@@ -1405,7 +1387,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (targetElement) {
-            const scrollParent = targetElement.closest('.keyword-grid-preview.is-scrollable, .keyword-list-preview');
+            const scrollParent = targetElement.closest('.keyword-grid-preview.is-scrollable');
             if (scrollParent) {
                 const offset = targetElement.offsetTop - scrollParent.clientHeight + targetElement.offsetHeight + 16;
                 const finalOffset = Math.max(0, offset);
@@ -1621,7 +1603,8 @@ document.addEventListener('DOMContentLoaded', () => {
     window.saveNewKeyword = saveNewKeyword;
 
     // --- Render Functions ---
-    const renderGroups = () => {
+    function renderGroups() {
+        if (!groupsContainer) return;
         groupsContainer.innerHTML = '';
         // Store original index for each group so UI actions hit the right item
         const filteredGroups = groups.map((group, idx) => ({ ...group, _originalIndex: idx }));
@@ -1737,160 +1720,106 @@ document.addEventListener('DOMContentLoaded', () => {
                 groupCard.appendChild(header);
 
                 // --- Preview Keywords ---
-                if (viewMode === 'grid') {
-                    const keywords = group.keywords;
-                    const previewGrid = document.createElement('div');
-                    previewGrid.className = 'keyword-grid-preview';
+                const keywords = group.keywords;
+                const previewGrid = document.createElement('div');
+                previewGrid.className = 'keyword-grid-preview';
 
-                    if (keywords.length === 0) {
-                        const emptyItem = document.createElement('div');
-                        emptyItem.className = 'keyword-grid-empty';
-                        emptyItem.textContent = 'No keywords yet';
-                        previewGrid.appendChild(emptyItem);
+                if (keywords.length === 0) {
+                    const emptyItem = document.createElement('div');
+                    emptyItem.className = 'keyword-grid-empty';
+                    emptyItem.textContent = 'No keywords yet';
+                    previewGrid.appendChild(emptyItem);
+                } else {
+                    previewGrid.classList.add('is-scrollable');
+
+                    // Add size class based on keyword count for mobile
+                    if (keywords.length <= 3) {
+                        previewGrid.classList.add('size-small');
+                    } else if (keywords.length <= 9) {
+                        previewGrid.classList.add('size-medium');
                     } else {
-                        previewGrid.classList.add('is-scrollable');
+                        previewGrid.classList.add('size-large');
+                    }
 
-                        // Add size class based on keyword count for mobile
-                        if (keywords.length <= 3) {
-                            previewGrid.classList.add('size-small');
-                        } else if (keywords.length <= 9) {
-                            previewGrid.classList.add('size-medium');
-                        } else {
-                            previewGrid.classList.add('size-large');
+                    keywords.forEach((keyword, keywordIndex) => {
+                        const { displayText, targetUrl } = parseKeyword(keyword);
+                        const emoji = getKeywordEmoji(keyword);
+                        const previewItem = document.createElement('div');
+                        previewItem.className = 'keyword-grid-preview-item';
+                        previewItem.dataset.keywordValue = keyword;
+                        previewItem.dataset.groupIndex = originalIndex;
+                        previewItem.dataset.keywordIndex = keywordIndex;
+                        previewItem.draggable = adminLoggedIn;
+
+                        const encodedKeyword = encodeURIComponent(keyword).replace(/\./g, '%2E');
+                        const clickCount = globalClickCounts[encodedKeyword] || 0;
+                        const description = keywordDescriptions[encodedKeyword];
+
+                        // Log description status for debugging
+                        if (description) {
+                            console.log(`Rendering tooltip for "${displayText}":`, description);
                         }
 
-                        keywords.forEach((keyword, keywordIndex) => {
-                            const { displayText, targetUrl } = parseKeyword(keyword);
-                            const emoji = getKeywordEmoji(keyword);
-                            const previewItem = document.createElement('div');
-                            previewItem.className = 'keyword-grid-preview-item';
-                            previewItem.dataset.keywordValue = keyword;
-                            previewItem.dataset.groupIndex = originalIndex;
-                            previewItem.dataset.keywordIndex = keywordIndex;
-                            previewItem.draggable = adminLoggedIn;
-                            
-                            const encodedKeyword = encodeURIComponent(keyword).replace(/\./g, '%2E');
-                            const clickCount = globalClickCounts[encodedKeyword] || 0;
-                            const description = keywordDescriptions[encodedKeyword];
-                            
-                            // Log description status for debugging
-                            if (description) {
-                                console.log(`Rendering tooltip for "${displayText}":`, description);
-                            }
-                            
-                            previewItem.innerHTML = `
+                        previewItem.innerHTML = `
                                 <div class="keyword-grid-icon">${getFaviconOrEmoji(keyword, emoji)}</div>
                                 <div class="keyword-grid-text">${displayText}</div>
                                 <div class="keyword-click-counter">${clickCount}</div>
                                 ${description ? `<div class="keyword-tooltip" data-description="${encodeURIComponent(description)}">${description}</div>` : ''}
                             `;
-                            previewItem.setAttribute('aria-label', displayText);
+                        previewItem.setAttribute('aria-label', displayText);
 
-                            // Single click/tap opens URL (only if not admin or not dragging)
-                            previewItem.addEventListener('click', (event) => {
-                                if (adminLoggedIn && previewItem.classList.contains('dragging')) {
-                                    return; // Don't open URL when dragging in admin mode
-                                }
-                                event.preventDefault();
-                                event.stopPropagation();
+                        // Single click/tap opens URL (only if not admin or not dragging)
+                        previewItem.addEventListener('click', (event) => {
+                            if (adminLoggedIn && previewItem.classList.contains('dragging')) {
+                                return; // Don't open URL when dragging in admin mode
+                            }
+                            event.preventDefault();
+                            event.stopPropagation();
 
-                                // Vibration feedback for mobile devices
-                                if (navigator.vibrate) {
-                                    navigator.vibrate(20);
-                                }
-
-                                // Increment click count
-                                incrementKeywordClick(originalIndex, keyword);
-
-                                previewItem.classList.add('keyword-clicked');
-                                // Check for Ctrl/Meta key to open in new tab
-                                const inNewTab = event.ctrlKey || event.metaKey;
-                                openURLWithBrowser(targetUrl, inNewTab);
-
-                                // Force remove focus to prevent sticky hover/zoom on mobile
-                                if (document.activeElement) {
-                                    document.activeElement.blur();
-                                }
-                                previewItem.blur();
-
-                                setTimeout(() => {
-                                    previewItem.classList.remove('keyword-clicked');
-                                }, 800);
-                            });
-
-                            // Middle-click support
-                            previewItem.addEventListener('auxclick', (event) => {
-                                if (event.button === 1) { // Middle click
-                                    event.preventDefault();
-                                    event.stopPropagation();
-                                    openURLWithBrowser(targetUrl, true); // Open in new tab
-                                }
-                            });
-
-                            // Add context menu support (right-click/long-press)
-                            attachKeywordContextMenu(previewItem, originalIndex, keywordIndex, keyword, targetUrl);
-
-                            // Add hover sound effect for desktop
-                            addKeywordHoverSound(previewItem);
-
-                            previewGrid.appendChild(previewItem);
-                        });
-                    }
-
-                    groupCard.appendChild(previewGrid);
-                } else {
-                    const keywords = group.keywords;
-
-                    if (keywords.length === 0) {
-                        const emptyItem = document.createElement('div');
-                        emptyItem.className = 'keyword-list-empty';
-                        emptyItem.textContent = 'No keywords yet';
-                        groupCard.appendChild(emptyItem);
-                    } else {
-                        const listWrapper = document.createElement('div');
-                        listWrapper.className = 'keyword-list-preview';
-                        const ul = document.createElement('ul');
-
-                        keywords.forEach((keyword, keywordIndex) => {
-                            const li = document.createElement('li');
-                            const emoji = getKeywordEmoji(keyword);
-                            const { displayText, targetUrl } = parseKeyword(keyword);
-
-                            const encodedKeyword = encodeURIComponent(keyword).replace(/\./g, '%2E');
-                            const clickCount = globalClickCounts[encodedKeyword] || 0;
-                            const description = keywordDescriptions[encodedKeyword];
-                            li.innerHTML = `
-                                ${getFaviconOrEmoji(keyword, emoji)}
-                                <span class="keyword-text">${displayText}</span>
-                                <div class="keyword-click-counter">${clickCount}</div>
-                                ${description ? `<div class="keyword-tooltip" data-description="${encodeURIComponent(description)}">${description}</div>` : ''}
-                            `;
-                            li.style.cursor = 'default';
-                            li.dataset.keywordValue = keyword;
-                            li.dataset.groupIndex = originalIndex;
-                            li.dataset.keywordIndex = keywordIndex;
-                            li.draggable = adminLoggedIn;
-
-                            const textElement = li.querySelector('.keyword-text');
-                            if (textElement) {
-                                textElement.setAttribute('aria-label', displayText);
-                                textElement.dataset.keywordValue = keyword;
-                                attachKeywordActivation(textElement, targetUrl, originalIndex, keyword, li);
+                            // Vibration feedback for mobile devices
+                            if (navigator.vibrate) {
+                                navigator.vibrate(20);
                             }
 
-                            // Add context menu support
-                            attachKeywordContextMenu(li, originalIndex, keywordIndex, keyword, targetUrl);
+                            // Increment click count
+                            incrementKeywordClick(originalIndex, keyword);
 
-                            // Add hover sound effect for desktop
-                            addKeywordHoverSound(li);
+                            previewItem.classList.add('keyword-clicked');
+                            // Check for Ctrl/Meta key to open in new tab
+                            const inNewTab = event.ctrlKey || event.metaKey;
+                            openURLWithBrowser(targetUrl, inNewTab);
 
-                            ul.appendChild(li);
+                            // Force remove focus to prevent sticky hover/zoom on mobile
+                            if (document.activeElement) {
+                                document.activeElement.blur();
+                            }
+                            previewItem.blur();
+
+                            setTimeout(() => {
+                                previewItem.classList.remove('keyword-clicked');
+                            }, 800);
                         });
 
-                        listWrapper.appendChild(ul);
-                        groupCard.appendChild(listWrapper);
-                    }
+                        // Middle-click support
+                        previewItem.addEventListener('auxclick', (event) => {
+                            if (event.button === 1) { // Middle click
+                                event.preventDefault();
+                                event.stopPropagation();
+                                openURLWithBrowser(targetUrl, true); // Open in new tab
+                            }
+                        });
+
+                        // Add context menu support (right-click/long-press)
+                        attachKeywordContextMenu(previewItem, originalIndex, keywordIndex, keyword, targetUrl);
+
+                        // Add hover sound effect for desktop
+                        addKeywordHoverSound(previewItem);
+
+                        previewGrid.appendChild(previewItem);
+                    });
                 }
+
+                groupCard.appendChild(previewGrid);
 
                 // Set group index for event delegation
                 groupCard.dataset.groupIndex = originalIndex;
@@ -1900,7 +1829,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 groupsContainer.appendChild(groupCard);
             });
         }
-    };
+    }
 
     // --- Event Listeners (Delegation) ---
     groupsContainer.addEventListener('click', (e) => {
@@ -2263,13 +2192,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    if (viewToggleBtn) {
-        viewToggleBtn.addEventListener('click', () => {
-            const nextMode = viewMode === 'grid' ? 'list' : 'grid';
-            setViewMode(nextMode);
-        });
-    }
-
     // --- Global Modal Key Handling (Type-to-Focus & Enter-to-Save) ---
     document.addEventListener('keydown', (e) => {
         const activeModal = document.querySelector('.modal-container.visible');
@@ -2427,15 +2349,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Initial Render ---
 
     // Set view mode (default to grid)
-    viewMode = 'grid';
-    document.body.dataset.keywordView = viewMode;
-
-    // Apply persisted theme (or system preference) before first render
+    renderGroups(); // Apply persisted theme (or system preference) before first render
     const initialTheme = getSavedTheme();
     setTheme(initialTheme, { persist: false });
 
     updateAdminButton();
-    updateViewToggleButton();
 
     // Show loading message
     groupsContainer.innerHTML = '<p style="color: #ccc; text-align: center; padding: 40px;">Loading data from cloud...</p>';
