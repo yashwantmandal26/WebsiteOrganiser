@@ -2270,7 +2270,7 @@ document.addEventListener('DOMContentLoaded', () => {
         exportBtn.addEventListener('click', () => {
             const dataToExport = {
                 exportDate: new Date().toISOString(),
-                version: '2.7',
+                version: '2.8',
                 groups: groups
             };
             const jsonString = JSON.stringify(dataToExport, null, 2);
