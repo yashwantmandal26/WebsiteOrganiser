@@ -1817,7 +1817,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (!inNewTab) {
                                 setTimeout(() => {
                                     openURLWithBrowser(targetUrl, false);
-                                }, 1200); // Increased delay to see the icon move to center clearly
+                                }, 600); // Shortened to match the new move-to-center animation
                                 
                                 // For same-tab, we DON'T remove classes here.
                                 // The browser will clear the page state when the new site loads.
@@ -2288,7 +2288,7 @@ document.addEventListener('DOMContentLoaded', () => {
         exportBtn.addEventListener('click', () => {
             const dataToExport = {
                 exportDate: new Date().toISOString(),
-                version: '3.6',
+                version: '3.7',
                 groups: groups
             };
             const jsonString = JSON.stringify(dataToExport, null, 2);

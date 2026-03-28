@@ -1813,7 +1813,7 @@ li[draggable="true"][data-keyword-index]:active {
 }
 
 .keyword-clicked .keyword-grid-icon {
-  animation: keywordFullScreenZoom 4s cubic-bezier(0.2, 0.4, 0.2, 1) forwards;
+  animation: keywordMoveToCenter 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   z-index: 1000000 !important;
 }
 
@@ -1930,7 +1930,7 @@ body.is-zooming .search-bar-container {
   }
 }
 
-@keyframes keywordFullScreenZoom {
+@keyframes keywordMoveToCenter {
   0% {
     transform: translate(0, 0) scale(1);
     opacity: 1;
@@ -1938,23 +1938,13 @@ body.is-zooming .search-bar-container {
     border-radius: 22px;
   }
 
-  /* Slow movement to center with moderate scaling */
-  40% {
-    transform: translate(var(--tx, 0), var(--ty, 0)) scale(2);
-    opacity: 1;
-    background: var(--bg-color);
-    border-radius: 10px;
-  }
-
+  /* Movement to center with moderate scaling - the end state */
   100% {
-    /* Final explosion to fill the screen from center */
-    transform: translate(var(--tx, 0), var(--ty, 0)) scale(400);
+    transform: translate(var(--tx, 0), var(--ty, 0)) scale(2.8);
     opacity: 1;
     background: var(--bg-color);
-    filter: brightness(1);
-    border-radius: 0;
-    box-shadow: none;
-    border: none;
+    border-radius: 12px;
+    box-shadow: 0 0 30px rgba(123, 44, 191, 0.4);
   }
 }
 
