@@ -1817,7 +1817,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (!inNewTab) {
                                 setTimeout(() => {
                                     openURLWithBrowser(targetUrl, false);
-                                }, 500); // Increased delay for slower zoom effect to be seen clearly
+                                }, 1200); // Increased delay to see the icon move to center clearly
                                 
                                 // For same-tab, we DON'T remove classes here.
                                 // The browser will clear the page state when the new site loads.
@@ -2288,7 +2288,7 @@ document.addEventListener('DOMContentLoaded', () => {
         exportBtn.addEventListener('click', () => {
             const dataToExport = {
                 exportDate: new Date().toISOString(),
-                version: '3.4',
+                version: '3.5',
                 groups: groups
             };
             const jsonString = JSON.stringify(dataToExport, null, 2);
