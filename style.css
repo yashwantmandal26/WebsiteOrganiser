@@ -1834,12 +1834,24 @@ body.is-zooming .search-bar-container {
 }
 
 .parent-of-clicked {
-  z-index: 999998 !important; /* Just below the zoom item */
-  background: transparent !important; /* Hide original card background to avoid clipping look */
+  z-index: 999998 !important;
+  background: transparent !important;
   border: none !important;
   box-shadow: none !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+}
+
+/* Hide everything inside the parent group except the expanding keyword */
+.parent-of-clicked .group-card-header,
+.parent-of-clicked .keyword-grid-preview-item:not(.keyword-clicked),
+.parent-of-clicked .keyword-grid-preview-more,
+.parent-of-clicked .keyword-grid-empty,
+.parent-of-clicked .keyword-grid-item:not(.keyword-clicked) {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+  transition: opacity 0.2s ease !important;
 }
 
 .parent-of-clicked::before,
