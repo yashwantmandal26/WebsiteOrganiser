@@ -1806,31 +1806,38 @@ li[draggable="true"][data-keyword-index]:active {
 .keyword-clicked {
   animation: keywordFullScreenZoom 0.6s cubic-bezier(0.45, 0.05, 0.55, 0.95) forwards;
   pointer-events: none;
-  z-index: 999999 !important; /* Increased significantly */
-  position: relative; /* Maintain position for zoom anchor */
+  z-index: 999999 !important;
+  position: relative;
 }
 
-/* Ensure the parent group card doesn't clip or overlap the zoom */
-.parent-of-clicked {
-  z-index: 99999 !important;
-  overflow: visible !important;
+/* Ensure the parent group card and all ancestors allow the zoom to overflow */
+body.is-zooming {
+  overflow: hidden !important; /* Prevent scroll while zooming */
 }
 
-/* Ensure parents of the grid also allow overlap */
-.parent-of-clicked .keyword-grid-preview,
-.parent-of-clicked .keyword-grid {
-  overflow: visible !important;
-}
-
-/* Allow the global containers to show the expanding zoom above header and everything */
 body.is-zooming .groups-grid,
-body.is-zooming main.container {
-  z-index: 99999 !important;
+body.is-zooming main.container,
+body.is-zooming .group-card,
+body.is-zooming .keyword-grid-preview,
+body.is-zooming .keyword-grid {
   overflow: visible !important;
 }
 
-body.is-zooming header {
-  z-index: 1 !important; /* Force header below the zooming card */
+/* Fade out non-participating UI for a clean full-screen transition */
+body.is-zooming header,
+body.is-zooming .group-card:not(.parent-of-clicked),
+body.is-zooming #add-fab,
+body.is-zooming .search-bar-container {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: opacity 0.3s ease !important;
+}
+
+.parent-of-clicked {
+  z-index: 999998 !important; /* Just below the zoom item */
+  background: transparent !important; /* Hide original card background to avoid clipping look */
+  border: none !important;
+  box-shadow: none !important;
 }
 
 .keyword-clicked .keyword-text,
