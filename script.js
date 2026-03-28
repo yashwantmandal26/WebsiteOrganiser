@@ -1780,15 +1780,17 @@ document.addEventListener('DOMContentLoaded', () => {
                             event.preventDefault();
                             event.stopPropagation();
 
-                            // Vibration feedback for mobile devices
+                            // Instant visual feedback
+                            previewItem.classList.add('keyword-clicked');
+                            
+                            // Vibration feedback for mobile devices (minimal duration for speed feel)
                             if (navigator.vibrate) {
-                                navigator.vibrate(20);
+                                navigator.vibrate(10);
                             }
 
-                            // Increment click count
+                            // Increment click count (don't await this, it's async)
                             incrementKeywordClick(originalIndex, keyword);
 
-                            previewItem.classList.add('keyword-clicked');
                             // Check for Ctrl/Meta key to open in new tab
                             const inNewTab = event.ctrlKey || event.metaKey;
                             openURLWithBrowser(targetUrl, inNewTab);
@@ -1799,9 +1801,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                             previewItem.blur();
 
+                            // Faster reset for instant feel
                             setTimeout(() => {
                                 previewItem.classList.remove('keyword-clicked');
-                            }, 800);
+                            }, 300);
                         });
 
                         // Middle-click support
