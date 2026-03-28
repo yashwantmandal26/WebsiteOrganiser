@@ -1810,7 +1810,8 @@ li[draggable="true"][data-keyword-index]:active {
   pointer-events: none;
   z-index: 999999 !important;
   position: relative;
-  background: transparent !important;
+  visibility: hidden !important; /* Hide the card itself at the original position */
+  background: none !important;
   background-image: none !important;
   box-shadow: none !important;
   border: none !important;
@@ -1822,8 +1823,8 @@ li[draggable="true"][data-keyword-index]:active {
 .keyword-clicked .keyword-grid-icon {
   animation: keywordMoveToCenter 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   z-index: 1000000 !important;
+  visibility: visible !important; /* ONLY show the icon */
   opacity: 1 !important;
-  visibility: visible !important;
 }
 
 /* Ensure the parent group card and all ancestors allow the zoom to overflow */
