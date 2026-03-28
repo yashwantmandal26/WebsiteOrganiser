@@ -1804,11 +1804,14 @@ li[draggable="true"][data-keyword-index]:active {
 }
 
 .keyword-clicked {
-  animation: keywordClick 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  background: rgba(123, 44, 191, 0.25) !important;
-  box-shadow: 0 0 25px rgba(123, 44, 191, 0.4) !important;
-  transform: scale(0.94) !important;
-  z-index: 100;
+  animation: keywordZoomFade 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  pointer-events: none;
+  z-index: 999 !important;
+}
+
+.keyword-clicked .keyword-text {
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
 }
 
 .keyword-clicked .keyword-text {
@@ -1867,18 +1870,24 @@ li[draggable="true"][data-keyword-index]:active {
   }
 }
 
-@keyframes keywordClick {
+@keyframes keywordZoomFade {
   0% {
     transform: scale(1);
+    opacity: 1;
+    filter: brightness(1);
   }
 
   30% {
-    transform: scale(0.92);
-    background: rgba(123, 44, 191, 0.35);
+    transform: scale(0.94);
+    background: rgba(123, 44, 191, 0.2);
+    box-shadow: 0 0 15px rgba(123, 44, 191, 0.3);
+    opacity: 1;
   }
 
   100% {
-    transform: scale(1);
+    transform: scale(2.2);
+    opacity: 0;
+    filter: brightness(1.5);
   }
 }
 

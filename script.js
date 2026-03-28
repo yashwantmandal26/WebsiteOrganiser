@@ -1793,7 +1793,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
                             // Check for Ctrl/Meta key to open in new tab
                             const inNewTab = event.ctrlKey || event.metaKey;
-                            openURLWithBrowser(targetUrl, inNewTab);
+
+                            // Small delay for same-tab navigation to let zoom/fade animation show
+                            if (!inNewTab) {
+                                setTimeout(() => {
+                                    openURLWithBrowser(targetUrl, false);
+                                }, 180);
+                            } else {
+                                openURLWithBrowser(targetUrl, true);
+                            }
 
                             // Force remove focus to prevent sticky hover/zoom on mobile
                             if (document.activeElement) {
@@ -1801,10 +1809,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                             previewItem.blur();
 
-                            // Faster reset for instant feel
+                            // Faster reset for instant feel (matches animation length)
                             setTimeout(() => {
                                 previewItem.classList.remove('keyword-clicked');
-                            }, 300);
+                            }, 450);
                         });
 
                         // Middle-click support
@@ -2259,7 +2267,7 @@ document.addEventListener('DOMContentLoaded', () => {
         exportBtn.addEventListener('click', () => {
             const dataToExport = {
                 exportDate: new Date().toISOString(),
-                version: '2.3',
+                version: '2.4',
                 groups: groups
             };
             const jsonString = JSON.stringify(dataToExport, null, 2);
