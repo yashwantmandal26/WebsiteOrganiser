@@ -2288,7 +2288,7 @@ document.addEventListener('DOMContentLoaded', () => {
         exportBtn.addEventListener('click', () => {
             const dataToExport = {
                 exportDate: new Date().toISOString(),
-                version: '4.1',
+                version: '4.3',
                 groups: groups
             };
             const jsonString = JSON.stringify(dataToExport, null, 2);
@@ -2383,6 +2383,9 @@ document.addEventListener('DOMContentLoaded', () => {
     themeToggleBtn.style.maxHeight = '44px';
 
     // --- Initial Render ---
+    
+    // Ensure we start with a clean state (fixes potential stuck zoom from previous session)
+    resetKeywordStates();
 
     // Set view mode (default to grid)
     const initialTheme = getSavedTheme();
@@ -2499,22 +2502,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Handle "Back" button and page visibility to clear zoom state
+    window.addEventListener('pageshow', (event) => {
+        // Clear state whenever page is shown (initial load or back navigation)
+        resetKeywordStates();
+    });
+
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
             resetKeywordStates();
         }
-    });
-
-    // Handle "Back" button specifically to clear zoom state
-    window.addEventListener('pageshow', (event) => {
-        if (event.persisted) {
-            resetKeywordStates();
-        }
-    });
-
-    window.addEventListener('pageshow', (event) => {
-        // pageshow fires when navigating back from another page
-        resetKeywordStates();
     });
 
     // ===================================
