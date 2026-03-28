@@ -1432,9 +1432,19 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (e) { }
         if (isUrl) {
-            // Use Google's favicon service with sz=64 for high quality, fallback to 😎 on error
-            return `<img src='https://www.google.com/s2/favicons?sz=64&domain=${host}' class='keyword-favicon' loading='lazy' decoding='async' onerror="this.style.display='none';this.nextElementSibling.style.display='inline';">` +
-                `<span class='keyword-fallback-emoji' style='display:none;'>😎</span>`;
+            // Generate a gradient letter fallback based on the host
+            const firstLetter = host.charAt(0).toUpperCase();
+            const gradient = getKeywordGradient(host);
+            const letterFallback = `<span class='keyword-letter' style='background: linear-gradient(135deg, ${gradient[0]}, ${gradient[1]}); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;'>${firstLetter}</span>`;
+
+            // Try multiple favicon services for maximum reliability
+            // Primary: Google, Secondary: DuckDuckGo, Final: Letter Fallback
+            return `<img src='https://www.google.com/s2/favicons?sz=64&domain=${host}' 
+                         class='keyword-favicon' 
+                         loading='lazy' 
+                         decoding='async' 
+                         onerror="if(!this.dataset.triedDdg){this.dataset.triedDdg='true';this.src='https://icons.duckduckgo.com/ip3/${host}.ico';}else{this.style.display='none';this.nextElementSibling.style.display='flex';}">` +
+                `<div class='keyword-fallback-container' style='display:none;width:100%;height:100%;align-items:center;justify-content:center;'>${letterFallback}</div>`;
         } else {
             // Generate gradient letter for non-URL keywords (same color, high to low contrast)
             const firstLetter = keyword.charAt(0).toUpperCase();
@@ -1815,9 +1825,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                             // Small delay for same-tab navigation to let zoom animation show
                             if (!inNewTab) {
+                                // Dynamic delay: 1.5s for mobile, 1.2s for desktop
+                                const navDelay = window.innerWidth <= 600 ? 1500 : 1200;
                                 setTimeout(() => {
                                     openURLWithBrowser(targetUrl, false);
-                                }, 1000); // Increased to match the slower smooth animation
+                                }, navDelay);
                                 
                                 // For same-tab, we DON'T remove classes here.
                                 // The browser will clear the page state when the new site loads.
@@ -2288,7 +2300,7 @@ document.addEventListener('DOMContentLoaded', () => {
         exportBtn.addEventListener('click', () => {
             const dataToExport = {
                 exportDate: new Date().toISOString(),
-                version: '4.3',
+                version: '4.5',
                 groups: groups
             };
             const jsonString = JSON.stringify(dataToExport, null, 2);

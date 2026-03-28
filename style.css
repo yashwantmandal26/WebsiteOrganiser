@@ -1821,7 +1821,7 @@ li[draggable="true"][data-keyword-index]:active {
 }
 
 .keyword-clicked .keyword-grid-icon {
-  animation: keywordMoveToCenter 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: keywordMoveToCenter 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   z-index: 1000000 !important;
   visibility: visible !important; /* ONLY show the icon */
   opacity: 1 !important;
@@ -2491,8 +2491,14 @@ body.is-zooming .search-bar-container {
 }
 
 .keyword-grid-icon .keyword-emoji,
-.keyword-grid-icon .keyword-fallback-emoji {
+.keyword-grid-icon .keyword-fallback-emoji,
+.keyword-grid-icon .keyword-fallback-container {
   font-size: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
 }
 
 .keyword-grid-icon .keyword-letter {
@@ -3979,6 +3985,11 @@ body.is-touch .group-card[draggable="true"] {
     min-height: 44px;
     min-width: 44px;
     padding: 10px 16px;
+  }
+
+  /* Make keyword click animation slower on mobile for better visibility */
+  .keyword-clicked .keyword-grid-icon {
+    animation-duration: 2s !important;
   }
 
   /* Make FAB larger on mobile for easier tapping */
