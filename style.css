@@ -1933,16 +1933,18 @@ body.is-zooming .search-bar-container {
   20% {
     transform: scale(0.92);
     background: var(--bg-color);
-    box-shadow: 0 0 40px rgba(123, 44, 191, 0.5);
+    box-shadow: none;
     opacity: 1;
   }
 
   100% {
-    transform: scale(30); /* Zoom to fill screen */
-    opacity: 1; /* Keep it visible until navigation */
+    transform: scale(150); /* Massive scale to guarantee total coverage */
+    opacity: 1;
     background: var(--bg-color);
     filter: brightness(1);
     border-radius: 0;
+    box-shadow: none;
+    border: none;
   }
 }
 
