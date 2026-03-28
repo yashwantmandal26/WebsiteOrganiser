@@ -1782,6 +1782,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                             // Instant visual feedback
                             previewItem.classList.add('keyword-clicked');
+                            document.body.classList.add('is-zooming');
+                            const parentGroupCard = previewItem.closest('.group-card');
+                            if (parentGroupCard) {
+                                parentGroupCard.classList.add('parent-of-clicked');
+                            }
                             
                             // Vibration feedback for mobile devices (minimal duration for speed feel)
                             if (navigator.vibrate) {
@@ -1806,6 +1811,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             // Reset after animation and navigation attempt
                             setTimeout(() => {
                                 previewItem.classList.remove('keyword-clicked');
+                                document.body.classList.remove('is-zooming');
+                                if (parentGroupCard) {
+                                    parentGroupCard.classList.remove('parent-of-clicked');
+                                }
                             }, 1000); // Longer reset to cover the zoom duration
                         });
 
@@ -2261,7 +2270,7 @@ document.addEventListener('DOMContentLoaded', () => {
         exportBtn.addEventListener('click', () => {
             const dataToExport = {
                 exportDate: new Date().toISOString(),
-                version: '2.5',
+                version: '2.6',
                 groups: groups
             };
             const jsonString = JSON.stringify(dataToExport, null, 2);
