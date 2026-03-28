@@ -1804,10 +1804,17 @@ li[draggable="true"][data-keyword-index]:active {
 }
 
 .keyword-clicked {
-  animation: keywordFullScreenZoom 0.6s cubic-bezier(0.45, 0.05, 0.55, 0.95) forwards;
   pointer-events: none;
   z-index: 999999 !important;
   position: relative;
+  background: transparent !important; /* Hide card background to focus on icon */
+  box-shadow: none !important;
+  border: none !important;
+}
+
+.keyword-clicked .keyword-grid-icon {
+  animation: keywordFullScreenZoom 0.65s cubic-bezier(0.45, 0.05, 0.55, 0.95) forwards;
+  z-index: 1000000 !important;
 }
 
 /* Ensure the parent group card and all ancestors allow the zoom to overflow */
@@ -1847,7 +1854,8 @@ body.is-zooming .search-bar-container {
 .parent-of-clicked .keyword-grid-preview-item:not(.keyword-clicked),
 .parent-of-clicked .keyword-grid-preview-more,
 .parent-of-clicked .keyword-grid-empty,
-.parent-of-clicked .keyword-grid-item:not(.keyword-clicked) {
+.parent-of-clicked .keyword-grid-item:not(.keyword-clicked),
+.keyword-clicked .keyword-text {
   opacity: 0 !important;
   pointer-events: none !important;
   visibility: hidden !important;
@@ -1858,12 +1866,6 @@ body.is-zooming .search-bar-container {
 .parent-of-clicked::after {
   display: none !important;
   content: none !important;
-}
-
-.keyword-clicked .keyword-text,
-.keyword-clicked .keyword-grid-icon {
-  opacity: 0;
-  transition: opacity 0.2s ease;
 }
 
 .keyword-clicked .keyword-text {
