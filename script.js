@@ -1831,19 +1831,17 @@ document.addEventListener('DOMContentLoaded', () => {
                                     openURLWithBrowser(targetUrl, false);
                                 }, navDelay);
                                 
-                                // For same-tab, we DON'T remove classes here.
-                                // The browser will clear the page state when the new site loads.
-                                // This ensures the zoom stays until the very last moment.
+                                // SAFETY CLEANUP: Even for same-tab, we eventually remove classes 
+                                // in case the navigation fails or the user clicks "Back" very quickly.
+                                setTimeout(() => {
+                                    resetKeywordStates();
+                                }, navDelay + 2000); 
                             } else {
                                 openURLWithBrowser(targetUrl, true);
                                 
                                 // For new-tab, remove classes after a short delay so current page stays usable
                                 setTimeout(() => {
-                                    previewItem.classList.remove('keyword-clicked');
-                                    document.body.classList.remove('is-zooming');
-                                    if (parentGroupCard) {
-                                        parentGroupCard.classList.remove('parent-of-clicked');
-                                    }
+                                    resetKeywordStates();
                                 }, 600);
                             }
                         });
@@ -2300,7 +2298,7 @@ document.addEventListener('DOMContentLoaded', () => {
         exportBtn.addEventListener('click', () => {
             const dataToExport = {
                 exportDate: new Date().toISOString(),
-                version: '4.5',
+                version: '4.6',
                 groups: groups
             };
             const jsonString = JSON.stringify(dataToExport, null, 2);
@@ -2500,12 +2498,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Reset UI states when returning to the tab (fixes mobile zoom/highlight issues)
     function resetKeywordStates() {
-        document.querySelectorAll('.keyword-clicked').forEach(el => {
+        // Remove all animation classes from any element that might have them
+        document.querySelectorAll('.keyword-clicked, .parent-of-clicked').forEach(el => {
             el.classList.remove('keyword-clicked');
-        });
-        document.querySelectorAll('.parent-of-clicked').forEach(el => {
             el.classList.remove('parent-of-clicked');
+            
+            // Also clear any inline styles/variables set during animation
+            const icon = el.querySelector('.keyword-grid-icon');
+            if (icon) {
+                icon.style.removeProperty('--tx');
+                icon.style.removeProperty('--ty');
+            }
         });
+        
+        // Ensure body class is removed
         document.body.classList.remove('is-zooming');
 
         // Force blur anything that might be focused/hovered
