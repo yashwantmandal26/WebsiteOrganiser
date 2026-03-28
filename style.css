@@ -1808,6 +1808,9 @@ li[draggable="true"][data-keyword-index]:active {
   pointer-events: none;
   z-index: 999999 !important;
   position: relative;
+  border: none !important; /* Remove the scaled-up border */
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 /* Ensure the parent group card and all ancestors allow the zoom to overflow */
@@ -1928,6 +1931,8 @@ body.is-zooming .search-bar-container {
     opacity: 1;
     filter: brightness(1);
     border-radius: 22px;
+    border: none;
+    box-shadow: none;
   }
 
   20% {
@@ -1938,11 +1943,13 @@ body.is-zooming .search-bar-container {
   }
 
   100% {
-    transform: scale(30); /* Zoom to fill screen */
-    opacity: 1; /* Keep it visible until navigation */
+    transform: scale(40); /* Increased zoom to be safe */
+    opacity: 1;
     background: var(--bg-color);
     filter: brightness(1);
     border-radius: 0;
+    border: none;
+    box-shadow: none;
   }
 }
 
