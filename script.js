@@ -1803,7 +1803,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (!inNewTab) {
                                 setTimeout(() => {
                                     openURLWithBrowser(targetUrl, false);
-                                }, 350); // Increased to let zoom effect develop
+                                }, 500); // Increased delay for slower zoom effect to be seen clearly
                                 
                                 // For same-tab, we DON'T remove classes here.
                                 // The browser will clear the page state when the new site loads.
@@ -2274,7 +2274,7 @@ document.addEventListener('DOMContentLoaded', () => {
         exportBtn.addEventListener('click', () => {
             const dataToExport = {
                 exportDate: new Date().toISOString(),
-                version: '3.2',
+                version: '3.3',
                 groups: groups
             };
             const jsonString = JSON.stringify(dataToExport, null, 2);

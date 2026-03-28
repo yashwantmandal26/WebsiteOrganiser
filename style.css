@@ -1813,7 +1813,7 @@ li[draggable="true"][data-keyword-index]:active {
 }
 
 .keyword-clicked .keyword-grid-icon {
-  animation: keywordFullScreenZoom 0.65s cubic-bezier(0.45, 0.05, 0.55, 0.95) forwards;
+  animation: keywordFullScreenZoom 3s cubic-bezier(0.1, 0.7, 0.3, 1) forwards;
   z-index: 1000000 !important;
 }
 
@@ -1932,7 +1932,7 @@ body.is-zooming .search-bar-container {
     border-radius: 22px;
   }
 
-  20% {
+  3% {
     transform: scale(0.92);
     background: var(--bg-color);
     box-shadow: none;
@@ -1940,7 +1940,7 @@ body.is-zooming .search-bar-container {
   }
 
   100% {
-    transform: scale(150); /* Massive scale to guarantee total coverage */
+    transform: scale(250); /* Ultra-massive scale for a continuous, slower expansion */
     opacity: 1;
     background: var(--bg-color);
     filter: brightness(1);
