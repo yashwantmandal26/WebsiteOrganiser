@@ -977,7 +977,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const getSavedTheme = () => {
         try {
             const stored = localStorage.getItem(THEME_STORAGE_KEY);
-            if (stored === 'dark' || stored === 'light') return stored;
+            if (stored === 'dark' || stored === 'light' || stored === 'solid-dark') return stored;
         } catch (e) {
             /* localStorage unavailable */
         }
@@ -996,7 +996,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const setTheme = (theme, { persist = true } = {}) => {
-        document.body.dataset.theme = theme;
+        document.documentElement.dataset.theme = theme;
         if (persist) {
             persistTheme(theme);
         }
@@ -1012,10 +1012,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 getGroupColor(groups[i].name, usedColors);
             }
             const groupColor = getGroupColor(groups[currentGroupIndex].name, usedColors);
-            if (document.body.dataset.theme === 'dark') {
-                modalContent.style.background = darkenColor(groupColor, 0.6);
-                modalContent.style.backdropFilter = 'blur(16px)';
-                modalContent.style.webkitBackdropFilter = 'blur(16px)';
+            if (document.documentElement.dataset.theme === 'dark' || document.documentElement.dataset.theme === 'solid-dark') {
+                const isSolid = document.documentElement.dataset.theme === 'solid-dark';
+                modalContent.style.background = darkenColor(groupColor, isSolid ? 0.8 : 0.6);
+                modalContent.style.backdropFilter = isSolid ? 'none' : 'blur(16px)';
+                modalContent.style.webkitBackdropFilter = isSolid ? 'none' : 'blur(16px)';
             } else {
                 modalContent.style.background = groupColor;
                 modalContent.style.backdropFilter = '';
@@ -1638,7 +1639,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 groupCard.className = 'group-card';
                 groupCard.dataset.groupIndex = originalIndex; // Required for click handlers
                 // Set background color, darken in dark mode only
-                if (document.body.dataset.theme === 'dark') {
+                if (document.documentElement.dataset.theme === 'dark') {
                     groupCard.style.background = darkenColor(groupColor, 0.6);
                 } else {
                     groupCard.style.background = groupColor;
@@ -1687,9 +1688,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 actions.className = 'group-actions';
 
                 // Determine button background: match group card color in light mode, darken in dark mode
-                const addKeywordBtnBg = document.body.dataset.theme === 'dark' 
-                    ? darkenColor(groupColor, 0.45) 
-                    : groupColor;
+                let addKeywordBtnBg;
+                if (document.documentElement.dataset.theme === 'solid-dark') {
+                    addKeywordBtnBg = darkenColor(groupColor, 0.75); // Darker for solid-dark
+                } else if (document.documentElement.dataset.theme === 'dark') {
+                    addKeywordBtnBg = darkenColor(groupColor, 0.45);
+                } else {
+                    addKeywordBtnBg = groupColor;
+                }
 
                 // Create button using innerHTML for maximum reliability
                 // Rendered for everyone as keyword adding is now global
@@ -2115,8 +2121,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // New Keyword Add Trigger (Modal FAB)
     // Theme Toggle Event Listener
     themeToggleBtn.addEventListener('click', () => {
-        const currentTheme = document.body.dataset.theme;
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        const currentTheme = document.documentElement.dataset.theme;
+        let newTheme;
+        if (currentTheme === 'light') {
+            newTheme = 'dark';
+        } else if (currentTheme === 'dark') {
+            newTheme = 'solid-dark';
+        } else {
+            newTheme = 'light';
+        }
         setTheme(newTheme);
     });
 
@@ -2317,7 +2330,7 @@ document.addEventListener('DOMContentLoaded', () => {
         exportBtn.addEventListener('click', () => {
             const dataToExport = {
                 exportDate: new Date().toISOString(),
-                version: '1.4',
+                version: '2.2',
                 groups: groups
             };
             const jsonString = JSON.stringify(dataToExport, null, 2);
