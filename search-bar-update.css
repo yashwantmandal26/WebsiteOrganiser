@@ -117,14 +117,14 @@
 .header-row {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 16px;
+  justify-content: space-between !important; /* Distribute items across the header */
+  gap: 20px;
   width: 100%;
-  max-width: 1400px;
+  max-width: 100%; /* Allow full width use */
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 30px;
   box-sizing: border-box;
-  min-height: 70px;
+  min-height: 75px;
   flex-wrap: nowrap;
   overflow: visible;
 }
@@ -134,38 +134,56 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  flex: 0 1 auto; /* Don't grow, can shrink but will be limited by content */
+  flex: 0 0 auto !important; /* Force it to stay visible and not be crushed */
   justify-content: flex-start;
   min-width: fit-content;
-  flex-shrink: 0; /* Important to prevent title from being crushed */
+  overflow: visible;
 }
 
 .site-logo-link {
   flex: 0 0 auto;
-  flex-shrink: 0;
   display: flex;
   align-items: center;
+  gap: 12px;
+  text-decoration: none !important;
 }
 
 .site-title {
   margin: 0;
+  padding: 0;
   font-size: clamp(1.4rem, 2.5vw, 1.9rem);
   font-weight: 800;
   white-space: nowrap;
-  background: linear-gradient(90deg, #f9ca24 0%, #22d1ee 100%) !important;
+  display: inline-block !important;
+  color: #FFD700 !important; /* Vivid Gold Fallback */
+  opacity: 1 !important;
+  visibility: visible !important;
+  z-index: 100 !important;
+  line-height: 1.2;
+  position: relative;
+  /* Ultra-saturated gradient */
+  background: linear-gradient(90deg, #FFD700 0%, #00B4DB 50%, #0083B0 100%) !important;
   -webkit-background-clip: text !important;
   background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
-  color: #f9ca24 !important; /* Fallback color */
-  display: block !important;
-  width: fit-content;
+  background-size: 100% auto !important;
+  /* Fix blurriness & sharpening */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  /* Add subtle sharp contrast shadow */
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.15)) !important;
 }
 
-.title-website,
-.title-organiser {
-  color: inherit !important;
-  -webkit-text-fill-color: inherit !important;
+/* Add deeper shadow for dark mode */
+[data-theme="dark"] .site-title,
+[data-theme="solid-dark"] .site-title {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4)) !important;
 }
+
+/* Removed old support block */
+
+/* Removed title spans */
 
 @keyframes gradientShift {
   0% {
@@ -190,6 +208,10 @@
 @media (max-width: 1024px) {
   .site-title {
     font-size: clamp(1.3rem, 2.2vw, 1.8rem);
+    display: inline-block !important;
+    color: #FFD700 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
   
   .search-bar-container {
@@ -205,6 +227,24 @@
   
   .header-right {
     flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .header-right .btn {
+    height: 48px; /* Match default search bar height */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 18px;
+  }
+
+  #theme-toggle-btn {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
   }
 }
 
@@ -234,8 +274,11 @@
   }
   
   .site-title {
-    display: block;
+    display: inline-block !important;
     font-size: 1.6rem;
+    color: #FFD700 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
   
   .search-bar-container {
@@ -283,17 +326,25 @@
     margin-right: 12px;
   }
   
-  /* Make buttons more touch-friendly on mobile */
+  /* Make buttons more touch-friendly on mobile and match search bar height */
   .header-right .btn {
-    padding: 9px 16px;
+    padding: 0 16px;
     font-size: 0.9rem;
     white-space: nowrap;
+    height: 48px; /* Match search bar height */
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   
   #theme-toggle-btn {
-    width: 42px;
-    height: 42px;
-    min-width: 42px;
+    width: 48px; /* Match search bar height */
+    height: 48px; /* Match search bar height */
+    min-width: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
   }
 
   header {
@@ -337,6 +388,10 @@
   
   .site-title {
       font-size: 1.45rem;
+      display: inline-block !important;
+      color: #FFD700 !important;
+      visibility: visible !important;
+      opacity: 1 !important;
     }
   
   .search-bar-container {
@@ -379,14 +434,22 @@
   }
   
   .header-right .btn {
-    padding: 8px 14px;
+    padding: 0 14px;
     font-size: 0.85rem;
+    height: 42px; /* Match search bar height */
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   
   #theme-toggle-btn {
-    width: 40px;
-    height: 40px;
-    min-width: 40px;
+    width: 42px; /* Match search bar height */
+    height: 42px; /* Match search bar height */
+    min-width: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
   }
 
   header {
@@ -405,6 +468,10 @@
   .site-title {
     font-size: 1.35rem;
     letter-spacing: -0.02em;
+    display: inline-block !important;
+    color: #FFD700 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
   
   .search-bar-container {
@@ -477,11 +544,15 @@
   }
   
   .header-right .btn {
-    padding: 10px 16px;
+    padding: 0 16px;
     font-size: 0.9rem;
-    min-height: 44px;
+    height: 48px; /* Match search bar height */
+    min-height: 48px;
     touch-action: manipulation;
     transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   
   .header-right .btn:active {
@@ -489,11 +560,15 @@
   }
   
   #theme-toggle-btn {
-    width: 44px;
-    height: 44px;
-    min-width: 44px;
+    width: 48px; /* Match search bar height */
+    height: 48px; /* Match search bar height */
+    min-width: 48px;
     touch-action: manipulation;
     transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
   }
   
   #theme-toggle-btn:active {
@@ -519,6 +594,10 @@
   .site-title {
     font-size: 1.25rem;
     letter-spacing: -0.01em;
+    display: inline-block !important;
+    color: #FFD700 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
 
   .site-logo {
@@ -582,15 +661,22 @@
   }
   
   .header-right .btn {
-    padding: 7px 10px;
+    padding: 0 10px;
     font-size: 0.8rem;
-    min-height: 36px;
+    height: 40px; /* Match search bar height */
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   
   #theme-toggle-btn {
-    width: 36px;
-    height: 36px;
-    min-width: 36px;
+    width: 40px; /* Match search bar height */
+    height: 40px; /* Match search bar height */
+    min-width: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
   }
 
   header {
@@ -608,6 +694,10 @@
   
   .site-title {
     font-size: 1.3rem;
+    display: inline-block !important;
+    color: #FFD700 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
   
   .search-bar-container {
@@ -661,15 +751,22 @@
   }
   
   .header-right .btn {
-    padding: 6px 12px;
+    padding: 0 12px;
     font-size: 0.85rem;
-    min-height: 36px;
+    height: 40px; /* Match search bar height */
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   
   #theme-toggle-btn {
-    width: 36px;
-    height: 36px;
-    min-width: 36px;
+    width: 40px; /* Match search bar height */
+    height: 40px; /* Match search bar height */
+    min-width: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
   }
 }
 

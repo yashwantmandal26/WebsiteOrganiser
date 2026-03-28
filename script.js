@@ -446,44 +446,48 @@ document.addEventListener('DOMContentLoaded', () => {
                 descriptionsRef.get()
             ]);
 
+            let changed = false;
+
             if (clicksDoc.exists) {
-                globalClickCounts = clicksDoc.data() || {};
+                const newClicks = clicksDoc.data() || {};
+                if (JSON.stringify(newClicks) !== JSON.stringify(globalClickCounts)) {
+                    globalClickCounts = newClicks;
+                    changed = true;
+                }
             }
 
             if (descriptionsDoc.exists) {
-                keywordDescriptions = descriptionsDoc.data() || {};
+                const newDesc = descriptionsDoc.data() || {};
+                if (JSON.stringify(newDesc) !== JSON.stringify(keywordDescriptions)) {
+                    keywordDescriptions = newDesc;
+                    changed = true;
+                }
             }
 
             if (groupsDoc.exists && groupsDoc.data().data) {
-                groups = groupsDoc.data().data;
+                const newGroups = groupsDoc.data().data;
                 
-                // Cleanup: remove nested clickCounts from groups array (now handled globally)
-                let needsCleanup = false;
-                groups.forEach(group => {
+                // Cleanup: remove nested clickCounts from groups array
+                newGroups.forEach(group => {
                     if (group.clickCounts) {
                         delete group.clickCounts;
-                        needsCleanup = true;
                     }
                 });
-                
-                if (needsCleanup && adminLoggedIn) {
-                    await saveGroups();
-                }
 
-                saveToLocalStorage(); // Cache for offline
+                if (JSON.stringify(newGroups) !== JSON.stringify(groups)) {
+                    groups = newGroups;
+                    changed = true;
+                    saveToLocalStorage(); // Cache for offline
+                }
             } else {
                 groups = JSON.parse(JSON.stringify(DEFAULT_GROUPS));
                 await saveGroups();
+                changed = true;
             }
+            return changed;
         } catch (error) {
-            // Try to load from localStorage (offline mode)
-            const cached = loadFromLocalStorage();
-            if (cached && cached.length > 0) {
-                groups = cached;
-                // Toast removed
-            } else {
-                groups = JSON.parse(JSON.stringify(DEFAULT_GROUPS));
-            }
+            console.error("Error loading groups:", error);
+            return false;
         }
     }
 
@@ -2252,7 +2256,7 @@ document.addEventListener('DOMContentLoaded', () => {
         exportBtn.addEventListener('click', () => {
             const dataToExport = {
                 exportDate: new Date().toISOString(),
-                version: '2.2',
+                version: '2.3',
                 groups: groups
             };
             const jsonString = JSON.stringify(dataToExport, null, 2);
@@ -2349,14 +2353,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Initial Render ---
 
     // Set view mode (default to grid)
-    renderGroups(); // Apply persisted theme (or system preference) before first render
     const initialTheme = getSavedTheme();
-    setTheme(initialTheme, { persist: false });
-
+    // Use setTheme but skip rendering since we are about to load data and render anyway
+    document.documentElement.dataset.theme = initialTheme;
     updateAdminButton();
-
-    // Show loading message
-    groupsContainer.innerHTML = '<p style="color: #ccc; text-align: center; padding: 40px;">Loading data from cloud...</p>';
 
     // Load data from Firestore and setup real-time sync (DON'T set defaults before this!)
     loadDataWithCache();
@@ -2405,13 +2405,13 @@ document.addEventListener('DOMContentLoaded', () => {
             setupRealtimeSync();
             // Refresh from cloud in background
             loadGroups()
-                .then(() => {
-                    renderGroups();
-                    // Toast removed
+                .then((changed) => {
+                    if (changed) {
+                        renderGroups();
+                    }
                 })
                 .catch(() => {
                     // Stay on cached data if network fails
-                    // Toast removed
                 });
             return;
         }
@@ -2423,11 +2423,9 @@ document.addEventListener('DOMContentLoaded', () => {
             renderGroups();
             hideLoading();
             setupRealtimeSync();
-            // Toast removed
         } catch (error) {
             hideLoading();
             renderGroups(); // Render defaults if present
-            // Toast removed
         }
     }
 
