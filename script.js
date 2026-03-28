@@ -21,8 +21,19 @@ window.onerror = function (msg, url, lineNo, columnNo, error) {
     return false;
 };
 
+// Global state to track when zoom started to prevent immediate resets
+let zoomStartedAt = 0;
+
 // Global reset for zoom and animation states
 function resetKeywordStates() {
+    // Cooldown check: If we just started a zoom (within last 500ms), 
+    // ignore this reset (avoids lifecycle events killing the animation).
+    const now = Date.now();
+    if (now - zoomStartedAt < 500) {
+        console.log('Reset ignored: cooldown active');
+        return;
+    }
+
     // 1. Immediately clear the body-level blocking class
     document.body.classList.remove('is-zooming');
 
@@ -56,10 +67,12 @@ function resetKeywordStates() {
 // Attach reset listeners as early as possible (outside DOMContentLoaded)
 window.addEventListener('pageshow', (event) => {
     // Reset state whenever page is shown (initial load, back navigation, or tab switch)
+    // Cooldown doesn't apply to initial page shows or back-button
+    zoomStartedAt = 0; 
     resetKeywordStates();
 });
 
-window.addEventListener('load', resetKeywordStates);
+// REMOVED window.addEventListener('load', resetKeywordStates) as it can fire during zoom if assets are loading
 
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
@@ -68,10 +81,15 @@ document.addEventListener('visibilitychange', () => {
 });
 
 // Catch back button / history navigation
-window.addEventListener('popstate', resetKeywordStates);
+window.addEventListener('popstate', () => {
+    zoomStartedAt = 0;
+    resetKeywordStates();
+});
 
 // Prevent caching the page in a "zoomed" state
 window.addEventListener('beforeunload', () => {
+    // On beforeunload, we remove the class but don't call the full reset
+    // to keep the visual state as stable as possible during the hop.
     document.body.classList.remove('is-zooming');
 });
 
@@ -1856,7 +1874,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             event.stopPropagation();
 
                             // Clean any existing states first (aggressive reset)
+                            zoomStartedAt = 0; // Temporarily bypass cooldown for explicit reset
                             resetKeywordStates();
+
+                            // Start zoom timer for cooldown
+                            zoomStartedAt = Date.now();
 
                             // Instant visual feedback
                             previewItem.classList.add('keyword-clicked');
