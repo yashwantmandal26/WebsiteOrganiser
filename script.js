@@ -1787,6 +1787,20 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (parentGroupCard) {
                                 parentGroupCard.classList.add('parent-of-clicked');
                             }
+
+                            // Calculate distance to screen center for the zoom effect
+                            const rect = previewItem.querySelector('.keyword-grid-icon').getBoundingClientRect();
+                            const centerX = window.innerWidth / 2;
+                            const centerY = window.innerHeight / 2;
+                            const iconCenterX = rect.left + rect.width / 2;
+                            const iconCenterY = rect.top + rect.height / 2;
+                            const translateX = centerX - iconCenterX;
+                            const translateY = centerY - iconCenterY;
+                            
+                            // Apply translation variables to the clicked icon
+                            const iconElement = previewItem.querySelector('.keyword-grid-icon');
+                            iconElement.style.setProperty('--tx', `${translateX}px`);
+                            iconElement.style.setProperty('--ty', `${translateY}px`);
                             
                             // Vibration feedback for mobile devices (minimal duration for speed feel)
                             if (navigator.vibrate) {
@@ -2274,7 +2288,7 @@ document.addEventListener('DOMContentLoaded', () => {
         exportBtn.addEventListener('click', () => {
             const dataToExport = {
                 exportDate: new Date().toISOString(),
-                version: '3.3',
+                version: '3.4',
                 groups: groups
             };
             const jsonString = JSON.stringify(dataToExport, null, 2);

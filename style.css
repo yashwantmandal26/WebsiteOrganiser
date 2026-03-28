@@ -1926,21 +1926,22 @@ body.is-zooming .search-bar-container {
 
 @keyframes keywordFullScreenZoom {
   0% {
-    transform: scale(1);
+    transform: translate(0, 0) scale(1);
     opacity: 1;
     filter: brightness(1);
     border-radius: 22px;
   }
 
-  3% {
-    transform: scale(0.92);
+  5% {
+    transform: translate(0, 0) scale(0.92);
     background: var(--bg-color);
     box-shadow: none;
     opacity: 1;
   }
 
   100% {
-    transform: scale(250); /* Ultra-massive scale for a continuous, slower expansion */
+    /* Move to the center of the screen while expanding */
+    transform: translate(var(--tx, 0), var(--ty, 0)) scale(350);
     opacity: 1;
     background: var(--bg-color);
     filter: brightness(1);
