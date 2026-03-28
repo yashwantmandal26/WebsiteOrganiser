@@ -1842,6 +1842,7 @@ body.is-zooming .search-bar-container {
 
 .parent-of-clicked {
   z-index: 999998 !important;
+  visibility: hidden !important; /* Hide the entire card container and its content */
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
@@ -1849,7 +1850,13 @@ body.is-zooming .search-bar-container {
   -webkit-backdrop-filter: none !important;
 }
 
-/* Hide everything inside the parent group except the expanding keyword */
+/* Force the clicked keyword and its icon to remain visible */
+.parent-of-clicked .keyword-clicked,
+.parent-of-clicked .keyword-clicked .keyword-grid-icon {
+  visibility: visible !important;
+}
+
+/* Hide everything else inside the parent group except the expanding keyword */
 .parent-of-clicked .group-card-header,
 .parent-of-clicked .keyword-grid-preview-item:not(.keyword-clicked),
 .parent-of-clicked .keyword-grid-preview-more,
@@ -1859,7 +1866,6 @@ body.is-zooming .search-bar-container {
   opacity: 0 !important;
   pointer-events: none !important;
   visibility: hidden !important;
-  transition: opacity 0.2s ease !important;
 }
 
 .parent-of-clicked::before,
