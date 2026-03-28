@@ -1804,18 +1804,22 @@ document.addEventListener('DOMContentLoaded', () => {
                                 setTimeout(() => {
                                     openURLWithBrowser(targetUrl, false);
                                 }, 350); // Increased to let zoom effect develop
+                                
+                                // For same-tab, we DON'T remove classes here.
+                                // The browser will clear the page state when the new site loads.
+                                // This ensures the zoom stays until the very last moment.
                             } else {
                                 openURLWithBrowser(targetUrl, true);
+                                
+                                // For new-tab, remove classes after a short delay so current page stays usable
+                                setTimeout(() => {
+                                    previewItem.classList.remove('keyword-clicked');
+                                    document.body.classList.remove('is-zooming');
+                                    if (parentGroupCard) {
+                                        parentGroupCard.classList.remove('parent-of-clicked');
+                                    }
+                                }, 600);
                             }
-
-                            // Reset after animation and navigation attempt
-                            setTimeout(() => {
-                                previewItem.classList.remove('keyword-clicked');
-                                document.body.classList.remove('is-zooming');
-                                if (parentGroupCard) {
-                                    parentGroupCard.classList.remove('parent-of-clicked');
-                                }
-                            }, 1000); // Longer reset to cover the zoom duration
                         });
 
                         // Middle-click support
@@ -2470,6 +2474,11 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.keyword-clicked').forEach(el => {
             el.classList.remove('keyword-clicked');
         });
+        document.querySelectorAll('.parent-of-clicked').forEach(el => {
+            el.classList.remove('parent-of-clicked');
+        });
+        document.body.classList.remove('is-zooming');
+
         // Force blur anything that might be focused/hovered
         if (document.activeElement && document.activeElement !== document.body) {
             document.activeElement.blur();
@@ -2478,6 +2487,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
+            resetKeywordStates();
+        }
+    });
+
+    // Handle "Back" button specifically to clear zoom state
+    window.addEventListener('pageshow', (event) => {
+        if (event.persisted) {
             resetKeywordStates();
         }
     });
