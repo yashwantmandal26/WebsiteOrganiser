@@ -1846,8 +1846,9 @@ body.is-zooming .group-card:not(.parent-of-clicked),
 body.is-zooming #add-fab,
 body.is-zooming .search-bar-container {
   opacity: 0 !important;
+  visibility: hidden !important; /* Aggressive hiding */
   pointer-events: none !important;
-  transition: opacity 0.3s ease !important;
+  transition: opacity 0.3s ease, visibility 0.3s ease !important;
 }
 
 .parent-of-clicked {
@@ -1949,13 +1950,13 @@ body.is-zooming .search-bar-container {
     border-radius: 22px;
   }
 
-  /* Movement to center with moderate scaling - the end state */
+  /* Movement to center with large scaling for full-screen feel */
   100% {
-    transform: translate(var(--tx, 0), var(--ty, 0)) scale(2.8);
+    transform: translate(var(--tx, 0), var(--ty, 0)) scale(5);
     opacity: 1;
     background: var(--bg-color);
-    border-radius: 12px;
-    box-shadow: 0 0 30px rgba(123, 44, 191, 0.4);
+    border-radius: 50%; /* Circle at end */
+    box-shadow: 0 0 100px rgba(123, 44, 191, 0.6);
   }
 }
 

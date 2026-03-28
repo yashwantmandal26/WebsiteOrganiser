@@ -1899,11 +1899,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                     openURLWithBrowser(targetUrl, false);
                                 }, navDelay);
                                 
-                                // SAFETY CLEANUP: Even for same-tab, we eventually remove classes 
-                                // in case the navigation fails or the user clicks "Back" very quickly.
+                                // SAFETY CLEANUP: Increased to 10s to ensure UI doesn't pop back before page loads
                                 setTimeout(() => {
                                     resetKeywordStates();
-                                }, navDelay + 2000); 
+                                }, 10000); 
                             } else {
                                 openURLWithBrowser(targetUrl, true);
                                 
