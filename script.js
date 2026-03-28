@@ -21,6 +21,60 @@ window.onerror = function (msg, url, lineNo, columnNo, error) {
     return false;
 };
 
+// Global reset for zoom and animation states
+function resetKeywordStates() {
+    // 1. Immediately clear the body-level blocking class
+    document.body.classList.remove('is-zooming');
+
+    // 2. Remove classes from elements (using a broader selector to catch any stuck states)
+    const elementsToReset = document.querySelectorAll('.keyword-clicked, .parent-of-clicked');
+    elementsToReset.forEach(el => {
+        el.classList.remove('keyword-clicked');
+        el.classList.remove('parent-of-clicked');
+        
+        // Clear any inline styles or CSS variables set during animation
+        const icon = el.querySelector('.keyword-grid-icon');
+        if (icon) {
+            icon.style.removeProperty('--tx');
+            icon.style.removeProperty('--ty');
+            icon.style.removeProperty('z-index');
+            icon.style.removeProperty('visibility');
+            icon.style.removeProperty('opacity');
+        }
+    });
+
+    // 3. Force scroll unlock
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+
+    // 4. Force blur anything that might be focused/hovered
+    if (document.activeElement && document.activeElement !== document.body) {
+        document.activeElement.blur();
+    }
+}
+
+// Attach reset listeners as early as possible (outside DOMContentLoaded)
+window.addEventListener('pageshow', (event) => {
+    // Reset state whenever page is shown (initial load, back navigation, or tab switch)
+    resetKeywordStates();
+});
+
+window.addEventListener('load', resetKeywordStates);
+
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        resetKeywordStates();
+    }
+});
+
+// Catch back button / history navigation
+window.addEventListener('popstate', resetKeywordStates);
+
+// Prevent caching the page in a "zoomed" state
+window.addEventListener('beforeunload', () => {
+    document.body.classList.remove('is-zooming');
+});
+
 document.addEventListener('DOMContentLoaded', () => {
     // --- Dynamic Header Height Adjustment ---
     // Automatically adjust body padding to prevent content from hiding behind the fixed header
@@ -501,7 +555,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     const newGroups = data.data;
 
                     // Only update if data actually changed (avoid infinite loops)
-                    if (JSON.stringify(newGroups) !== JSON.stringify(groups)) {
+                    // and NOT currently zooming to avoid killing the animation
+                    if (JSON.stringify(newGroups) !== JSON.stringify(groups) && !document.body.classList.contains('is-zooming')) {
                         groups = newGroups;
                         renderGroups();
                     }
@@ -517,8 +572,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const newClicks = doc.data() || {};
                 if (JSON.stringify(newClicks) !== JSON.stringify(globalClickCounts)) {
                     globalClickCounts = newClicks;
-                    // Only re-render if we're not currently dragging something
-                    if (!draggedKeywordData && draggedItemIndex === null) {
+                    // Only re-render if we're not currently dragging something or zooming
+                    if (!draggedKeywordData && draggedItemIndex === null && !document.body.classList.contains('is-zooming')) {
                         renderGroups();
                     }
                 }
@@ -531,7 +586,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const newDescriptions = doc.data() || {};
                 if (JSON.stringify(newDescriptions) !== JSON.stringify(keywordDescriptions)) {
                     keywordDescriptions = newDescriptions;
-                    if (!draggedKeywordData && draggedItemIndex === null) {
+                    if (!draggedKeywordData && draggedItemIndex === null && !document.body.classList.contains('is-zooming')) {
                         renderGroups();
                     }
                 }
@@ -1619,6 +1674,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Render Functions ---
     function renderGroups() {
         if (!groupsContainer) return;
+        
+        // If we are currently zooming, don't re-render as it would kill the animation
+        if (document.body.classList.contains('is-zooming')) {
+            console.log('Skipping renderGroups because a zoom is in progress');
+            return;
+        }
+        
+        // Ensure we are not in a zooming state when rendering (extra safety)
+        resetKeywordStates();
+        
         groupsContainer.innerHTML = '';
         // Store original index for each group so UI actions hit the right item
         const filteredGroups = groups.map((group, idx) => ({ ...group, _originalIndex: idx }));
@@ -1789,6 +1854,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                             event.preventDefault();
                             event.stopPropagation();
+
+                            // Clean any existing states first (aggressive reset)
+                            resetKeywordStates();
 
                             // Instant visual feedback
                             previewItem.classList.add('keyword-clicked');
@@ -2494,42 +2562,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.addEventListener('offline', () => {
         // Toast removed
-    });
-
-    // Reset UI states when returning to the tab (fixes mobile zoom/highlight issues)
-    function resetKeywordStates() {
-        // Remove all animation classes from any element that might have them
-        document.querySelectorAll('.keyword-clicked, .parent-of-clicked').forEach(el => {
-            el.classList.remove('keyword-clicked');
-            el.classList.remove('parent-of-clicked');
-            
-            // Also clear any inline styles/variables set during animation
-            const icon = el.querySelector('.keyword-grid-icon');
-            if (icon) {
-                icon.style.removeProperty('--tx');
-                icon.style.removeProperty('--ty');
-            }
-        });
-        
-        // Ensure body class is removed
-        document.body.classList.remove('is-zooming');
-
-        // Force blur anything that might be focused/hovered
-        if (document.activeElement && document.activeElement !== document.body) {
-            document.activeElement.blur();
-        }
-    }
-
-    // Handle "Back" button and page visibility to clear zoom state
-    window.addEventListener('pageshow', (event) => {
-        // Clear state whenever page is shown (initial load or back navigation)
-        resetKeywordStates();
-    });
-
-    document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') {
-            resetKeywordStates();
-        }
     });
 
     // ===================================
