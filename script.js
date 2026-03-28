@@ -1794,25 +1794,19 @@ document.addEventListener('DOMContentLoaded', () => {
                             // Check for Ctrl/Meta key to open in new tab
                             const inNewTab = event.ctrlKey || event.metaKey;
 
-                            // Small delay for same-tab navigation to let zoom/fade animation show
+                            // Small delay for same-tab navigation to let zoom animation show
                             if (!inNewTab) {
                                 setTimeout(() => {
                                     openURLWithBrowser(targetUrl, false);
-                                }, 180);
+                                }, 350); // Increased to let zoom effect develop
                             } else {
                                 openURLWithBrowser(targetUrl, true);
                             }
 
-                            // Force remove focus to prevent sticky hover/zoom on mobile
-                            if (document.activeElement) {
-                                document.activeElement.blur();
-                            }
-                            previewItem.blur();
-
-                            // Faster reset for instant feel (matches animation length)
+                            // Reset after animation and navigation attempt
                             setTimeout(() => {
                                 previewItem.classList.remove('keyword-clicked');
-                            }, 450);
+                            }, 1000); // Longer reset to cover the zoom duration
                         });
 
                         // Middle-click support
@@ -2267,7 +2261,7 @@ document.addEventListener('DOMContentLoaded', () => {
         exportBtn.addEventListener('click', () => {
             const dataToExport = {
                 exportDate: new Date().toISOString(),
-                version: '2.4',
+                version: '2.5',
                 groups: groups
             };
             const jsonString = JSON.stringify(dataToExport, null, 2);
