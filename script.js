@@ -384,6 +384,11 @@ document.addEventListener('DOMContentLoaded', () => {
         adminOnlyButtons.forEach(btn => {
             btn.style.display = adminLoggedIn ? 'inline-flex' : 'none';
         });
+
+        // Show/hide add group FAB
+        if (addFab) {
+            addFab.style.display = adminLoggedIn ? 'flex' : 'none';
+        }
     }
 
     // Default groups for new users
@@ -732,9 +737,14 @@ document.addEventListener('DOMContentLoaded', () => {
             renameKeyword(groupIndex, keywordIndex, keyword, true); // true = comment only mode
         };
 
-        // Everyone can rename or delete keywords (now global)
-        renameOption.style.display = 'block';
-        deleteOption.style.display = 'block';
+        // Only admins can rename or delete keywords
+        if (adminLoggedIn) {
+            renameOption.style.display = 'block';
+            deleteOption.style.display = 'block';
+        } else {
+            renameOption.style.display = 'none';
+            deleteOption.style.display = 'none';
+        }
         
         renameOption.onclick = () => {
             hideContextMenu();
@@ -758,7 +768,15 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('scroll', hideContextMenu);
 
     async function renameKeyword(groupIndex, keywordIndex, oldKeyword, commentOnly = false) {
-        // Admin check removed: keyword management is now global
+        // Enforce admin check for full renaming
+        if (!commentOnly && !adminLoggedIn) {
+            if (typeof showToast === 'function') {
+                showToast('Admin access required to rename keywords', 3000);
+            } else {
+                alert('Admin access required to rename keywords');
+            }
+            return;
+        }
         
         // Set mode
         isCommentOnlyMode = commentOnly;
@@ -830,7 +848,17 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Full rename logic (global)
+        // Must be admin to rename the actual keyword
+        if (!adminLoggedIn) {
+            if (typeof showToast === 'function') {
+                showToast('Admin access required to rename keywords', 3000);
+            } else {
+                alert('Admin access required to rename keywords');
+            }
+            return;
+        }
+
+        // Full rename logic (admin only)
         groups[renameTargetGroupIndex].keywords[renameTargetKeywordIndex] = newKeyword;
 
         // Update global click counts and descriptions on rename
@@ -874,7 +902,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function deleteKeyword(groupIndex, keywordIndex) {
-        // Admin check removed: keyword management is now global
+        // Only admins can delete keywords
+        if (!adminLoggedIn) {
+            if (typeof showToast === 'function') {
+                showToast('Admin access required to delete keywords', 3000);
+            } else {
+                alert('Admin access required to delete keywords');
+            }
+            return;
+        }
+
         if (!confirm('Delete this keyword?')) return;
 
         const keywordToDelete = groups[groupIndex].keywords[keywordIndex];
@@ -1525,6 +1562,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // GROUP CRUD
     const openGroupModal = (mode, index = null) => {
+        if (!adminLoggedIn) {
+            alert('Admin access is required to manage groups.');
+            return;
+        }
         groupModalMode = mode;
         currentGroupIndex = index;
         groupModalTitle.textContent = mode === 'add' ? 'Create New Group' : 'Rename Group';
@@ -1587,10 +1628,17 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     async function addKeywordToGroup(index) {
-        // Removed: adminLoggedIn check, as keyword adding is now global
+        if (!adminLoggedIn) {
+            if (typeof showToast === 'function') {
+                showToast('Admin access required to add keywords', 3000);
+            } else {
+                alert('Admin access required to add keywords');
+            }
+            return;
+        }
+        
         const group = groups[index];
         if (!group) {
-            // Toast removed
             return;
         }
 
@@ -1622,8 +1670,18 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // Helper to normalize strings for comparison (handles trailing slashes, www, https mobile keyboards might add)
+        const normalizeForComparison = (str) => {
+            let s = str.trim().toLowerCase();
+            s = s.replace(/^https?:\/\//, '').replace(/^www\./, '');
+            if (s.endsWith('/')) s = s.slice(0, -1);
+            return s;
+        };
+
+        const normalizedInput = normalizeForComparison(keyword);
+
         // Check if keyword already exists in the current group
-        const exists = group.keywords.some((kw) => kw.trim().toLowerCase() === keyword.toLowerCase());
+        const exists = group.keywords.some((kw) => normalizeForComparison(kw) === normalizedInput);
         if (exists) {
             alert('This keyword already exists in the group.');
             return;
@@ -1632,7 +1690,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Check if keyword/link already exists in ANY group
         for (let i = 0; i < groups.length; i++) {
             if (i === addKeywordTargetGroupIndex) continue; // Skip current group (already checked)
-            const duplicateExists = groups[i].keywords.some((kw) => kw.trim().toLowerCase() === keyword.toLowerCase());
+            const duplicateExists = groups[i].keywords.some((kw) => normalizeForComparison(kw) === normalizedInput);
             if (duplicateExists) {
                 alert(`This keyword/link already exists in the group "${groups[i].name}".`);
                 return;
@@ -1774,20 +1832,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     addKeywordBtnBg = groupColor;
                 }
 
-                // Create button using innerHTML for maximum reliability
-                // Rendered for everyone as keyword adding is now global
-                const addKeywordBtnHTML = `
-                    <button 
-                        type="button"
-                        class="icon-btn icon-btn--add-keyword"
-                        data-action="add-keyword"
-                        data-group-index="${originalIndex}"
-                        style="cursor:pointer; z-index:10; pointer-events:auto; user-select:none; background: ${addKeywordBtnBg} !important;"
-                        aria-label="Add keyword to ${group.name}"
-                        onclick="event.stopPropagation(); window.addKeywordToGroup(${originalIndex}); return false;">
-                        <span class="icon-plus">+</span>
-                    </button>
-                `;
+                // Formulate button HTML for admins
+                let addKeywordBtnHTML = '';
+                if (adminLoggedIn) {
+                    addKeywordBtnHTML = `
+                        <button 
+                            type="button"
+                            class="icon-btn icon-btn--add-keyword"
+                            data-action="add-keyword"
+                            data-group-index="${originalIndex}"
+                            style="cursor:pointer; z-index:10; pointer-events:auto; user-select:none; background: ${addKeywordBtnBg} !important;"
+                            aria-label="Add keyword to ${group.name}"
+                            onclick="event.stopPropagation(); window.addKeywordToGroup(${originalIndex}); return false;">
+                            <span class="icon-plus">+</span>
+                        </button>
+                    `;
+                }
 
                 actions.innerHTML = addKeywordBtnHTML;
 
@@ -1930,14 +1990,18 @@ document.addEventListener('DOMContentLoaded', () => {
                             const inNewTab = event.ctrlKey || event.metaKey;
 
                             if (!inNewTab) {
-                                const navDelay = window.innerWidth <= 600 ? 1500 : 1200;
+                                // Defer the load by a fraction of a second to ensure the browser
+                                // registers the animation and doesn't cancel the navigation request.
+                                // The animation will pulse dynamically until the new page actually loads!
+                                openURLWithBrowser(targetUrl, false);
+
+                                // Safety fallback: If target URL fails to open (e.g. adblocker, invalid route),
+                                // we shouldn't leave the user stuck on the zooming screen forever.
                                 setTimeout(() => {
-                                    openURLWithBrowser(targetUrl, false);
-                                }, navDelay);
-                                
-                                // NO SAFETY CLEANUP for same-tab. 
-                                // The UI will stay hidden until the page navigates away.
-                                // If the user hits "Back", pageshow/popstate will reset it.
+                                    if (document.visibilityState === 'visible' && document.body.classList.contains('is-zooming')) {
+                                        resetKeywordStates(true);
+                                    }
+                                }, 3500);
                             } else {
                                 openURLWithBrowser(targetUrl, true);
                                 setTimeout(() => {
@@ -2307,9 +2371,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Add Keyword modal handlers
     if (addKeywordSaveBtn) {
         // Remove old listeners to be safe (though cloning is better, we'll just add)
-        addKeywordSaveBtn.onclick = saveNewKeyword; // Force direct assignment to be sure
-
-        // Also add touchstart for better mobile response
+        addKeywordSaveBtn.onclick = (e) => {
+            e.preventDefault();
+            saveNewKeyword();
+        }; // Force direct assignment to be sure
         addKeywordSaveBtn.addEventListener('touchstart', (e) => {
             e.preventDefault(); // Prevent double-fire
             saveNewKeyword();
