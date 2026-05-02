@@ -2683,20 +2683,31 @@ document.addEventListener('DOMContentLoaded', () => {
     // Enhanced URL opening with browser preference
     function openURLWithBrowser(url, inNewTab = false) {
         resetIOSZoom();
-        // On PC (non-touch desktop), open WebsiteOrganiser in a new background tab
-        // so it stays available for reuse, then navigate this tab to the clicked URL.
         const isPCDesktop = !('ontouchstart' in window) && !navigator.maxTouchPoints && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
         if (inNewTab) {
             // Explicitly requested new tab (Ctrl+click / middle-click)
             const w = window.open(url, '_blank', 'noopener');
             if (w) { try { w.opener = null; } catch (e) { } }
         } else if (isPCDesktop) {
-            // PC: navigate current tab to the clicked site first,
-            // then open WebsiteOrganiser in a new tab.
-            // Since the current tab is already loading, the browser keeps focus here.
+            // PC: open WebsiteOrganiser in a background tab using Ctrl+click trick,
+            // then navigate this tab to the clicked website.
             const selfUrl = window.location.href.split('?')[0];
+            const a = document.createElement('a');
+            a.href = selfUrl;
+            a.target = '_blank';
+            a.rel = 'noopener';
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            // Ctrl+click tells the browser to open in a background tab
+            a.dispatchEvent(new MouseEvent('click', {
+                ctrlKey: true,
+                bubbles: true,
+                cancelable: true,
+                view: window
+            }));
+            document.body.removeChild(a);
+            // Navigate current tab to the clicked website
             window.location.href = url;
-            window.open(selfUrl, '_blank');
         } else {
             // Mobile: open in same tab
             window.location.href = url;
