@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Pre-generate sounds as WAV data URIs
-    const _buildWavURI = (frequency, duration, decay) => {
+    const _buildWavURI = (frequency, duration, decay, amplitude = 28000) => {
         try {
             const sampleRate = 22050;
             const numSamples = Math.floor(sampleRate * duration);
@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const t = i / sampleRate;
                 const env = Math.exp(-t * decay);
                 const sample = env * Math.sin(2 * Math.PI * frequency * t);
-                v.setInt16(44 + i * 2, Math.max(-32768, Math.min(32767, Math.floor(sample * 28000))), true);
+                v.setInt16(44 + i * 2, Math.max(-32768, Math.min(32767, Math.floor(sample * amplitude))), true);
             }
             const bytes = new Uint8Array(buf);
             let bin = '';
@@ -152,7 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const _clickSoundURI = _buildWavURI(1200, 0.06, 70);
-    const _hoverSoundURI = _buildWavURI(640, 0.07, 45);
+    const _hoverSoundURI = _buildWavURI(400, 0.05, 80, 18000);
     const _silentSoundURI = _buildWavURI(1, 0.01, 100); // Silent 1Hz tone for unlocking
 
     // Reusable Audio objects
@@ -160,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const clickAudio = _clickSoundURI ? new Audio(_clickSoundURI) : null;
     const unlockAudioObj = _silentSoundURI ? new Audio(_silentSoundURI) : null;
 
-    if (hoverAudio) hoverAudio.volume = 0.18;
+    if (hoverAudio) hoverAudio.volume = 0.08;
     if (clickAudio) clickAudio.volume = 0.55;
 
     // Aggressive Audio Unlock Function
@@ -1999,7 +1999,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             `;
                         previewItem.setAttribute('aria-label', displayText);
 
-                        // Single click/tap opens URL (only if not admin or not dragging)
+                        // Single click/tap opens URL in new tab (no animation)
                         previewItem.addEventListener('click', (event) => {
                             if (adminLoggedIn && previewItem.classList.contains('dragging')) {
                                 return; // Don't open URL when dragging in admin mode
@@ -2007,56 +2007,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             event.preventDefault();
                             event.stopPropagation();
 
-                            // Clean any existing states first
-                            resetKeywordStates();
-
-                            // 1. CAPTURE POSITION FIRST (Crucial: before hiding UI)
-                            const originalIcon = previewItem.querySelector('.keyword-grid-icon');
-                            const rect = originalIcon.getBoundingClientRect();
-
-                            // 2. SET LOCK AND HIDE UI
-                            lastZoomTime = Date.now();
-                            document.body.classList.add('is-zooming');
-
-                            // 3. Create a physical backdrop to ensure absolute hiding
-                            const backdrop = document.createElement('div');
-                            backdrop.className = 'cinematic-backdrop';
-                            document.body.appendChild(backdrop);
-
-                            // 4. Create a clone for the cinematic zoom
-                            const clonedIcon = originalIcon.cloneNode(true);
-                            clonedIcon.classList.add('cloned-zoom-icon');
-                            
-                            // Set initial position of clone to match original exactly
-                            clonedIcon.style.position = 'fixed';
-                            clonedIcon.style.left = rect.left + 'px';
-                            clonedIcon.style.top = rect.top + 'px';
-                            clonedIcon.style.width = rect.width + 'px';
-                            clonedIcon.style.height = rect.height + 'px';
-                            clonedIcon.style.margin = '0';
-                            clonedIcon.style.zIndex = '10000000';
-                            clonedIcon.style.pointerEvents = 'none';
-
-                            // 5. Calculate translation to center
-                            const centerX = window.innerWidth / 2;
-                            const centerY = window.innerHeight / 2;
-                            const iconCenterX = rect.left + rect.width / 2;
-                            const iconCenterY = rect.top + rect.height / 2;
-                            const translateX = centerX - iconCenterX;
-                            const translateY = centerY - iconCenterY;
-                            
-                            clonedIcon.style.setProperty('--tx', `${translateX}px`);
-                            clonedIcon.style.setProperty('--ty', `${translateY}px`);
-
-                            // 6. Add clone to body
-                            document.body.appendChild(clonedIcon);
-                            
-                            // 7. Trigger the animation in the next frame
-                            requestAnimationFrame(() => {
-                                clonedIcon.classList.add('animate-to-center');
-                            });
-
-                            // Vibration feedback
+                            // Vibration feedback for mobile
                             if (navigator.vibrate) {
                                 navigator.vibrate(10);
                             }
@@ -2064,27 +2015,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             // Increment click count
                             incrementKeywordClick(originalIndex, keyword);
 
-                            const inNewTab = event.ctrlKey || event.metaKey;
-
-                            if (!inNewTab) {
-                                // Defer the load by a fraction of a second to ensure the browser
-                                // registers the animation and doesn't cancel the navigation request.
-                                // The animation will pulse dynamically until the new page actually loads!
-                                openURLWithBrowser(targetUrl, false);
-
-                                // Safety fallback: If target URL fails to open (e.g. adblocker, invalid route),
-                                // we shouldn't leave the user stuck on the zooming screen forever.
-                                setTimeout(() => {
-                                    if (document.visibilityState === 'visible' && document.body.classList.contains('is-zooming')) {
-                                        resetKeywordStates(true);
-                                    }
-                                }, 3500);
-                            } else {
-                                openURLWithBrowser(targetUrl, true);
-                                setTimeout(() => {
-                                    resetKeywordStates();
-                                }, 800);
-                            }
+                            // Open URL in new tab
+                            openURLWithBrowser(targetUrl, true);
                         });
 
                         // Add context menu support (right-click/long-press)
@@ -2561,7 +2493,7 @@ document.addEventListener('DOMContentLoaded', () => {
         exportBtn.addEventListener('click', () => {
             const dataToExport = {
                 exportDate: new Date().toISOString(),
-                version: '4.6',
+                version: '4.7',
                 groups: groups
             };
             const jsonString = JSON.stringify(dataToExport, null, 2);
@@ -2683,31 +2615,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Enhanced URL opening with browser preference
     function openURLWithBrowser(url, inNewTab = false) {
         resetIOSZoom();
+        // On PC (non-touch desktop), always open in a new tab so
+        // WebsiteOrganiser stays open for reuse.
         const isPCDesktop = !('ontouchstart' in window) && !navigator.maxTouchPoints && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-        if (inNewTab) {
-            // Explicitly requested new tab (Ctrl+click / middle-click)
+        if (inNewTab || isPCDesktop) {
+            // Use noopener for security and performance
             const w = window.open(url, '_blank', 'noopener');
             if (w) { try { w.opener = null; } catch (e) { } }
-        } else if (isPCDesktop) {
-            // PC: open WebsiteOrganiser in a background tab using Ctrl+click trick,
-            // then navigate this tab to the clicked website.
-            const selfUrl = window.location.href.split('?')[0];
-            const a = document.createElement('a');
-            a.href = selfUrl;
-            a.target = '_blank';
-            a.rel = 'noopener';
-            a.style.display = 'none';
-            document.body.appendChild(a);
-            // Ctrl+click tells the browser to open in a background tab
-            a.dispatchEvent(new MouseEvent('click', {
-                ctrlKey: true,
-                bubbles: true,
-                cancelable: true,
-                view: window
-            }));
-            document.body.removeChild(a);
-            // Navigate current tab to the clicked website
-            window.location.href = url;
         } else {
             // Mobile: open in same tab
             window.location.href = url;
@@ -3498,10 +3412,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (anyModalOpen) return;
 
         // Don't trigger if user is already in an input/textarea/contenteditable
+        // (but allow it when the toggle switch checkbox has focus)
         const activeElement = document.activeElement;
-        const isInput = activeElement.tagName === 'INPUT' || 
+        const isToggleCheckbox = activeElement.id === 'search-mode-toggle-input';
+        const isInput = !isToggleCheckbox && (
+                        activeElement.tagName === 'INPUT' || 
                         activeElement.tagName === 'TEXTAREA' || 
-                        activeElement.isContentEditable;
+                        activeElement.isContentEditable);
         if (isInput) return;
 
         // Ignore modifier keys and non-character keys

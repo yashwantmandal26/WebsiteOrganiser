@@ -19,7 +19,6 @@
     content="Save and organize your favorite websites and keywords with smart categorization and cloud sync.">
   <meta name="format-detection" content="telephone=no">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="msapplication-config" content="/browserconfig.xml">
   <meta name="msapplication-TileColor" content="#7b2cbf">
   <meta name="msapplication-tap-highlight" content="no">
 
@@ -28,9 +27,9 @@
   <link rel="dns-prefetch" href="//www.gstatic.com">
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=94">
-  <link rel="stylesheet" href="add-keyword-modal.css?v=59">
-  <link rel="stylesheet" href="search-bar-update.css?v=69">
+  <link rel="stylesheet" href="style.css?v=97">
+  <link rel="stylesheet" href="add-keyword-modal.css?v=60">
+  <link rel="stylesheet" href="search-bar-update.css?v=72">
   <link rel="manifest" href="manifest.json">
   <link rel="dns-prefetch" href="//www.google.com">
   <link rel="preconnect" href="https://www.google.com" crossorigin>
@@ -55,7 +54,7 @@
   <header>
     <div class="header-row">
       <div class="header-left">
-        <a href="/" class="site-logo-link">
+        <a href="./" class="site-logo-link">
           <img src="media/logo.png" alt="WebsiteOrganiser Logo" class="site-logo">
         </a>
         <span class="site-title">WebsiteOrganiser</span>
@@ -67,6 +66,15 @@
           <img src="media/google.png" alt="Google Search" class="search-icon">
           <input type="text" id="google-search-input" class="google-search-input" placeholder="Google Search..."
             autocomplete="off" spellcheck="false">
+          <label class="search-mode-toggle-switch" title="Switch to keyword search">
+            <input id="search-mode-toggle-input" class="search-mode-toggle-input" type="checkbox" role="switch"
+              aria-label="Switch search mode">
+            <span class="search-mode-toggle-track" data-mode="google">
+              <span class="search-mode-toggle-option search-mode-toggle-option--left">Google</span>
+              <span class="search-mode-toggle-option search-mode-toggle-option--right">Keywords</span>
+              <span class="search-mode-toggle-thumb" aria-hidden="true"></span>
+            </span>
+          </label>
           <button id="clear-search-btn" class="clear-search-btn" style="display: none;" title="Clear">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -182,31 +190,25 @@
     let db;
     try {
       if (typeof firebaseConfig === 'undefined') {
-        throw new Error('Firebase configuration not found. Please create firebase-config.js.');
+        console.warn('Firebase configuration not found. Running in local-only mode.');
+        db = null;
+      } else {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
       }
-      firebase.initializeApp(firebaseConfig);
-      db = firebase.firestore();
     } catch (error) {
-      // Show user-friendly error without console logging
-      document.body.innerHTML = `
-        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#1a1a2e;color:#fff;font-family:sans-serif;text-align:center;padding:20px;">
-          <h1 style="color:#ff6b6b;">⚠️ Connection Error</h1>
-          <p>Failed to connect to the server. Please check your internet connection and try again.</p>
-          <button onclick="location.reload()" style="margin-top:20px;padding:12px 24px;background:#7b2cbf;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:1rem;">
-            Retry
-          </button>
-        </div>
-      `;
+      console.warn('Firebase initialization failed. Running in local-only mode.', error);
+      db = null;
     }
 
     // Register service worker for offline caching as early as possible
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(function () {
+      navigator.serviceWorker.register('./sw.js').catch(function () {
         // Silent failure - service worker is optional
       });
     }
   </script>
-  <script src="script.js?v=77"></script>
+  <script src="script.js?v=84"></script>
   <div id="toast-container"></div>
 </body>
 

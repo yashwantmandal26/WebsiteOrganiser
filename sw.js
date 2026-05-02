@@ -1,21 +1,22 @@
 // Fast-loading service worker with precache + stale-while-revalidate
 // Caches the app shell for instant loads and updates in background
 
-const VERSION = 'v58';
+const VERSION = 'v66';
 const STATIC_CACHE = `wo-static-${VERSION}`;
 const RUNTIME_CACHE = `wo-runtime-${VERSION}`;
+const APP_BASE = new URL('./', self.location.href);
+const appUrl = (path) => new URL(path, APP_BASE).href;
 // App shell files to precache (same-origin only)
 const PRECACHE_URLS = [
-  '/',
-  '/index.html',
-  '/style.css?v=94',
-  '/script.js?v=77',
-  '/add-keyword-modal.css?v=59',
-  '/search-bar-update.css?v=69',
-  '/manifest.json',
-  '/media/logo.png',
-  '/icon-192.png',
-  '/icon-512.png'
+  appUrl('index.html'),
+  appUrl('style.css?v=97'),
+  appUrl('script.js?v=84'),
+  appUrl('add-keyword-modal.css?v=60'),
+  appUrl('search-bar-update.css?v=72'),
+  appUrl('manifest.json'),
+  appUrl('media/logo.png'),
+  appUrl('icon-192.png'),
+  appUrl('icon-512.png')
 ];
 
 self.addEventListener('install', (event) => {
@@ -76,10 +77,10 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       (async () => {
         const cache = await caches.open(STATIC_CACHE);
-        const cached = await cache.match('/index.html');
+        const cached = await cache.match(appUrl('index.html'));
         const network = fetch(request).then((response) => {
           if (response && response.status === 200) {
-            cache.put('/index.html', response.clone());
+            cache.put(appUrl('index.html'), response.clone());
           }
           return response;
         }).catch(() => cached);
@@ -104,7 +105,7 @@ self.addEventListener('fetch', (event) => {
           return response;
         } catch (e) {
           // Fallback: return any cached shell if available
-          const shell = await cache.match('/index.html');
+          const shell = await cache.match(appUrl('index.html'));
           return shell || new Response('Offline', { status: 503 });
         }
       })()
