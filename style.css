@@ -384,6 +384,12 @@ html {
   width: 100%;
 }
 
+@media (max-width: 600px) {
+  .container {
+    padding: 0 6px !important;
+  }
+}
+
 
 /* Header */
 header {
@@ -842,12 +848,54 @@ header h1 {
 
   .search-suggestions {
     position: absolute;
-    top: calc(100% + 8px);
-    left: 0;
-    right: 0;
-    width: 100%;
-    max-height: 300px;
+    top: calc(100% + 6px);
+    left: -4px;
+    right: -4px;
+    width: calc(100% + 8px);
+    max-height: 55vh;
     z-index: 1000;
+    border-radius: 14px;
+  }
+
+  .suggestion-item {
+    padding: 14px 16px;
+    gap: 14px;
+    min-height: 48px;
+  }
+
+  .suggestion-icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .suggestion-text {
+    font-size: 15px;
+    line-height: 1.35;
+  }
+
+  .keyword-suggestion-meta {
+    font-size: 12px;
+    line-height: 1.3;
+    -webkit-line-clamp: 1;
+  }
+
+  .keyword-suggestion-badge {
+    font-size: 9px;
+    padding: 3px 7px;
+  }
+
+  .suggestion-header {
+    padding: 10px 16px 6px;
+    font-size: 10px;
+  }
+
+  .suggestion-delete-btn {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 }
 
@@ -894,6 +942,12 @@ header h1 {
   transform: translateX(4px);
 }
 
+.suggestion-item:active {
+  background: var(--button-hover-bg);
+  transform: scale(0.98);
+  opacity: 0.85;
+}
+
 .suggestion-clear-all {
   border-top: 1px solid var(--card-border);
   opacity: 0.65;
@@ -910,6 +964,89 @@ header h1 {
 .suggestion-text {
   flex: 1;
   font-size: 14px;
+}
+
+.keyword-suggestion-item {
+  align-items: flex-start;
+}
+
+.keyword-suggestion-content {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.keyword-suggestion-content .suggestion-text {
+  flex: none;
+  text-align: left;
+  line-height: 1.25;
+}
+
+.keyword-suggestion-meta {
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--placeholder-color);
+  opacity: 0.95;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.keyword-suggestion-badge {
+  flex-shrink: 0;
+  align-self: center;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--button-hover-bg);
+  color: var(--text-color);
+  opacity: 0.85;
+}
+
+.keyword-suggestion-empty {
+  cursor: default;
+  justify-content: flex-start;
+  pointer-events: none;
+}
+
+.keyword-suggestion-empty:hover,
+.keyword-suggestion-empty.selected {
+  transform: none;
+  background: transparent;
+}
+
+.keyword-search-highlight {
+  display: inline;
+  padding: 0 3px;
+  border-radius: 4px;
+  background: rgba(255, 215, 0, 0.28);
+  color: inherit;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+[data-theme="light"] .keyword-search-highlight {
+  background: rgba(255, 193, 7, 0.34);
+}
+
+.keyword-grid-preview-item.keyword-search-focus {
+  box-shadow:
+    0 0 0 3px rgba(123, 44, 191, 0.22),
+    0 18px 34px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .keyword-grid-preview-item.keyword-search-focus,
+[data-theme="solid-dark"] .keyword-grid-preview-item.keyword-search-focus {
+  box-shadow:
+    0 0 0 3px rgba(187, 134, 252, 0.24),
+    0 18px 34px rgba(0, 0, 0, 0.42);
 }
 
 .suggestion-delete-btn {
@@ -992,11 +1129,18 @@ header h1 {
 @media (max-width: 768px) {
   .groups-grid {
     grid-template-columns: 1fr;
-    padding: 10px 0 20px; /* Centered with 0 padding because container has padding */
+    padding: 8px 0 20px;
     width: 100%;
     box-sizing: border-box;
     justify-items: center;
-    gap: 15px;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .groups-grid {
+    gap: 10px;
+    padding: 6px 0 16px;
   }
 }
 
@@ -2519,6 +2663,13 @@ body.is-zooming .search-suggestions {
   align-content: start;
 }
 
+@media (max-width: 480px) {
+  .keyword-grid-preview {
+    gap: 6px;
+    margin-top: 8px;
+  }
+}
+
 .keyword-grid-preview.is-scrollable {
   /* Auto-size: no max-height, no scroll - page scrolls instead */
   overflow: visible;
@@ -2686,21 +2837,21 @@ body.is-zooming .search-suggestions {
 
   .keyword-grid-preview {
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 8px;
+    gap: 6px;
   }
 
   .keyword-grid-preview-item,
   .keyword-grid-preview-more {
-    padding: 6px 4px;
-    border-radius: 12px;
-    gap: 4px;
+    padding: 5px 3px 6px;
+    border-radius: 14px;
+    gap: 3px;
   }
 
   .keyword-grid-preview-item .keyword-grid-icon {
-    width: 36px;
-    height: 36px;
+    width: 34px;
+    height: 34px;
     border-radius: 8px;
-    margin-bottom: 2px;
+    margin-bottom: 1px;
   }
 
   .keyword-grid-preview-item .keyword-grid-icon img.keyword-favicon {
@@ -2710,7 +2861,7 @@ body.is-zooming .search-suggestions {
   }
 
   .keyword-grid-preview-item .keyword-grid-text {
-    font-size: 0.65rem;
+    font-size: 0.62rem;
     line-height: 1.1;
   }
 }
@@ -3999,8 +4150,8 @@ body.is-touch .group-card[draggable="true"] {
 
   /* Optimize group cards for mobile */
   .group-card {
-    padding: 16px;
-    margin-bottom: 40px;
+    padding: 14px;
+    margin-bottom: 0;
   }
 
   /* Make group card header more touch-friendly */
@@ -4113,8 +4264,8 @@ body.is-touch .group-card[draggable="true"] {
   /* Optimize groups grid for mobile */
   .groups-grid {
     grid-template-columns: 1fr;
-    gap: 40px;
-    padding: 0 10px;
+    gap: 12px;
+    padding: 0 4px;
   }
 
   /* Reduce animation intensity on mobile for better performance */
@@ -4446,7 +4597,7 @@ textarea {
 
   /* Group card optimizations */
   .group-card {
-    padding: 10px 8px; /* Slightly tighter internal padding for more content space */
+    padding: 10px 6px; /* Tighter internal padding for more content space */
     border-radius: 14px;
     margin: 0 auto !important; /* Force center within grid */
     width: 100% !important; /* Spread to cover both sides */
@@ -4464,15 +4615,15 @@ textarea {
   /* Keyword grid - 4 columns on mobile for smaller cards */
   .group-card .keyword-grid-preview {
     grid-template-columns: repeat(4, 1fr) !important;
-    gap: 8px !important; /* Adjusted gap for 4 columns */
+    gap: 5px !important; /* Tighter gap for 4 columns on small screens */
   }
 
   .group-card .keyword-grid-preview-item {
-    padding: 6px 0 8px !important; /* Removed horizontal padding to fit more text */
-    min-height: 68px !important; /* Reduced from 82px to fit 1 line by default */
-    max-height: 95px !important;
+    padding: 5px 0 6px !important; /* Tight padding for compact mobile layout */
+    min-height: 62px !important;
+    max-height: 90px !important;
     height: auto !important;
-    border-radius: 18px !important;
+    border-radius: 14px !important;
     background: linear-gradient(150deg, #F8F9FA 0%, #f0f0f0 100%) !important;
   }
 

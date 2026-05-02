@@ -24,7 +24,7 @@ window.onerror = function (msg, url, lineNo, columnNo, error) {
 // Global reset for zoom and animation states
 let lastZoomTime = 0;
 
-function resetKeywordStates(force = false) {
+function resetKeywordStates(force = false, preserveFocus = false) {
     // If a zoom just started (less than 20 seconds ago), ignore unexpected resets 
     // unless explicitly forced (like the logo click or pageshow).
     const timeSinceZoom = Date.now() - lastZoomTime;
@@ -60,8 +60,9 @@ function resetKeywordStates(force = false) {
     document.body.style.overflow = '';
     document.documentElement.style.overflow = '';
 
-    // 5. Force blur anything that might be focused/hovered
-    if (document.activeElement && document.activeElement !== document.body) {
+    // 5. Force blur anything that might be focused/hovered unless the caller
+    // needs to keep the current input focused during a live rerender.
+    if (!preserveFocus && document.activeElement && document.activeElement !== document.body) {
         document.activeElement.blur();
     }
 }
@@ -151,7 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const _clickSoundURI = _buildWavURI(1200, 0.06, 70);
-    const _hoverSoundURI = _buildWavURI(800, 0.08, 60);
+    const _hoverSoundURI = _buildWavURI(640, 0.07, 45);
     const _silentSoundURI = _buildWavURI(1, 0.01, 100); // Silent 1Hz tone for unlocking
 
     // Reusable Audio objects
@@ -159,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const clickAudio = _clickSoundURI ? new Audio(_clickSoundURI) : null;
     const unlockAudioObj = _silentSoundURI ? new Audio(_silentSoundURI) : null;
 
-    if (hoverAudio) hoverAudio.volume = 0.35;
+    if (hoverAudio) hoverAudio.volume = 0.18;
     if (clickAudio) clickAudio.volume = 0.55;
 
     // Aggressive Audio Unlock Function
@@ -357,6 +358,34 @@ document.addEventListener('DOMContentLoaded', () => {
     // Keyword drag-and-drop state
     let draggedKeywordData = null; // { groupIndex, keywordIndex, keyword }
 
+    const SEARCH_MODE_KEY = 'websiteOrganiserSearchMode';
+    const SEARCH_MODE_GOOGLE = 'google';
+    const SEARCH_MODE_KEYWORDS = 'keywords';
+
+    function loadSavedSearchMode() {
+        try {
+            const savedMode = localStorage.getItem(SEARCH_MODE_KEY);
+            return savedMode === SEARCH_MODE_KEYWORDS ? SEARCH_MODE_KEYWORDS : SEARCH_MODE_GOOGLE;
+        } catch (error) {
+            return SEARCH_MODE_GOOGLE;
+        }
+    }
+
+    function saveSearchMode(mode) {
+        try {
+            localStorage.setItem(SEARCH_MODE_KEY, mode);
+        } catch (error) {
+            console.warn('Unable to save search mode:', error);
+        }
+    }
+
+    let searchMode = loadSavedSearchMode();
+    let activeKeywordSearchQuery = '';
+    let selectedSuggestionIndex = -1;
+    let currentSuggestions = [];
+    let selectedKeywordSuggestionIndex = -1;
+    let currentKeywordSuggestions = [];
+
     // --- Adult Content Filter ---
     const BLOCKED_WORDS = [
         'porn', 'xxx', 'sex', 'nude', 'naked', 'adult', 'nsfw', 'hentai',
@@ -459,9 +488,23 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
 
     // --- Firestore Cloud Sync Functions ---
-    const groupsRef = db.collection('sharedData').doc('groups');
-    const clickCountsRef = db.collection('sharedData').doc('clickCounts');
-    const descriptionsRef = db.collection('sharedData').doc('keywordDescriptions');
+    const cloudSyncEnabled = typeof db !== 'undefined' && db && typeof db.collection === 'function';
+    const firestoreFieldValue = cloudSyncEnabled ? firebase.firestore.FieldValue : {
+        increment: (value) => value,
+        delete: () => undefined,
+        serverTimestamp: () => null
+    };
+
+    const createOfflineDocRef = () => ({
+        set: async () => { },
+        update: async () => { },
+        get: async () => ({ exists: false, data: () => null }),
+        onSnapshot: () => () => { }
+    });
+
+    const groupsRef = cloudSyncEnabled ? db.collection('sharedData').doc('groups') : createOfflineDocRef();
+    const clickCountsRef = cloudSyncEnabled ? db.collection('sharedData').doc('clickCounts') : createOfflineDocRef();
+    const descriptionsRef = cloudSyncEnabled ? db.collection('sharedData').doc('keywordDescriptions') : createOfflineDocRef();
     const LOCAL_STORAGE_KEY = 'websiteorganiser_groups_cache';
     const CLICK_COUNTS_STORAGE_KEY = 'websiteorganiser_clicks_cache';
 
@@ -500,7 +543,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Attempting Firestore save...');
             await groupsRef.set({
                 data: groups,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                updatedAt: firestoreFieldValue.serverTimestamp()
             });
             console.log('Firestore save successful');
             saveToLocalStorage(); // Cache locally for offline
@@ -869,8 +912,8 @@ document.addEventListener('DOMContentLoaded', () => {
             globalClickCounts[newEncoded] = oldCount;
             delete globalClickCounts[oldEncoded];
             updateOps.push(clickCountsRef.update({
-                [newEncoded]: firebase.firestore.FieldValue.increment(oldCount),
-                [oldEncoded]: firebase.firestore.FieldValue.delete()
+                [newEncoded]: firestoreFieldValue.increment(oldCount),
+                [oldEncoded]: firestoreFieldValue.delete()
             }));
         }
 
@@ -881,8 +924,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         updateOps.push(descriptionsRef.update({
-            [newEncoded]: newDescription || firebase.firestore.FieldValue.delete(),
-            [oldEncoded]: firebase.firestore.FieldValue.delete()
+            [newEncoded]: newDescription || firestoreFieldValue.delete(),
+            [oldEncoded]: firestoreFieldValue.delete()
         }).catch(() => {
             // If newEncoded doesn't exist yet, use set
             return descriptionsRef.set({
@@ -931,10 +974,10 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 await Promise.all([
                     clickCountsRef.update({
-                        [encodedKeyword]: firebase.firestore.FieldValue.delete()
+                        [encodedKeyword]: firestoreFieldValue.delete()
                     }),
                     descriptionsRef.update({
-                        [encodedKeyword]: firebase.firestore.FieldValue.delete()
+                        [encodedKeyword]: firestoreFieldValue.delete()
                     })
                 ]);
             } catch (error) {
@@ -964,7 +1007,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Sync to Firestore using atomic increment
         try {
             await clickCountsRef.set({
-                [encodedKeyword]: firebase.firestore.FieldValue.increment(1)
+                [encodedKeyword]: firestoreFieldValue.increment(1)
             }, { merge: true });
         } catch (error) {
             console.error('Failed to sync global click count:', error);
@@ -1630,9 +1673,9 @@ document.addEventListener('DOMContentLoaded', () => {
     async function addKeywordToGroup(index) {
         if (!adminLoggedIn) {
             if (typeof showToast === 'function') {
-                showToast('Admin access required to add keywords', 3000);
+                showToast('Admin access required to add keywords. Use Admin Login first.', 3000);
             } else {
-                alert('Admin access required to add keywords');
+                alert('Admin access required to add keywords. Use Admin Login first.');
             }
             return;
         }
@@ -1755,17 +1798,49 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         // Ensure we are not in a zooming state when rendering (extra safety)
-        resetKeywordStates();
+        resetKeywordStates(false, true);
         
         groupsContainer.innerHTML = '';
+        const normalizedSearchQuery = searchMode === SEARCH_MODE_KEYWORDS
+            ? normalizeSearchQuery(activeKeywordSearchQuery)
+            : '';
+        const searchTokens = normalizedSearchQuery ? normalizedSearchQuery.split(/\s+/).filter(Boolean) : [];
+        const isKeywordSearchActive = searchMode === SEARCH_MODE_KEYWORDS && searchTokens.length > 0;
+
         // Store original index for each group so UI actions hit the right item
-        const filteredGroups = groups.map((group, idx) => ({ ...group, _originalIndex: idx }));
+        const filteredGroups = groups.map((group, idx) => {
+            const previewKeywords = group.keywords.map((keyword, keywordIndex) => {
+                const { displayText, targetUrl } = parseKeyword(keyword);
+                const encodedKeyword = encodeURIComponent(keyword).replace(/\./g, '%2E');
+                const description = keywordDescriptions[encodedKeyword] || '';
+                const searchText = [keyword, displayText, targetUrl, description, group.name].join(' ').toLowerCase();
+
+                return {
+                    keyword,
+                    keywordIndex,
+                    displayText,
+                    targetUrl,
+                    description,
+                    encodedKeyword,
+                    searchText,
+                };
+            }).filter((entry) => !isKeywordSearchActive || matchesKeywordSearch(entry.searchText, searchTokens));
+
+            return {
+                ...group,
+                _originalIndex: idx,
+                _previewKeywords: previewKeywords,
+            };
+        }).filter((group) => !isKeywordSearchActive || group._previewKeywords.length > 0);
 
         // Track used colors for this render
         const usedColors = new Set();
 
         if (filteredGroups.length === 0) {
-            groupsContainer.innerHTML = `<p style="color: #ccc; grid-column: 1 / -1; text-align: center;">No groups found matching your search.</p>`;
+            const emptyMessage = isKeywordSearchActive
+                ? 'No keywords or comments match your search.'
+                : 'No groups found matching your search.';
+            groupsContainer.innerHTML = `<p style="color: #ccc; grid-column: 1 / -1; text-align: center;">${emptyMessage}</p>`;
         } else {
             filteredGroups.forEach((group) => {
                 const originalIndex = group._originalIndex;
@@ -1832,22 +1907,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     addKeywordBtnBg = groupColor;
                 }
 
-                // Formulate button HTML for admins
-                let addKeywordBtnHTML = '';
-                if (adminLoggedIn) {
-                    addKeywordBtnHTML = `
-                        <button 
-                            type="button"
-                            class="icon-btn icon-btn--add-keyword"
-                            data-action="add-keyword"
-                            data-group-index="${originalIndex}"
-                            style="cursor:pointer; z-index:10; pointer-events:auto; user-select:none; background: ${addKeywordBtnBg} !important;"
-                            aria-label="Add keyword to ${group.name}"
-                            onclick="event.stopPropagation(); window.addKeywordToGroup(${originalIndex}); return false;">
-                            <span class="icon-plus">+</span>
-                        </button>
-                    `;
-                }
+                // Keep the add button visible so users can discover the action,
+                // but the click handler still enforces admin access.
+                const addKeywordBtnHTML = `
+                    <button 
+                        type="button"
+                        class="icon-btn icon-btn--add-keyword"
+                        data-action="add-keyword"
+                        data-group-index="${originalIndex}"
+                        style="cursor:pointer; z-index:10; pointer-events:auto; user-select:none; background: ${addKeywordBtnBg} !important; ${adminLoggedIn ? '' : 'opacity: 0.85;'}"
+                        aria-label="Add keyword to ${group.name}"
+                        title="${adminLoggedIn ? `Add keyword to ${group.name}` : 'Admin login required to add keywords'}"
+                        onclick="event.stopPropagation(); window.addKeywordToGroup(${originalIndex}); return false;">
+                        <span class="icon-plus">+</span>
+                    </button>
+                `;
 
                 actions.innerHTML = addKeywordBtnHTML;
 
@@ -1874,7 +1948,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 groupCard.appendChild(header);
 
                 // --- Preview Keywords ---
-                const keywords = group.keywords;
+                const keywords = group._previewKeywords || [];
                 const previewGrid = document.createElement('div');
                 previewGrid.className = 'keyword-grid-preview';
 
@@ -1895,30 +1969,33 @@ document.addEventListener('DOMContentLoaded', () => {
                         previewGrid.classList.add('size-large');
                     }
 
-                    keywords.forEach((keyword, keywordIndex) => {
-                        const { displayText, targetUrl } = parseKeyword(keyword);
+                    keywords.forEach((keywordEntry) => {
+                        const { keyword, keywordIndex, displayText, targetUrl, description, encodedKeyword } = keywordEntry;
                         const emoji = getKeywordEmoji(keyword);
                         const previewItem = document.createElement('div');
                         previewItem.className = 'keyword-grid-preview-item';
                         previewItem.dataset.keywordValue = keyword;
+                        previewItem.dataset.targetUrl = targetUrl;
                         previewItem.dataset.groupIndex = originalIndex;
                         previewItem.dataset.keywordIndex = keywordIndex;
-                        previewItem.draggable = adminLoggedIn;
+                        previewItem.draggable = true;
 
-                        const encodedKeyword = encodeURIComponent(keyword).replace(/\./g, '%2E');
                         const clickCount = globalClickCounts[encodedKeyword] || 0;
-                        const description = keywordDescriptions[encodedKeyword];
 
                         // Log description status for debugging
                         if (description) {
                             console.log(`Rendering tooltip for "${displayText}":`, description);
                         }
 
+                        const keywordLabelHtml = isKeywordSearchActive
+                            ? highlightSearchHtml(displayText, normalizedSearchQuery)
+                            : escapeHtml(displayText);
+
                         previewItem.innerHTML = `
                                 <div class="keyword-grid-icon">${getFaviconOrEmoji(keyword, emoji)}</div>
-                                <div class="keyword-grid-text">${displayText}</div>
+                                <div class="keyword-grid-text">${keywordLabelHtml}</div>
                                 <div class="keyword-click-counter">${clickCount}</div>
-                                ${description ? `<div class="keyword-tooltip" data-description="${encodeURIComponent(description)}">${description}</div>` : ''}
+                                ${description ? `<div class="keyword-tooltip" data-description="${encodeURIComponent(description)}">${escapeHtml(description)}</div>` : ''}
                             `;
                         previewItem.setAttribute('aria-label', displayText);
 
@@ -2010,15 +2087,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                         });
 
-                        // Middle-click support
-                        previewItem.addEventListener('auxclick', (event) => {
-                            if (event.button === 1) { // Middle click
-                                event.preventDefault();
-                                event.stopPropagation();
-                                openURLWithBrowser(targetUrl, true); // Open in new tab
-                            }
-                        });
-
                         // Add context menu support (right-click/long-press)
                         attachKeywordContextMenu(previewItem, originalIndex, keywordIndex, keyword, targetUrl);
 
@@ -2066,11 +2134,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Drag and Drop Event Listeners
     groupsContainer.addEventListener('dragstart', (e) => {
+        const draggedCard = e.target.closest('.group-card');
+        const keywordItem = e.target.closest('.keyword-grid-preview-item, li[data-keyword-index]');
+
+        if (!draggedCard || keywordItem) {
+            return;
+        }
+
         if (!adminLoggedIn) {
             e.preventDefault();
             return;
         }
-        const draggedCard = e.target.closest('.group-card');
+
         if (draggedCard) {
             draggedItemIndex = parseInt(draggedCard.dataset.groupIndex);
             e.dataTransfer.effectAllowed = 'move';
@@ -2128,20 +2203,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // === Keyword Drag and Drop Event Listeners ===
     groupsContainer.addEventListener('dragstart', (e) => {
-        if (!adminLoggedIn) {
-            e.preventDefault();
-            return;
-        }
-
         // Check if it's a keyword item being dragged
         const keywordItem = e.target.closest('.keyword-grid-preview-item, li[data-keyword-index]');
         if (keywordItem && keywordItem.dataset.keywordIndex !== undefined) {
+            const targetUrl = keywordItem.dataset.targetUrl || parseKeyword(keywordItem.dataset.keywordValue || '').targetUrl;
+
+            if (e.dataTransfer && targetUrl) {
+                e.dataTransfer.setData('text/uri-list', targetUrl);
+                e.dataTransfer.setData('text/plain', targetUrl);
+                e.dataTransfer.effectAllowed = adminLoggedIn ? 'copyMove' : 'copyLink';
+            }
+
+            if (!adminLoggedIn) {
+                return;
+            }
+
             const groupIndex = parseInt(keywordItem.dataset.groupIndex);
             const keywordIndex = parseInt(keywordItem.dataset.keywordIndex);
             const keyword = keywordItem.dataset.keywordValue;
 
             draggedKeywordData = { groupIndex, keywordIndex, keyword };
-            e.dataTransfer.effectAllowed = 'move';
+            if (e.dataTransfer) {
+                e.dataTransfer.effectAllowed = 'copyMove';
+            }
             keywordItem.classList.add('dragging');
             e.stopPropagation(); // Prevent group card drag
         }
@@ -2250,6 +2334,20 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.keyword-drag-over-group').forEach(el => el.classList.remove('keyword-drag-over-group'));
 
         draggedKeywordData = null;
+    }, true);
+
+    groupsContainer.addEventListener('auxclick', (e) => {
+        if (e.button !== 1) return;
+
+        const keywordItem = e.target.closest('.keyword-grid-preview-item, li[data-keyword-index]');
+        if (!keywordItem || keywordItem.classList.contains('dragging')) return;
+
+        const targetUrl = keywordItem.dataset.targetUrl || parseKeyword(keywordItem.dataset.keywordValue || '').targetUrl;
+        if (!targetUrl) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+        openURLWithBrowser(targetUrl, true);
     }, true);
 
     // --- Direct Event Listeners ---
@@ -2585,12 +2683,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // Enhanced URL opening with browser preference
     function openURLWithBrowser(url, inNewTab = false) {
         resetIOSZoom();
+        // On PC (non-touch desktop), open WebsiteOrganiser in a new background tab
+        // so it stays available for reuse, then navigate this tab to the clicked URL.
+        const isPCDesktop = !('ontouchstart' in window) && !navigator.maxTouchPoints && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
         if (inNewTab) {
-            // Use noopener for security and performance
+            // Explicitly requested new tab (Ctrl+click / middle-click)
             const w = window.open(url, '_blank', 'noopener');
             if (w) { try { w.opener = null; } catch (e) { } }
+        } else if (isPCDesktop) {
+            // PC: navigate current tab to the clicked site first,
+            // then open WebsiteOrganiser in a new tab.
+            // Since the current tab is already loading, the browser keeps focus here.
+            const selfUrl = window.location.href.split('?')[0];
+            window.location.href = url;
+            window.open(selfUrl, '_blank');
         } else {
-            // Open in same tab
+            // Mobile: open in same tab
             window.location.href = url;
         }
     }
@@ -2642,7 +2750,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Register service worker for offline caching
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js').catch(error => {
+            navigator.serviceWorker.register('./sw.js').catch(error => {
                 console.error('SW registration failed:', error);
             });
         });
@@ -2666,12 +2774,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // ===================================
 
     const searchInput = document.getElementById('google-search-input');
+    const searchModeToggleInput = document.getElementById('search-mode-toggle-input');
     const clearSearchBtn = document.getElementById('clear-search-btn');
     const searchSuggestions = document.getElementById('search-suggestions');
     const SEARCH_HISTORY_KEY = 'googleSearchHistory';
     const MAX_HISTORY = 10;
-    let selectedSuggestionIndex = -1;
-    let currentSuggestions = [];
 
     // Load search history from localStorage
     function loadSearchHistory() {
@@ -2727,10 +2834,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Show suggestions
     function showSuggestions(query) {
+        if (searchMode === SEARCH_MODE_KEYWORDS) {
+            showKeywordSuggestions(query);
+            return;
+        }
+
         const history = loadSearchHistory();
         currentSuggestions = [];
 
-        if (!query || query.trim().length === 0) {
+        const trimmedQuery = normalizeSearchQuery(query);
+
+        if (trimmedQuery.length === 0) {
             // Show recent searches
             if (history.length > 0) {
                 currentSuggestions = history.slice(0, 5);
@@ -2743,7 +2857,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Filter history by query
         const filtered = history.filter(item =>
-            item.toLowerCase().includes(query.toLowerCase())
+            item.toLowerCase().includes(trimmedQuery.toLowerCase())
         );
 
         if (filtered.length > 0) {
@@ -2751,7 +2865,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderSuggestions(currentSuggestions, 'filtered');
         } else {
             // Show "Search for..." suggestion
-            currentSuggestions = [query];
+            currentSuggestions = [trimmedQuery];
             renderSuggestions(currentSuggestions, 'new');
         }
     }
@@ -2783,7 +2897,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 : '';
 
             html += `
-                <div class="suggestion-item" data-index="${index}" data-query="${escapeHtml(suggestion)}">
+                <div class="suggestion-item" data-index="${index}" data-query="${escapeHtml(suggestion)}" data-suggestion-mode="google">
                     ${icon}
                     <span class="suggestion-text">${escapeHtml(suggestion)}</span>
                     ${deleteBtn}
@@ -2794,7 +2908,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add "Clear all history" footer for history types
         if (isHistoryType) {
             html += `
-                <div class="suggestion-item suggestion-clear-all" data-action="clear-history">
+                <div class="suggestion-item suggestion-clear-all" data-action="clear-history" data-suggestion-mode="google">
                     <svg class="suggestion-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                     <span class="suggestion-text">Clear all history</span>
                 </div>
@@ -2807,6 +2921,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add click handlers to rows (search action)
         searchSuggestions.querySelectorAll('.suggestion-item').forEach(item => {
             item.addEventListener('click', handleSuggestionClick);
+            item.addEventListener('auxclick', handleSuggestionAuxClick);
         });
 
         // Add click handlers to individual delete buttons (prevent row click)
@@ -2828,6 +2943,9 @@ document.addEventListener('DOMContentLoaded', () => {
         searchSuggestions.style.display = 'none';
         searchSuggestions.innerHTML = '';
         selectedSuggestionIndex = -1;
+        selectedKeywordSuggestionIndex = -1;
+        currentSuggestions = [];
+        currentKeywordSuggestions = [];
     }
 
     // Handle suggestion click
@@ -2836,6 +2954,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.closest('.suggestion-delete-btn')) return;
 
         const item = e.currentTarget;
+        const suggestionMode = item.dataset.suggestionMode || SEARCH_MODE_GOOGLE;
+
+        if (suggestionMode === SEARCH_MODE_KEYWORDS) {
+            const keywordIndex = Number(item.dataset.index);
+            const result = currentKeywordSuggestions[keywordIndex];
+            if (!result) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            openURLWithBrowser(result.targetUrl, e.ctrlKey || e.metaKey);
+            hideSuggestions();
+            return;
+        }
 
         // Check if it's clear history action
         if (item.dataset.action === 'clear-history') {
@@ -2849,6 +2980,31 @@ document.addEventListener('DOMContentLoaded', () => {
         const query = item.dataset.query;
         if (query) {
             performGoogleSearch(query);
+        }
+    }
+
+    function handleSuggestionAuxClick(e) {
+        if (e.button !== 1) return;
+
+        const item = e.currentTarget;
+        const suggestionMode = item.dataset.suggestionMode || SEARCH_MODE_GOOGLE;
+
+        if (suggestionMode === SEARCH_MODE_KEYWORDS) {
+            const keywordIndex = Number(item.dataset.index);
+            const result = currentKeywordSuggestions[keywordIndex];
+            if (result) {
+                e.preventDefault();
+                e.stopPropagation();
+                focusKeywordSearchResult(result, true);
+            }
+            return;
+        }
+
+        const query = item.dataset.query;
+        if (query) {
+            e.preventDefault();
+            e.stopPropagation();
+            performGoogleSearch(query, true);
         }
     }
 
@@ -2880,14 +3036,247 @@ document.addEventListener('DOMContentLoaded', () => {
         return div.innerHTML;
     }
 
+    function normalizeSearchQuery(query) {
+        return (query || '').trim().replace(/\s+/g, ' ');
+    }
+
+    function escapeRegex(text) {
+        return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    function matchesKeywordSearch(searchText, tokens) {
+        if (!tokens || tokens.length === 0) return true;
+        return tokens.every((token) => searchText.includes(token.toLowerCase()));
+    }
+
+    function buildSearchSnippet(text, query, maxLength = 110) {
+        if (!text) return '';
+
+        const normalizedText = text.replace(/\s+/g, ' ').trim();
+        if (normalizedText.length === 0) return '';
+
+        const normalizedQuery = normalizeSearchQuery(query).toLowerCase();
+        if (!normalizedQuery) {
+            return normalizedText.length > maxLength
+                ? `${normalizedText.slice(0, maxLength).trimEnd()}…`
+                : normalizedText;
+        }
+
+        const lowerText = normalizedText.toLowerCase();
+        const matchIndex = lowerText.indexOf(normalizedQuery);
+        if (matchIndex === -1) {
+            return normalizedText.length > maxLength
+                ? `${normalizedText.slice(0, maxLength).trimEnd()}…`
+                : normalizedText;
+        }
+
+        const start = Math.max(0, matchIndex - 24);
+        const end = Math.min(normalizedText.length, matchIndex + normalizedQuery.length + 56);
+        let snippet = normalizedText.slice(start, end).trim();
+
+        if (start > 0) {
+            snippet = `…${snippet}`;
+        }
+
+        if (end < normalizedText.length) {
+            snippet += '…';
+        }
+
+        return snippet;
+    }
+
+    function highlightSearchHtml(text, query) {
+        const safeText = escapeHtml(text);
+        const normalizedQuery = normalizeSearchQuery(query);
+        if (!normalizedQuery) {
+            return safeText;
+        }
+
+        const tokens = Array.from(new Set(normalizedQuery.split(/\s+/).filter(Boolean)));
+        if (tokens.length === 0) {
+            return safeText;
+        }
+
+        let highlighted = safeText;
+        tokens
+            .map((token) => escapeRegex(token))
+            .sort((a, b) => b.length - a.length)
+            .forEach((token) => {
+                const regex = new RegExp(`(${token})`, 'ig');
+                highlighted = highlighted.replace(regex, '<span class="keyword-search-highlight">$1</span>');
+            });
+
+        return highlighted;
+    }
+
+    function getKeywordSearchResults(query) {
+        const normalizedQuery = normalizeSearchQuery(query);
+        if (!normalizedQuery) {
+            return [];
+        }
+
+        const tokens = normalizedQuery.toLowerCase().split(/\s+/).filter(Boolean);
+        const results = [];
+
+        groups.forEach((group, groupIndex) => {
+            group.keywords.forEach((keyword, keywordIndex) => {
+                const { displayText, targetUrl } = parseKeyword(keyword);
+                const encodedKeyword = encodeURIComponent(keyword).replace(/\./g, '%2E');
+                const description = keywordDescriptions[encodedKeyword] || '';
+                const searchText = [keyword, displayText, targetUrl, description, group.name].join(' ').toLowerCase();
+
+                if (!matchesKeywordSearch(searchText, tokens)) {
+                    return;
+                }
+
+                let score = 2;
+                const lowerDisplay = displayText.toLowerCase();
+                const lowerDescription = description.toLowerCase();
+
+                if (lowerDisplay.startsWith(normalizedQuery.toLowerCase()) || keyword.toLowerCase().startsWith(normalizedQuery.toLowerCase())) {
+                    score = 0;
+                } else if (lowerDisplay.includes(normalizedQuery.toLowerCase()) || keyword.toLowerCase().includes(normalizedQuery.toLowerCase())) {
+                    score = 1;
+                } else if (lowerDescription.includes(normalizedQuery.toLowerCase())) {
+                    score = 1.5;
+                }
+
+                results.push({
+                    groupIndex,
+                    keywordIndex,
+                    keyword,
+                    displayText,
+                    targetUrl,
+                    description,
+                    groupName: group.name,
+                    score,
+                });
+            });
+        });
+
+        return results.sort((left, right) => {
+            if (left.score !== right.score) {
+                return left.score - right.score;
+            }
+
+            return left.displayText.localeCompare(right.displayText);
+        }).slice(0, 12);
+    }
+
+    function updateSearchModeToggle() {
+        if (!searchModeToggleInput) return;
+
+        const isKeywordMode = searchMode === SEARCH_MODE_KEYWORDS;
+        searchModeToggleInput.checked = isKeywordMode;
+
+        const toggleTrack = searchModeToggleInput.nextElementSibling;
+        if (toggleTrack) {
+            toggleTrack.dataset.mode = isKeywordMode ? SEARCH_MODE_KEYWORDS : SEARCH_MODE_GOOGLE;
+            toggleTrack.title = isKeywordMode ? 'Switch to Google search' : 'Switch to keyword search';
+        }
+
+        if (searchInput) {
+            searchInput.placeholder = isKeywordMode ? 'Search keywords and comments...' : 'Google Search...';
+        }
+    }
+
+    function focusKeywordSearchResult(result, openInNewTab = false) {
+        if (!result || !result.targetUrl) return;
+
+        openURLWithBrowser(result.targetUrl, openInNewTab);
+        hideSuggestions();
+
+        if (searchInput) {
+            searchInput.focus();
+        }
+    }
+
+    function showKeywordSuggestions(query) {
+        const normalizedQuery = normalizeSearchQuery(query);
+
+        selectedKeywordSuggestionIndex = -1;
+
+        if (!normalizedQuery) {
+            currentKeywordSuggestions = [];
+            hideSuggestions();
+            return;
+        }
+
+        currentKeywordSuggestions = getKeywordSearchResults(normalizedQuery);
+        renderKeywordSuggestions(currentKeywordSuggestions, normalizedQuery);
+    }
+
+    function renderKeywordSuggestions(results, query) {
+        if (!results || results.length === 0) {
+            const emptyQuery = escapeHtml(query);
+            searchSuggestions.innerHTML = `
+                <div class="suggestion-item keyword-suggestion-empty" data-suggestion-mode="keywords">
+                    <svg class="suggestion-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+                    <span class="suggestion-text">No keywords or comments match "${emptyQuery}"</span>
+                </div>
+            `;
+            searchSuggestions.style.display = 'block';
+
+            searchSuggestions.querySelectorAll('.suggestion-item').forEach((item) => {
+                item.addEventListener('click', handleSuggestionClick);
+                item.addEventListener('auxclick', handleSuggestionAuxClick);
+            });
+            return;
+        }
+
+        let html = `<div class="suggestion-header"><span>Keyword matches</span></div>`;
+
+        results.forEach((result, index) => {
+            const snippet = result.description ? buildSearchSnippet(result.description, query) : '';
+            const metaParts = [];
+
+            if (result.groupName) {
+                metaParts.push(escapeHtml(result.groupName));
+            }
+
+            if (snippet) {
+                metaParts.push(highlightSearchHtml(snippet, query));
+            }
+
+            const metaHtml = metaParts.length > 0
+                ? `<div class="keyword-suggestion-meta">${metaParts.join(' &middot; ')}</div>`
+                : '';
+
+            html += `
+                <div class="suggestion-item keyword-suggestion-item" data-index="${index}" data-suggestion-mode="keywords" data-group-index="${result.groupIndex}" data-keyword-index="${result.keywordIndex}" data-target-url="${escapeHtml(result.targetUrl || '')}">
+                    <svg class="suggestion-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+                    <div class="keyword-suggestion-content">
+                        <span class="suggestion-text">${highlightSearchHtml(result.displayText, query)}</span>
+                        ${metaHtml}
+                    </div>
+                    <span class="keyword-suggestion-badge">Keyword</span>
+                </div>
+            `;
+        });
+
+        searchSuggestions.innerHTML = html;
+        searchSuggestions.style.display = 'block';
+
+        searchSuggestions.querySelectorAll('.suggestion-item').forEach((item) => {
+            item.addEventListener('click', handleSuggestionClick);
+            item.addEventListener('auxclick', handleSuggestionAuxClick);
+        });
+    }
+
     // Search input event listeners
     if (searchInput) {
         // Input event - show suggestions
         searchInput.addEventListener('input', (e) => {
             const query = e.target.value;
+            const trimmedQuery = normalizeSearchQuery(query);
 
             // Show/hide clear button
-            clearSearchBtn.style.display = query.length > 0 ? 'block' : 'none';
+            clearSearchBtn.style.display = trimmedQuery.length > 0 ? 'block' : 'none';
+
+            if (searchMode === SEARCH_MODE_KEYWORDS) {
+                activeKeywordSearchQuery = trimmedQuery;
+                renderGroups();
+            }
 
             // Show suggestions
             showSuggestions(query);
@@ -2895,6 +3284,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Focus event - show recent searches
         searchInput.addEventListener('focus', () => {
+            if (searchMode === SEARCH_MODE_KEYWORDS) {
+                if (normalizeSearchQuery(searchInput.value).length === 0) {
+                    hideSuggestions();
+                } else {
+                    showSuggestions(searchInput.value);
+                }
+                return;
+            }
+
             if (searchInput.value.trim().length === 0) {
                 showSuggestions('');
             } else {
@@ -2904,6 +3302,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Keydown event - handle Enter and arrow keys
         searchInput.addEventListener('keydown', (e) => {
+            if (searchMode === SEARCH_MODE_KEYWORDS) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const inNewTab = e.ctrlKey || e.metaKey;
+                    const selectedIndex = selectedKeywordSuggestionIndex >= 0 && selectedKeywordSuggestionIndex < currentKeywordSuggestions.length
+                        ? selectedKeywordSuggestionIndex
+                        : 0;
+                    const selectedResult = currentKeywordSuggestions[selectedIndex];
+
+                    if (selectedResult) {
+                        focusKeywordSearchResult(selectedResult, inNewTab);
+                    }
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+
+                    if (currentKeywordSuggestions.length > 0) {
+                        selectedKeywordSuggestionIndex = Math.min(selectedKeywordSuggestionIndex + 1, currentKeywordSuggestions.length - 1);
+                        updateSelectedKeywordSuggestion();
+                    }
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+
+                    if (currentKeywordSuggestions.length > 0) {
+                        selectedKeywordSuggestionIndex = Math.max(selectedKeywordSuggestionIndex - 1, -1);
+                        updateSelectedKeywordSuggestion();
+                    }
+                } else if (e.key === 'Escape') {
+                    hideSuggestions();
+                    searchInput.blur();
+                }
+
+                return;
+            }
+
             if (e.key === 'Enter') {
                 e.preventDefault();
                 // Check for Ctrl/Meta key to open in new tab
@@ -2936,20 +3368,66 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        // Global paste: paste text anywhere on the page into the search bar
+        document.addEventListener('paste', (e) => {
+            // Don't interfere with text fields or open modals
+            const anyModalOpen = document.querySelector('.modal-container.visible');
+            if (anyModalOpen) return;
+
+            const target = e.target;
+            const targetTag = target && target.tagName ? target.tagName.toUpperCase() : '';
+            const isEditableTarget = target === searchInput ||
+                targetTag === 'INPUT' ||
+                targetTag === 'TEXTAREA' ||
+                target?.isContentEditable;
+
+            if (isEditableTarget) return;
+
+            const pastedText =
+                (e.clipboardData && e.clipboardData.getData('text/plain')) ||
+                (window.clipboardData && window.clipboardData.getData('Text')) ||
+                '';
+
+            if (!pastedText || pastedText.trim().length === 0) return;
+
+            e.preventDefault();
+            searchInput.value = pastedText;
+            searchInput.focus();
+            searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }, true);
+
         // Clear button click
         if (clearSearchBtn) {
             clearSearchBtn.addEventListener('click', () => {
                 searchInput.value = '';
                 clearSearchBtn.style.display = 'none';
+                activeKeywordSearchQuery = '';
+                if (searchMode === SEARCH_MODE_KEYWORDS) {
+                    renderGroups();
+                }
                 hideSuggestions();
                 searchInput.focus();
+            });
+        }
+
+        if (searchModeToggleInput) {
+            updateSearchModeToggle();
+
+            searchModeToggleInput.addEventListener('change', () => {
+                searchMode = searchMode === SEARCH_MODE_GOOGLE ? SEARCH_MODE_KEYWORDS : SEARCH_MODE_GOOGLE;
+                saveSearchMode(searchMode);
+                updateSearchModeToggle();
+
+                activeKeywordSearchQuery = searchMode === SEARCH_MODE_KEYWORDS ? normalizeSearchQuery(searchInput.value) : '';
+                renderGroups();
+                showSuggestions(searchInput.value);
             });
         }
     }
 
     // Update selected suggestion highlight
     function updateSelectedSuggestion() {
-        const items = searchSuggestions.querySelectorAll('.suggestion-item');
+        const items = searchSuggestions.querySelectorAll('.suggestion-item[data-suggestion-mode="google"]');
         items.forEach((item, index) => {
             if (index === selectedSuggestionIndex) {
                 item.classList.add('selected');
@@ -2958,6 +3436,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (currentSuggestions[index]) {
                     searchInput.value = currentSuggestions[index];
                 }
+            } else {
+                item.classList.remove('selected');
+            }
+        });
+    }
+
+    function updateSelectedKeywordSuggestion() {
+        const items = searchSuggestions.querySelectorAll('.suggestion-item[data-suggestion-mode="keywords"]');
+        items.forEach((item, index) => {
+            if (index === selectedKeywordSuggestionIndex) {
+                item.classList.add('selected');
             } else {
                 item.classList.remove('selected');
             }
