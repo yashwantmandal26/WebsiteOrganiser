@@ -22,8 +22,8 @@ A professional, high-performance Progressive Web Application (PWA) designed to o
 
 ### ☁️ Intelligent Synchronization
 - **Real-time Firestore Sync**: Instant updates across all devices using Google Firebase.
-- **Public Contributions**: Anyone can add or modify keyword **Comments**, fostering a collaborative environment.
-- **Protected Management**: Structural changes (adding/renaming/deleting keywords and groups) are strictly reserved for **Admins**.
+- **Public Contributions**: Anyone can add groups and keywords/links, and anyone can add or modify keyword **Comments**.
+- **Protected Management**: Renaming and deleting keywords and groups are strictly reserved for **Admins**.
 - **Offline-First Resilience**: Full functionality without internet access, powered by robust local storage caching and Service Workers.
 
 ### 📱 PWA Excellence
@@ -91,8 +91,8 @@ WebsiteOrganiser/
 Administrative actions are protected to maintain organization integrity.
 - **Default Password**: `yashman911` (Base64 encoded in `script.js`).
 - **Permissions**: 
-  - **Everyone**: Read keywords, click keywords (counters), and **Edit Comments**.
-  - **Admin Only**: Add keywords, Rename keywords, Delete keywords/groups, and Import/Export data.
+  - **Everyone**: Read keywords, click keywords (counters), **Edit Comments**, and add groups/keywords/links.
+  - **Admin Only**: Rename keywords/groups, Delete keywords/groups, and Import/Export data.
 
 ---
 *Created with ❤️ for a more organized and productive web experience.*

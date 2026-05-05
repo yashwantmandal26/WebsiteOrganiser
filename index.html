@@ -63,9 +63,6 @@
       <!-- Google Search Bar (Inline) -->
       <div class="search-bar-container">
         <div class="search-bar-wrapper">
-          <img src="media/google.png" alt="Google Search" class="search-icon">
-          <input type="text" id="google-search-input" class="google-search-input" placeholder="Google Search..."
-            autocomplete="off" spellcheck="false">
           <label class="search-mode-toggle-switch" title="Switch to keyword search">
             <input id="search-mode-toggle-input" class="search-mode-toggle-input" type="checkbox" role="switch"
               aria-label="Switch search mode">
@@ -75,6 +72,12 @@
               <span class="search-mode-toggle-thumb" aria-hidden="true"></span>
             </span>
           </label>
+          <input type="text" id="google-search-input" class="google-search-input" placeholder="Google Search..."
+            autocomplete="off" spellcheck="false">
+          <button type="button" id="search-submit-btn" class="search-submit-btn" aria-label="Search"
+            title="Search">
+            <img src="media/google.png" alt="" class="search-icon">
+          </button>
           <button id="clear-search-btn" class="clear-search-btn" style="display: none;" title="Clear">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -125,8 +128,8 @@
   <div id="add-keyword-modal" class="modal-container">
     <div class="modal-content">
       <h2><img src="media/rename.png" style="width:24px;height:24px;margin-right:10px;vertical-align:middle;">Add Keyword</h2>
-      <input type="text" id="add-keyword-input" placeholder="Enter name or link...">
-      <input type="text" id="add-keyword-desc-input" placeholder="Give a comment..." style="margin-top: 10px;">
+      <input type="text" id="add-keyword-input" placeholder="Enter name or link..." autocomplete="off">
+      <input type="text" id="add-keyword-desc-input" placeholder="Give a comment..." style="margin-top: 10px;" autocomplete="off">
       <div class="modal-actions">
         <button id="add-keyword-save-btn" class="btn" onclick="if(window.saveNewKeyword)saveNewKeyword()">Add</button>
         <button id="add-keyword-cancel-btn" class="btn btn-secondary"

@@ -24,6 +24,10 @@ window.onerror = function (msg, url, lineNo, columnNo, error) {
 // Global reset for zoom and animation states
 let lastZoomTime = 0;
 
+function getEventKey(e) {
+    return typeof e.key === 'string' ? e.key : '';
+}
+
 function resetKeywordStates(force = false, preserveFocus = false) {
     // If a zoom just started (less than 20 seconds ago), ignore unexpected resets 
     // unless explicitly forced (like the logo click or pageshow).
@@ -414,9 +418,9 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.style.display = adminLoggedIn ? 'inline-flex' : 'none';
         });
 
-        // Show/hide add group FAB
+        // The add group FAB is available to everyone.
         if (addFab) {
-            addFab.style.display = adminLoggedIn ? 'flex' : 'none';
+            addFab.style.display = 'flex';
         }
     }
 
@@ -507,6 +511,144 @@ document.addEventListener('DOMContentLoaded', () => {
     const descriptionsRef = cloudSyncEnabled ? db.collection('sharedData').doc('keywordDescriptions') : createOfflineDocRef();
     const LOCAL_STORAGE_KEY = 'websiteorganiser_groups_cache';
     const CLICK_COUNTS_STORAGE_KEY = 'websiteorganiser_clicks_cache';
+    const LOCAL_GROUP_ORDER_KEY = 'websiteorganiser_group_order';
+    let localGroupOrder = [];
+
+    function normalizeGroupOrderKey(name) {
+        return (name || '').trim().toLowerCase();
+    }
+
+    function loadLocalGroupOrder() {
+        try {
+            const storedOrder = localStorage.getItem(LOCAL_GROUP_ORDER_KEY);
+            if (!storedOrder) {
+                return [];
+            }
+
+            const parsedOrder = JSON.parse(storedOrder);
+            return Array.isArray(parsedOrder)
+                ? parsedOrder.filter(item => typeof item === 'string' && item.trim().length > 0)
+                : [];
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function saveLocalGroupOrder(order = localGroupOrder) {
+        try {
+            localStorage.setItem(LOCAL_GROUP_ORDER_KEY, JSON.stringify(order));
+        } catch (e) {
+            // localStorage might be full or unavailable
+        }
+    }
+
+    function getOrderedGroupEntries() {
+        const groupEntries = groups.map((group, originalIndex) => ({
+            group,
+            originalIndex,
+            orderKey: normalizeGroupOrderKey(group.name)
+        }));
+
+        const entryByKey = new Map();
+        groupEntries.forEach((entry) => {
+            if (!entryByKey.has(entry.orderKey)) {
+                entryByKey.set(entry.orderKey, entry);
+            }
+        });
+
+        const orderedEntries = [];
+        const seenKeys = new Set();
+
+        localGroupOrder.forEach((storedName) => {
+            const key = normalizeGroupOrderKey(storedName);
+            const entry = entryByKey.get(key);
+            if (entry && !seenKeys.has(key)) {
+                orderedEntries.push(entry);
+                seenKeys.add(key);
+            }
+        });
+
+        groupEntries.forEach((entry) => {
+            if (!seenKeys.has(entry.orderKey)) {
+                orderedEntries.push(entry);
+                seenKeys.add(entry.orderKey);
+            }
+        });
+
+        const nextOrder = orderedEntries.map(entry => entry.group.name);
+        if (JSON.stringify(nextOrder) !== JSON.stringify(localGroupOrder)) {
+            localGroupOrder = nextOrder;
+            saveLocalGroupOrder();
+        }
+
+        return orderedEntries;
+    }
+
+    function renameLocalGroupOrder(oldName, newName) {
+        const oldKey = normalizeGroupOrderKey(oldName);
+        const newKey = normalizeGroupOrderKey(newName);
+        if (!oldKey || !newKey) {
+            return;
+        }
+
+        const nextOrder = [];
+        let replaced = false;
+
+        localGroupOrder.forEach((storedName) => {
+            const key = normalizeGroupOrderKey(storedName);
+            if (key === oldKey) {
+                if (!replaced) {
+                    nextOrder.push(newName);
+                    replaced = true;
+                }
+            } else if (key !== newKey) {
+                nextOrder.push(storedName);
+            }
+        });
+
+        if (!replaced) {
+            nextOrder.push(newName);
+        }
+
+        localGroupOrder = nextOrder;
+        saveLocalGroupOrder();
+    }
+
+    function removeLocalGroupOrder(groupName) {
+        const key = normalizeGroupOrderKey(groupName);
+        if (!key) {
+            return;
+        }
+
+        localGroupOrder = localGroupOrder.filter(name => normalizeGroupOrderKey(name) !== key);
+        saveLocalGroupOrder();
+    }
+
+    function moveLocalGroupOrder(draggedGroupName, targetGroupName) {
+        const draggedKey = normalizeGroupOrderKey(draggedGroupName);
+        const targetKey = normalizeGroupOrderKey(targetGroupName);
+        if (!draggedKey || !targetKey || draggedKey === targetKey) {
+            return false;
+        }
+
+        const orderedNames = getOrderedGroupEntries().map(entry => entry.group.name);
+        const draggedIndex = orderedNames.findIndex(name => normalizeGroupOrderKey(name) === draggedKey);
+        const targetIndex = orderedNames.findIndex(name => normalizeGroupOrderKey(name) === targetKey);
+
+        if (draggedIndex === -1 || targetIndex === -1) {
+            return false;
+        }
+
+        const [draggedName] = orderedNames.splice(draggedIndex, 1);
+        const insertIndex = draggedIndex < targetIndex ? targetIndex - 1 : targetIndex;
+        orderedNames.splice(insertIndex, 0, draggedName);
+
+        localGroupOrder = orderedNames;
+        saveLocalGroupOrder();
+        return true;
+    }
+
+    localGroupOrder = loadLocalGroupOrder();
 
     // Save to localStorage for offline access
     function saveToLocalStorage() {
@@ -1605,8 +1747,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // GROUP CRUD
     const openGroupModal = (mode, index = null) => {
-        if (!adminLoggedIn) {
-            alert('Admin access is required to manage groups.');
+        if (mode === 'edit' && !adminLoggedIn) {
+            alert('Admin access is required to rename groups.');
             return;
         }
         groupModalMode = mode;
@@ -1618,6 +1760,10 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const saveGroup = async () => {
+        if (groupModalMode === 'edit' && !adminLoggedIn) {
+            alert('Admin access is required to rename groups.');
+            return;
+        }
         const newName = groupNameInput.value.trim();
         if (!newName) {
             alert('Group name cannot be empty.');
@@ -1637,7 +1783,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (groupModalMode === 'add') {
             groups.push({ name: newName, keywords: [] });
         } else {
+            const oldName = groups[currentGroupIndex].name;
             groups[currentGroupIndex].name = newName;
+            renameLocalGroupOrder(oldName, newName);
         }
 
         toggleModal(groupModal, false);
@@ -1649,7 +1797,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Expose functions to window for inline onclick handlers
     window.saveGroup = saveGroup;
     window.closeGroupModal = () => toggleModal(groupModal, false);
-    window.closeAddKeywordModal = () => toggleModal(addKeywordModal, false);
+    window.closeAddKeywordModal = () => {
+        resetAddKeywordModalState();
+        toggleModal(addKeywordModal, false);
+    };
 
     // Add event listener for Enter key on groupNameInput
     groupNameInput.addEventListener('keydown', (e) => {
@@ -1664,30 +1815,35 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         if (confirm(`Are you sure you want to delete the group "${groups[index].name}"?`)) {
+            const deletedGroupName = groups[index].name;
             groups.splice(index, 1);
+            removeLocalGroupOrder(deletedGroupName);
             await syncAndSaveGroups();
             renderGroups();
         }
     };
 
-    async function addKeywordToGroup(index) {
-        if (!adminLoggedIn) {
-            if (typeof showToast === 'function') {
-                showToast('Admin access required to add keywords. Use Admin Login first.', 3000);
-            } else {
-                alert('Admin access required to add keywords. Use Admin Login first.');
-            }
-            return;
+    function resetAddKeywordModalState() {
+        addKeywordTargetGroupIndex = null;
+
+        if (addKeywordInput) {
+            addKeywordInput.value = '';
         }
-        
+
+        if (addKeywordDescInput) {
+            addKeywordDescInput.value = '';
+        }
+    }
+
+    async function addKeywordToGroup(index) {
         const group = groups[index];
         if (!group) {
             return;
         }
 
         // Show add keyword modal instead of prompt
+        resetAddKeywordModalState();
         addKeywordTargetGroupIndex = index;
-        addKeywordInput.value = '';
         toggleModal(addKeywordModal, true);
         // Delay focus until modal transition completes for reliable auto-focus
         setTimeout(() => {
@@ -1772,6 +1928,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Optimistic UI update: Render and close immediately
         renderGroups();
+        resetAddKeywordModalState();
         toggleModal(addKeywordModal, false);
 
         try {
@@ -1808,7 +1965,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const isKeywordSearchActive = searchMode === SEARCH_MODE_KEYWORDS && searchTokens.length > 0;
 
         // Store original index for each group so UI actions hit the right item
-        const filteredGroups = groups.map((group, idx) => {
+        const orderedGroups = getOrderedGroupEntries();
+        const filteredGroups = orderedGroups.map(({ group, originalIndex }) => {
             const previewKeywords = group.keywords.map((keyword, keywordIndex) => {
                 const { displayText, targetUrl } = parseKeyword(keyword);
                 const encodedKeyword = encodeURIComponent(keyword).replace(/\./g, '%2E');
@@ -1828,7 +1986,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             return {
                 ...group,
-                _originalIndex: idx,
+                _originalIndex: originalIndex,
                 _previewKeywords: previewKeywords,
             };
         }).filter((group) => !isKeywordSearchActive || group._previewKeywords.length > 0);
@@ -1907,17 +2065,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     addKeywordBtnBg = groupColor;
                 }
 
-                // Keep the add button visible so users can discover the action,
-                // but the click handler still enforces admin access.
+                // Keep the add button visible so everyone can add new keywords/links.
                 const addKeywordBtnHTML = `
                     <button 
                         type="button"
                         class="icon-btn icon-btn--add-keyword"
                         data-action="add-keyword"
                         data-group-index="${originalIndex}"
-                        style="cursor:pointer; z-index:10; pointer-events:auto; user-select:none; background: ${addKeywordBtnBg} !important; ${adminLoggedIn ? '' : 'opacity: 0.85;'}"
+                        style="cursor:pointer; z-index:10; pointer-events:auto; user-select:none; background: ${addKeywordBtnBg} !important;"
                         aria-label="Add keyword to ${group.name}"
-                        title="${adminLoggedIn ? `Add keyword to ${group.name}` : 'Admin login required to add keywords'}"
+                        title="Add keyword to ${group.name}"
                         onclick="event.stopPropagation(); window.addKeywordToGroup(${originalIndex}); return false;">
                         <span class="icon-plus">+</span>
                     </button>
@@ -2033,8 +2190,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Set group index for event delegation
                 groupCard.dataset.groupIndex = originalIndex;
-                // Make group card draggable only for admins
-                groupCard.draggable = adminLoggedIn;
+                // Make group cards draggable for desktop browsers.
+                groupCard.draggable = !document.body.classList.contains('is-touch');
 
                 groupsContainer.appendChild(groupCard);
             });
@@ -2073,11 +2230,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        if (!adminLoggedIn) {
-            e.preventDefault();
-            return;
-        }
-
         if (draggedCard) {
             draggedItemIndex = parseInt(draggedCard.dataset.groupIndex);
             e.dataTransfer.effectAllowed = 'move';
@@ -2086,7 +2238,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     groupsContainer.addEventListener('dragover', (e) => {
-        if (!adminLoggedIn) return;
         e.preventDefault(); // Allow dropping
         const dropTarget = e.target.closest('.group-card');
         if (dropTarget && draggedItemIndex !== null && !document.body.classList.contains('is-touch')) {
@@ -2106,7 +2257,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     groupsContainer.addEventListener('drop', (e) => {
-        if (!adminLoggedIn) return;
         e.preventDefault();
         const dropTarget = e.target.closest('.group-card');
         if (dropTarget && draggedItemIndex !== null && !document.body.classList.contains('is-touch')) {
@@ -2114,12 +2264,12 @@ document.addEventListener('DOMContentLoaded', () => {
             dropTarget.classList.remove('drag-over');
 
             if (draggedItemIndex !== dropTargetIndex) {
-                const [draggedGroup] = groups.splice(draggedItemIndex, 1);
-                groups.splice(dropTargetIndex, 0, draggedGroup);
-                (async () => {
-                    await syncAndSaveGroups(); // Save the new order
-                    renderGroups(); // Re-render to reflect new order
-                })();
+                const draggedGroup = groups[draggedItemIndex];
+                const dropTargetGroup = groups[dropTargetIndex];
+
+                if (draggedGroup && dropTargetGroup && moveLocalGroupOrder(draggedGroup.name, dropTargetGroup.name)) {
+                    renderGroups(); // Re-render to reflect the browser-local order
+                }
             }
         }
         draggedItemIndex = null; // Reset dragged item index
@@ -2412,7 +2562,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (addKeywordCancelBtn) {
-        addKeywordCancelBtn.onclick = () => toggleModal(addKeywordModal, false);
+        addKeywordCancelBtn.onclick = () => window.closeAddKeywordModal();
     }
 
     // Allow Enter key in add keyword modal
@@ -2428,18 +2578,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (addKeywordModal) {
         addKeywordModal.addEventListener('click', (e) => {
             if (e.target === addKeywordModal) {
-                toggleModal(addKeywordModal, false);
+                window.closeAddKeywordModal();
             }
         });
     }
 
     // --- Global Modal Key Handling (Type-to-Focus & Enter-to-Save) ---
     document.addEventListener('keydown', (e) => {
+        const key = getEventKey(e);
         const activeModal = document.querySelector('.modal-container.visible');
         if (!activeModal) return;
 
         // 1. Handle Enter to Save/Submit
-        if (e.key === 'Enter') {
+        if (key === 'Enter') {
             // Find the primary save button for the active modal
             const saveBtn = activeModal.querySelector('.btn:not(.btn-secondary), #admin-login-btn, #save-group-btn, #rename-save-btn, #add-keyword-save-btn');
             if (saveBtn) {
@@ -2450,7 +2601,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // 2. Handle Escape to Close
-        if (e.key === 'Escape') {
+        if (key === 'Escape') {
             toggleModal(activeModal, false);
             return;
         }
@@ -2458,7 +2609,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 3. Handle character typing to auto-focus primary input
         // Check if user is typing a character (a single char, not a control/cmd key)
         const isControlKey = e.ctrlKey || e.metaKey || e.altKey;
-        const isSpecialKey = e.key.length > 1; // e.g., Shift, Tab, Arrow keys, etc.
+        const isSpecialKey = key.length > 1; // e.g., Shift, Tab, Arrow keys, etc.
         const isAlreadyInInput = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA';
 
         if (!isControlKey && !isSpecialKey && !isAlreadyInInput) {
@@ -2700,6 +2851,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const searchInput = document.getElementById('google-search-input');
     const searchModeToggleInput = document.getElementById('search-mode-toggle-input');
+    const searchSubmitBtn = document.getElementById('search-submit-btn');
     const clearSearchBtn = document.getElementById('clear-search-btn');
     const searchSuggestions = document.getElementById('search-suggestions');
     const SEARCH_HISTORY_KEY = 'googleSearchHistory';
@@ -2938,13 +3090,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!query || query.trim().length === 0) return;
 
         const trimmedQuery = query.trim();
+        const directUrl = getDirectWebsiteUrl(trimmedQuery);
 
-        // Save to history
-        saveSearchToHistory(trimmedQuery);
+        if (directUrl) {
+            openURLWithBrowser(directUrl, inNewTab);
+        } else {
+            // Save to history
+            saveSearchToHistory(trimmedQuery);
 
-        // Open Google search
-        const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(trimmedQuery)}`;
-        openURLWithBrowser(searchUrl, inNewTab);
+            // Open Google search
+            const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(trimmedQuery)}`;
+            openURLWithBrowser(searchUrl, inNewTab);
+        }
 
         // Clear input and hide suggestions
         searchInput.value = '';
@@ -2952,6 +3109,40 @@ document.addEventListener('DOMContentLoaded', () => {
         clearSearchBtn.style.display = 'none';
 
         // Toast removed
+    }
+
+    function submitSearchFromBar(inNewTab = false) {
+        if (!searchInput) return;
+
+        const trimmedQuery = normalizeSearchQuery(searchInput.value);
+        if (!trimmedQuery) {
+            searchInput.focus();
+            return;
+        }
+
+        if (searchMode === SEARCH_MODE_KEYWORDS) {
+            const directUrl = getDirectWebsiteUrl(trimmedQuery);
+            if (directUrl) {
+                openURLWithBrowser(directUrl, inNewTab);
+                searchInput.value = '';
+                hideSuggestions();
+                clearSearchBtn.style.display = 'none';
+                return;
+            }
+
+            const selectedIndex = selectedKeywordSuggestionIndex >= 0 && selectedKeywordSuggestionIndex < currentKeywordSuggestions.length
+                ? selectedKeywordSuggestionIndex
+                : 0;
+            const selectedResult = currentKeywordSuggestions[selectedIndex];
+
+            if (selectedResult) {
+                focusKeywordSearchResult(selectedResult, inNewTab);
+            }
+
+            return;
+        }
+
+        performGoogleSearch(trimmedQuery, inNewTab);
     }
 
     // Escape HTML to prevent XSS
@@ -2963,6 +3154,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function normalizeSearchQuery(query) {
         return (query || '').trim().replace(/\s+/g, ' ');
+    }
+
+    function getDirectWebsiteUrl(query) {
+        const trimmedQuery = normalizeSearchQuery(query);
+        if (!trimmedQuery || /\s/.test(trimmedQuery)) {
+            return null;
+        }
+
+        try {
+            const parsed = new URL(normaliseKeywordUrl(trimmedQuery));
+            const hostname = parsed.hostname.toLowerCase();
+            const looksLikeWebHost =
+                hostname === 'localhost' ||
+                /^\d{1,3}(?:\.\d{1,3}){3}$/.test(hostname) ||
+                hostname.includes('.');
+
+            if (looksLikeWebHost && /^https?:$/.test(parsed.protocol)) {
+                return parsed.href;
+            }
+        } catch (error) {
+            // Not a direct website URL.
+        }
+
+        return null;
     }
 
     function escapeRegex(text) {
@@ -3105,6 +3320,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function setSearchMode(nextMode) {
+        if (nextMode !== SEARCH_MODE_GOOGLE && nextMode !== SEARCH_MODE_KEYWORDS) {
+            return;
+        }
+
+        if (searchMode === nextMode) {
+            return;
+        }
+
+        searchMode = nextMode;
+        saveSearchMode(searchMode);
+        updateSearchModeToggle();
+
+        activeKeywordSearchQuery = searchMode === SEARCH_MODE_KEYWORDS ? normalizeSearchQuery(searchInput.value) : '';
+        renderGroups();
+        showSuggestions(searchInput.value);
+    }
+
     function focusKeywordSearchResult(result, openInNewTab = false) {
         if (!result || !result.targetUrl) return;
 
@@ -3227,6 +3460,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Keydown event - handle Enter and arrow keys
         searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                setSearchMode(searchMode === SEARCH_MODE_GOOGLE ? SEARCH_MODE_KEYWORDS : SEARCH_MODE_GOOGLE);
+                return;
+            }
+
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const inNewTab = e.ctrlKey || e.metaKey;
+                submitSearchFromBar(inNewTab);
+                return;
+            }
+
             if (searchMode === SEARCH_MODE_KEYWORDS) {
                 if (e.key === 'Enter') {
                     e.preventDefault();
@@ -3293,6 +3539,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        if (searchSubmitBtn) {
+            searchSubmitBtn.addEventListener('click', (e) => {
+                const inNewTab = e.ctrlKey || e.metaKey;
+                submitSearchFromBar(inNewTab);
+            });
+        }
+
         // Global paste: paste text anywhere on the page into the search bar
         document.addEventListener('paste', (e) => {
             // Don't interfere with text fields or open modals
@@ -3339,13 +3592,17 @@ document.addEventListener('DOMContentLoaded', () => {
             updateSearchModeToggle();
 
             searchModeToggleInput.addEventListener('change', () => {
-                searchMode = searchMode === SEARCH_MODE_GOOGLE ? SEARCH_MODE_KEYWORDS : SEARCH_MODE_GOOGLE;
-                saveSearchMode(searchMode);
-                updateSearchModeToggle();
+                setSearchMode(searchMode === SEARCH_MODE_GOOGLE ? SEARCH_MODE_KEYWORDS : SEARCH_MODE_GOOGLE);
+            });
 
-                activeKeywordSearchQuery = searchMode === SEARCH_MODE_KEYWORDS ? normalizeSearchQuery(searchInput.value) : '';
-                renderGroups();
-                showSuggestions(searchInput.value);
+            searchModeToggleInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Tab') {
+                    e.preventDefault();
+                    setSearchMode(searchMode === SEARCH_MODE_GOOGLE ? SEARCH_MODE_KEYWORDS : SEARCH_MODE_GOOGLE);
+                    if (searchInput) {
+                        searchInput.focus();
+                    }
+                }
             });
         }
     }
@@ -3398,8 +3655,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Keyboard shortcuts and global typing capture
     document.addEventListener('keydown', (e) => {
+        const key = getEventKey(e);
         // Handle Ctrl+K / Cmd+K to focus and select search
-        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        if ((e.ctrlKey || e.metaKey) && key.toLowerCase() === 'k') {
             e.preventDefault();
             searchInput.focus();
             searchInput.select();
@@ -3423,7 +3681,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Ignore modifier keys and non-character keys
         // e.key.length === 1 typically identifies character keys (a, b, 1, !, etc.)
-        if (e.ctrlKey || e.metaKey || e.altKey || e.key.length !== 1) {
+        if (e.ctrlKey || e.metaKey || e.altKey || key.length !== 1) {
             return;
         }
 

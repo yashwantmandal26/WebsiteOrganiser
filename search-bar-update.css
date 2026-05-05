@@ -60,8 +60,38 @@
   width: 24px;
   height: 24px;
   flex-shrink: 0;
-  margin-right: 12px;
+  margin-right: 0;
+  display: block;
   object-fit: contain;
+}
+
+.search-submit-btn {
+  width: 24px;
+  height: 24px;
+  padding: 3px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.search-submit-btn:hover {
+  background: var(--button-hover-bg);
+}
+
+.search-submit-btn:hover .search-icon {
+  transform: scale(1.08);
+}
+
+.search-mode-toggle-switch {
+  margin-left: 0;
+  margin-right: 8px;
 }
 
 .google-search-input {
@@ -206,7 +236,7 @@
   align-items: center;
   width: 144px;
   height: 32px;
-  padding: 2px;
+  padding: 3px;
   box-sizing: border-box;
   border: 1px solid var(--card-border);
   border-radius: 999px;
@@ -236,10 +266,10 @@
 
 .search-mode-toggle-thumb {
   position: absolute;
-  top: 2px;
-  left: 2px;
-  width: calc(50% - 2px);
-  height: calc(100% - 4px);
+  top: 3px;
+  left: 3px;
+  width: calc(50% - 3px);
+  height: calc(100% - 6px);
   border-radius: 999px;
   background: linear-gradient(180deg, rgba(66, 133, 244, 0.15), rgba(66, 133, 244, 0.05));
   box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.3), 0 2px 6px rgba(0, 0, 0, 0.15);
@@ -261,6 +291,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 10px;
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.01em;
@@ -294,13 +327,22 @@
 
 @media (max-width: 480px) {
   .search-mode-toggle-switch {
-    margin-left: 4px;
+    margin-left: 0;
+    margin-right: 4px;
+  }
+
+  .search-submit-btn {
+    margin-left: 6px;
   }
 
   .search-mode-toggle-track {
     width: 120px;
     height: 28px;
     padding: 2px;
+  }
+
+  .clear-search-btn {
+    margin-left: 6px;
   }
 
   .search-mode-toggle-option {
