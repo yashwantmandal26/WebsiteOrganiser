@@ -646,6 +646,23 @@ header h1 {
   overflow: hidden;
 }
 
+@media (hover: hover) and (pointer: fine) {
+  .group-card .icon-btn--add-keyword {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-4px) scale(0.92);
+    pointer-events: none;
+  }
+
+  .group-card:hover .icon-btn--add-keyword,
+  .group-card:focus-within .icon-btn--add-keyword {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+  }
+}
+
 [data-theme="dark"] .icon-btn--add-keyword , [data-theme="solid-dark"] .icon-btn--add-keyword {
   border: 1px solid rgba(179, 136, 255, 0.45);
   color: #f5ecff;
@@ -2746,6 +2763,30 @@ body.is-zooming .search-suggestions {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
+.keyword-new-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  transform: none;
+  z-index: 11;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: rgba(123, 44, 191, 0.92);
+  color: #fff;
+  pointer-events: none;
+  box-shadow: 0 4px 10px rgba(123, 44, 191, 0.25);
+}
+
+[data-theme="dark"] .keyword-new-badge,
+[data-theme="solid-dark"] .keyword-new-badge {
+  background: rgba(187, 134, 252, 0.95);
+  color: #150f1f;
+}
+
 .keyword-grid-preview-item:hover .keyword-click-counter,
 .keyword-list-preview li:hover .keyword-click-counter {
   opacity: 1;
@@ -2863,6 +2904,13 @@ body.is-zooming .search-suggestions {
   .keyword-grid-preview-item .keyword-grid-text {
     font-size: 0.62rem;
     line-height: 1.1;
+  }
+
+  .keyword-new-badge {
+    top: 4px;
+    left: 4px;
+    font-size: 8px;
+    padding: 2px 6px;
   }
 }
 

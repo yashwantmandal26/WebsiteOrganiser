@@ -352,6 +352,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let groups = []; // Initialize as empty, data will be loaded from localStorage
     let globalClickCounts = {}; // Global keyword click counts
     let keywordDescriptions = {}; // Global keyword descriptions
+    let keywordAddedAt = {}; // Per-keyword add timestamps
     let currentGroupIndex = null; // To track which group is being edited
     let groupModalMode = 'add'; // 'add' or 'edit'
     let draggedItemIndex = null; // To track the index of the dragged group
@@ -509,9 +510,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const groupsRef = cloudSyncEnabled ? db.collection('sharedData').doc('groups') : createOfflineDocRef();
     const clickCountsRef = cloudSyncEnabled ? db.collection('sharedData').doc('clickCounts') : createOfflineDocRef();
     const descriptionsRef = cloudSyncEnabled ? db.collection('sharedData').doc('keywordDescriptions') : createOfflineDocRef();
+    const keywordAddedAtRef = cloudSyncEnabled ? db.collection('sharedData').doc('keywordAddedAt') : createOfflineDocRef();
     const LOCAL_STORAGE_KEY = 'websiteorganiser_groups_cache';
     const CLICK_COUNTS_STORAGE_KEY = 'websiteorganiser_clicks_cache';
+    const KEYWORD_ADDED_AT_STORAGE_KEY = 'websiteorganiser_keyword_added_at_cache';
     const LOCAL_GROUP_ORDER_KEY = 'websiteorganiser_group_order';
+    const NEW_BADGE_DURATION_MS = 15 * 24 * 60 * 60 * 1000;
     let localGroupOrder = [];
 
     function normalizeGroupOrderKey(name) {
@@ -655,6 +659,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(groups));
             localStorage.setItem(CLICK_COUNTS_STORAGE_KEY, JSON.stringify(globalClickCounts));
+            localStorage.setItem(KEYWORD_ADDED_AT_STORAGE_KEY, JSON.stringify(keywordAddedAt));
         } catch (e) {
             // localStorage might be full or unavailable
         }
@@ -665,9 +670,14 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const cachedGroups = localStorage.getItem(LOCAL_STORAGE_KEY);
             const cachedClicks = localStorage.getItem(CLICK_COUNTS_STORAGE_KEY);
+            const cachedAddedAt = localStorage.getItem(KEYWORD_ADDED_AT_STORAGE_KEY);
             
             if (cachedClicks) {
                 globalClickCounts = JSON.parse(cachedClicks);
+            }
+
+            if (cachedAddedAt) {
+                keywordAddedAt = JSON.parse(cachedAddedAt);
             }
             
             if (cachedGroups) {
@@ -698,11 +708,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function loadGroups() {
         try {
-            // Load groups, click counts and descriptions in parallel
-            const [groupsDoc, clicksDoc, descriptionsDoc] = await Promise.all([
+            // Load groups, click counts, descriptions and keyword add timestamps in parallel
+            const [groupsDoc, clicksDoc, descriptionsDoc, addedAtDoc] = await Promise.all([
                 groupsRef.get(),
                 clickCountsRef.get(),
-                descriptionsRef.get()
+                descriptionsRef.get(),
+                keywordAddedAtRef.get()
             ]);
 
             let changed = false;
@@ -719,6 +730,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const newDesc = descriptionsDoc.data() || {};
                 if (JSON.stringify(newDesc) !== JSON.stringify(keywordDescriptions)) {
                     keywordDescriptions = newDesc;
+                    changed = true;
+                }
+            }
+
+            if (addedAtDoc.exists) {
+                const newAddedAt = addedAtDoc.data() || {};
+                if (JSON.stringify(newAddedAt) !== JSON.stringify(keywordAddedAt)) {
+                    keywordAddedAt = newAddedAt;
                     changed = true;
                 }
             }
@@ -797,12 +816,58 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
+
+        // Listen for keyword add timestamps
+        keywordAddedAtRef.onSnapshot((doc) => {
+            if (doc.exists) {
+                const newAddedAt = doc.data() || {};
+                if (JSON.stringify(newAddedAt) !== JSON.stringify(keywordAddedAt)) {
+                    keywordAddedAt = newAddedAt;
+                    if (!draggedKeywordData && draggedItemIndex === null && !document.body.classList.contains('is-zooming')) {
+                        renderGroups();
+                    }
+                }
+            }
+        });
     }
 
     // --- Data Persistence ---
     // Persist to Firestore cloud
     async function syncAndSaveGroups() {
         await saveGroups();
+    }
+
+    function getKeywordEncodedKey(keyword) {
+        return encodeURIComponent(keyword).replace(/\./g, '%2E');
+    }
+
+    function getKeywordAddedTimestamp(keyword) {
+        if (!keyword) return null;
+        const encodedKeyword = getKeywordEncodedKey(keyword);
+        const storedValue = keywordAddedAt[encodedKeyword];
+        if (storedValue === undefined || storedValue === null) return null;
+
+        const timestamp = typeof storedValue === 'string' ? Date.parse(storedValue) : Number(storedValue);
+        return Number.isFinite(timestamp) ? timestamp : null;
+    }
+
+    function isKeywordNew(keyword) {
+        const timestamp = getKeywordAddedTimestamp(keyword);
+        return timestamp !== null && (Date.now() - timestamp) <= NEW_BADGE_DURATION_MS;
+    }
+
+    async function saveKeywordAddedAt(keyword, timestamp = Date.now()) {
+        if (!keyword) return;
+        const encodedKeyword = getKeywordEncodedKey(keyword);
+        keywordAddedAt[encodedKeyword] = timestamp;
+
+        try {
+            await keywordAddedAtRef.set({
+                [encodedKeyword]: timestamp
+            }, { merge: true });
+        } catch (error) {
+            console.error('Failed to save keyword add timestamp:', error);
+        }
     }
 
     // --- Context Menu for Keywords ---
@@ -1046,6 +1111,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Full rename logic (admin only)
         groups[renameTargetGroupIndex].keywords[renameTargetKeywordIndex] = newKeyword;
 
+        if (keywordAddedAt[oldEncoded] !== undefined) {
+            keywordAddedAt[newEncoded] = keywordAddedAt[oldEncoded];
+            delete keywordAddedAt[oldEncoded];
+        }
+
         // Update global click counts and descriptions on rename
         const updateOps = [];
         
@@ -1074,6 +1144,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 [newEncoded]: newDescription
             }, { merge: true });
         }));
+
+        if (keywordAddedAt[newEncoded] !== undefined) {
+            updateOps.push(keywordAddedAtRef.update({
+                [newEncoded]: keywordAddedAt[newEncoded],
+                [oldEncoded]: firestoreFieldValue.delete()
+            }).catch(() => {
+                return keywordAddedAtRef.set({
+                    [newEncoded]: keywordAddedAt[newEncoded]
+                }, { merge: true });
+            }));
+        }
 
         try {
             await Promise.all(updateOps);
@@ -1120,8 +1201,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     }),
                     descriptionsRef.update({
                         [encodedKeyword]: firestoreFieldValue.delete()
+                    }),
+                    keywordAddedAtRef.update({
+                        [encodedKeyword]: firestoreFieldValue.delete()
                     })
                 ]);
+                delete keywordAddedAt[encodedKeyword];
             } catch (error) {
                 console.error('Failed to delete global click count or description:', error);
             }
@@ -1917,14 +2002,19 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        const addedAt = Date.now();
+        const encodedKeyword = getKeywordEncodedKey(keyword);
         lastAddedKeyword = keyword;
         lastAddedGroupIndex = addKeywordTargetGroupIndex;
         group.keywords.push(keyword);
+        keywordAddedAt[encodedKeyword] = addedAt;
 
-        // Save description if provided
+        const saveTasks = [saveKeywordAddedAt(keyword, addedAt)];
         if (description) {
-            await saveKeywordDescription(keyword, description);
+            saveTasks.push(saveKeywordDescription(keyword, description));
         }
+
+        await Promise.all(saveTasks);
 
         // Optimistic UI update: Render and close immediately
         renderGroups();
@@ -1969,8 +2059,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const filteredGroups = orderedGroups.map(({ group, originalIndex }) => {
             const previewKeywords = group.keywords.map((keyword, keywordIndex) => {
                 const { displayText, targetUrl } = parseKeyword(keyword);
-                const encodedKeyword = encodeURIComponent(keyword).replace(/\./g, '%2E');
+                const encodedKeyword = getKeywordEncodedKey(keyword);
                 const description = keywordDescriptions[encodedKeyword] || '';
+                const isNew = isKeywordNew(keyword);
                 const searchText = [keyword, displayText, targetUrl, description, group.name].join(' ').toLowerCase();
 
                 return {
@@ -1980,8 +2071,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     targetUrl,
                     description,
                     encodedKeyword,
+                    isNew,
                     searchText,
                 };
+            }).sort((left, right) => {
+                const leftCount = globalClickCounts[left.encodedKeyword] || 0;
+                const rightCount = globalClickCounts[right.encodedKeyword] || 0;
+
+                if (rightCount !== leftCount) {
+                    return rightCount - leftCount;
+                }
+
+                return left.displayText.localeCompare(right.displayText, undefined, { sensitivity: 'base' });
             }).filter((entry) => !isKeywordSearchActive || matchesKeywordSearch(entry.searchText, searchTokens));
 
             return {
@@ -2065,7 +2166,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     addKeywordBtnBg = groupColor;
                 }
 
-                // Keep the add button visible so everyone can add new keywords/links.
                 const addKeywordBtnHTML = `
                     <button 
                         type="button"
@@ -2127,7 +2227,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     keywords.forEach((keywordEntry) => {
-                        const { keyword, keywordIndex, displayText, targetUrl, description, encodedKeyword } = keywordEntry;
+                        const { keyword, keywordIndex, displayText, targetUrl, description, encodedKeyword, isNew } = keywordEntry;
                         const emoji = getKeywordEmoji(keyword);
                         const previewItem = document.createElement('div');
                         previewItem.className = 'keyword-grid-preview-item';
@@ -2149,6 +2249,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             : escapeHtml(displayText);
 
                         previewItem.innerHTML = `
+                                ${isNew ? '<div class="keyword-new-badge">NEW</div>' : ''}
                                 <div class="keyword-grid-icon">${getFaviconOrEmoji(keyword, emoji)}</div>
                                 <div class="keyword-grid-text">${keywordLabelHtml}</div>
                                 <div class="keyword-click-counter">${clickCount}</div>
@@ -2644,8 +2745,9 @@ document.addEventListener('DOMContentLoaded', () => {
         exportBtn.addEventListener('click', () => {
             const dataToExport = {
                 exportDate: new Date().toISOString(),
-                version: '4.7',
-                groups: groups
+                version: '4.8',
+                groups: groups,
+                keywordAddedAt: keywordAddedAt
             };
             const jsonString = JSON.stringify(dataToExport, null, 2);
             const blob = new Blob([jsonString], { type: 'application/json' });
@@ -2693,6 +2795,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (choice) {
                     // Replace mode
                     groups = importedData.groups;
+                    keywordAddedAt = importedData.keywordAddedAt || {};
                 } else {
                     // Merge mode - add new groups and merge keywords
                     importedData.groups.forEach(importedGroup => {
@@ -2702,11 +2805,15 @@ document.addEventListener('DOMContentLoaded', () => {
                             importedGroup.keywords.forEach(kw => {
                                 if (!existingGroup.keywords.some(k => k.toLowerCase() === kw.toLowerCase())) {
                                     existingGroup.keywords.push(kw);
+                                    keywordAddedAt[getKeywordEncodedKey(kw)] = Date.now();
                                 }
                             });
                         } else {
                             // Add new group
                             groups.push(importedGroup);
+                            importedGroup.keywords.forEach((kw) => {
+                                keywordAddedAt[getKeywordEncodedKey(kw)] = Date.now();
+                            });
                         }
                     });
                 }
@@ -2763,15 +2870,42 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => { viewport.content = original; }, 300);
     }
 
+    // Map for dynamic movie website links updated via GitHub Actions
+    let dynamicLinkMap = {};
+    fetch('./dynamic-links.json')
+        .then(res => res.json())
+        .then(data => { dynamicLinkMap = data; })
+        .catch(() => console.warn('Could not load dynamic-links.json, continuing offline.'));
+
     // Enhanced URL opening with browser preference
     function openURLWithBrowser(url, inNewTab = false) {
         resetIOSZoom();
+
+        // 🚀 Substitute with the auto-updated dynamic link if available
+        let finalUrl = url;
+        let urlBase = url.replace(/\/$/, ''); // Remove trailing slash
+        
+        // Loop through keys and see if the user's clicked url matches a static url
+        for (const [staticUrl, dynamicUrl] of Object.entries(dynamicLinkMap)) {
+            // E.g. user clicks https://hdhub4u.gs/ (which is how they saved it), we can match 'hdhub4u'
+            // or just match exactly. Let's do exact match first, but allowing http/https interchange
+            if (urlBase.includes(staticUrl.replace(/^https?:\/\//, ''))) {
+                finalUrl = dynamicUrl;
+                break;
+            }
+        }
+
+        // Check if keyword is hdhub4u to cover variants manually
+        if (urlBase.includes('hdhub4u.') && dynamicLinkMap['https://hdhub4u.insure']) {
+             finalUrl = dynamicLinkMap['https://hdhub4u.insure'];
+        }
+
         // On PC (non-touch desktop), always open in a new tab so
         // WebsiteOrganiser stays open for reuse.
         const isPCDesktop = !('ontouchstart' in window) && !navigator.maxTouchPoints && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
         if (inNewTab || isPCDesktop) {
             // Use noopener for security and performance
-            const w = window.open(url, '_blank', 'noopener');
+            const w = window.open(finalUrl, '_blank', 'noopener');
             if (w) { try { w.opener = null; } catch (e) { } }
         } else {
             // Mobile: open in same tab
