@@ -1349,12 +1349,12 @@ li[data-keyword-index].keyword-drag-over {
 
 .keyword-grid-preview-item[draggable="true"],
 li[draggable="true"][data-keyword-index] {
-  cursor: grab;
+  cursor: pointer;
 }
 
 .keyword-grid-preview-item[draggable="true"]:active,
 li[draggable="true"][data-keyword-index]:active {
-  cursor: grabbing;
+  cursor: pointer;
 }
 
 .group-card-header {
