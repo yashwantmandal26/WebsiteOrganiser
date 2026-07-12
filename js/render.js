@@ -186,11 +186,35 @@
                     
                     expandBtn.onclick = (e) => {
                         e.stopPropagation();
-                        const isExpanded = previewGrid.classList.toggle('expanded');
-                        expandBtn.innerHTML = isExpanded 
-                            ? '<svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>'
-                            : '<svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>';
-                        expandBtn.title = isExpanded ? 'Show less' : 'Show more';
+                        const isExpanded = groupCard.classList.contains('expanded');
+                        
+                        if (!isExpanded) {
+                            // Expanding: Measure height before and after to apply negative margin
+                            const beforeHeight = groupCard.getBoundingClientRect().height;
+                            groupCard.classList.add('expanded');
+                            previewGrid.classList.add('expanded');
+                            
+                            requestAnimationFrame(() => {
+                                const afterHeight = groupCard.getBoundingClientRect().height;
+                                const diff = afterHeight - beforeHeight;
+                                groupCard.style.marginBottom = `-${diff}px`;
+                                groupCard.style.zIndex = '100';
+                                groupCard.style.boxShadow = '0 25px 50px rgba(0,0,0,0.5), 0 0 0 1px var(--card-border)'; 
+                            });
+                            
+                            expandBtn.innerHTML = '<svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>';
+                            expandBtn.title = 'Show less';
+                        } else {
+                            // Collapsing
+                            groupCard.classList.remove('expanded');
+                            previewGrid.classList.remove('expanded');
+                            groupCard.style.marginBottom = '';
+                            groupCard.style.zIndex = '';
+                            groupCard.style.boxShadow = '';
+                            
+                            expandBtn.innerHTML = '<svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>';
+                            expandBtn.title = 'Show more';
+                        }
                     };
                     expandBtnContainer.appendChild(expandBtn);
                     groupCard.appendChild(expandBtnContainer);

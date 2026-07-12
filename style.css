@@ -2793,6 +2793,14 @@ body.is-zooming .search-suggestions {
   background: rgba(255, 255, 255, 0.1);
 }
 
+/* Ensure overlapping expanded cards don't show text underneath */
+.group-card.expanded {
+  background: var(--main-bg) !important;
+}
+[data-theme="light"] .group-card.expanded {
+  background: #ffffff !important;
+}
+
 @media (max-width: 480px) {
   .keyword-grid-preview {
     gap: 6px;
