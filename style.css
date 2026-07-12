@@ -2749,9 +2749,48 @@ body.is-zooming .search-suggestions {
   align-content: start;
 }
 
-/* Limit to max 3 rows (3 rows * 4 cols = 12 items max) */
-.keyword-grid-preview > .keyword-grid-preview-item:nth-child(n+13) {
+/* Limit to max 3 rows (3 rows * 4 cols = 12 items max) unless expanded */
+.keyword-grid-preview:not(.expanded) > .keyword-grid-preview-item:nth-child(n+13) {
   display: none !important;
+}
+
+/* Expand container styling */
+.group-expand-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+  width: 100%;
+}
+
+.group-expand-btn {
+  background: var(--button-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-color);
+  cursor: pointer;
+  transition: all 0.2s var(--bounce-effect);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  padding: 0;
+}
+
+.group-expand-btn:hover {
+  background: var(--button-hover-bg);
+  transform: scale(1.15);
+  color: #ffbe0b;
+}
+
+[data-theme="dark"] .group-expand-btn, [data-theme="solid-dark"] .group-expand-btn {
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+[data-theme="dark"] .group-expand-btn:hover, [data-theme="solid-dark"] .group-expand-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 @media (max-width: 480px) {

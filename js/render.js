@@ -173,6 +173,29 @@
                 }
 
                 groupCard.appendChild(previewGrid);
+
+                // Expand Button for >12 items
+                if (keywords.length > 12) {
+                    const expandBtnContainer = document.createElement('div');
+                    expandBtnContainer.className = 'group-expand-container';
+                    
+                    const expandBtn = document.createElement('button');
+                    expandBtn.className = 'group-expand-btn icon-btn';
+                    expandBtn.innerHTML = '<svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>';
+                    expandBtn.title = 'Show more';
+                    
+                    expandBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        const isExpanded = previewGrid.classList.toggle('expanded');
+                        expandBtn.innerHTML = isExpanded 
+                            ? '<svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>'
+                            : '<svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>';
+                        expandBtn.title = isExpanded ? 'Show less' : 'Show more';
+                    };
+                    expandBtnContainer.appendChild(expandBtn);
+                    groupCard.appendChild(expandBtnContainer);
+                }
+
                 groupCard.draggable = !document.body.classList.contains('is-touch');
                 fragment.appendChild(groupCard);
             });
