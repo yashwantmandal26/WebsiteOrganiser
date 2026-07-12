@@ -3722,19 +3722,26 @@ body.is-zooming .search-suggestions {
 
 @media (max-width: 700px) {
   .header-row {
-    flex-direction: column;
-    align-items: stretch;
-    justify-content: flex-start;
-    gap: 12px;
-    max-width: 100vw;
+    display: grid;
+    grid-template-columns: 1fr auto auto 1fr;
+    grid-template-areas:
+      "logo logo title title"
+      ". timer toggle ."
+      "search search search search";
+    align-items: center;
+    row-gap: 16px;
+    column-gap: 16px;
     padding: 0 8px;
     min-height: unset;
   }
 
-  .header-left {
-    justify-content: flex-start;
-    gap: 8px;
-    margin-bottom: 0;
+  .header-left, .header-brand {
+    display: contents;
+  }
+
+  .site-logo-link {
+    grid-area: logo;
+    justify-self: end;
   }
 
   .site-logo {
@@ -3748,30 +3755,32 @@ body.is-zooming .search-suggestions {
     right: 1px;
   }
 
-  .header-left h1 {
+  .site-title {
+    grid-area: title;
+    justify-self: start;
     font-size: 1.9rem;
     text-align: left;
   }
 
-  .header-center {
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    margin-bottom: 0;
+  .live-clock {
+    grid-area: timer;
+    justify-self: end;
+    margin: 0;
   }
 
-  .header-center .search-container {
+  .search-bar-container {
+    grid-area: search;
     width: 100%;
-    max-width: 100%;
   }
 
   .header-right {
+    grid-area: toggle;
+    justify-self: start;
     flex-direction: row;
     align-items: center;
-    justify-content: space-between;
-    gap: 6px;
-    width: 100%;
+    width: auto;
     margin: 0;
+    gap: 8px;
     flex-wrap: nowrap;
     overflow: visible;
   }
