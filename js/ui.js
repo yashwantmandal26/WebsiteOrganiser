@@ -109,11 +109,15 @@
     // ── Admin ─────────────────────────────────────────────────────────────
     WO.updateAdminButton = function () {
         const btn = document.getElementById('admin-btn');
-        if (!btn) return;
-        btn.textContent = WO.adminLoggedIn ? 'Admin Logout' : 'Admin Login';
+        if (btn) {
+            btn.textContent = WO.adminLoggedIn ? 'Admin Logout' : 'Admin Login';
+        }
         document.querySelectorAll('.admin-only').forEach(el => { el.style.display = WO.adminLoggedIn ? 'inline-flex' : 'none'; });
         const fab = document.getElementById('add-fab');
         if (fab) fab.style.display = 'flex';
+        // Visual hint on clock when admin is logged in
+        const clock = document.getElementById('live-clock');
+        if (clock) clock.style.boxShadow = WO.adminLoggedIn ? '0 0 12px rgba(76,175,80,0.6)' : '';
     };
 
     // ── URL Opening ───────────────────────────────────────────────────────
@@ -214,8 +218,11 @@
             });
         }
 
-        if (adminBtn) {
-            adminBtn.addEventListener('click', () => {
+        // Admin login/logout — triggered by clicking the live clock
+        const liveClock = document.getElementById('live-clock');
+        if (liveClock) {
+            liveClock.style.cursor = 'pointer';
+            liveClock.addEventListener('click', () => {
                 if (WO.adminLoggedIn) {
                     if (typeof firebase !== 'undefined' && firebase.auth) {
                         firebase.auth().signOut().catch(e => console.error('Signout failed:', e));
@@ -230,6 +237,12 @@
                 adminErrorMsg.textContent = 'Invalid credentials';
                 adminErrorMsg.style.display = 'none';
                 WO.toggleModal(adminModal, true); adminIdInput.focus();
+            });
+        }
+        // Keep adminBtn handler as fallback if element exists
+        if (adminBtn) {
+            adminBtn.addEventListener('click', () => {
+                if (liveClock) liveClock.click();
             });
         }
         const adminLoginForm = document.getElementById('admin-login-form');

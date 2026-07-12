@@ -172,11 +172,9 @@
             const direct = WO.getDirectWebsiteUrl(tq);
             if (direct) { WO.openURLWithBrowser(direct, inNewTab); searchInput.value = ''; hideSuggestions(); if (clearSearchBtn) clearSearchBtn.style.display = 'none'; return; }
 
-            // Keyword suggestion selected/available → open it
-            if (WO.currentKeywordSuggestions && WO.currentKeywordSuggestions.length) {
-                const idx = WO.selectedKeywordSuggestionIndex >= 0 && WO.selectedKeywordSuggestionIndex < WO.currentKeywordSuggestions.length
-                    ? WO.selectedKeywordSuggestionIndex : 0;
-                const r = WO.currentKeywordSuggestions[idx];
+            // Keyword suggestion explicitly selected via arrow keys → open it
+            if (WO.selectedKeywordSuggestionIndex >= 0 && WO.currentKeywordSuggestions && WO.currentKeywordSuggestions.length) {
+                const r = WO.currentKeywordSuggestions[WO.selectedKeywordSuggestionIndex];
                 if (r) { WO.openURLWithBrowser(r.targetUrl, inNewTab); searchInput.value = ''; hideSuggestions(); if (clearSearchBtn) clearSearchBtn.style.display = 'none'; return; }
             }
 
