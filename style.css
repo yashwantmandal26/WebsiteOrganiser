@@ -3024,7 +3024,7 @@ body.is-zooming .search-suggestions {
 .header-brand {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: 2px;
   line-height: 1;
 }
