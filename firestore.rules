@@ -2,18 +2,28 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     // Shared data collection for WebsiteOrganiser
+
+    // groups: anyone can read/write (the app itself controls who can add/rename/delete via UI logic)
     match /sharedData/groups {
       allow read: if true;
       allow write: if request.resource.data.keys().hasAll(['data', 'updatedAt'])
                    && request.resource.data.data is list;
     }
 
+    // clickCounts: anyone can read/write (click tracking is open)
     match /sharedData/clickCounts {
       allow read: if true;
       allow write: if true;
     }
 
+    // keywordDescriptions: anyone can read/write (comments/descriptions are open)
     match /sharedData/keywordDescriptions {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // keywordAddedAt: anyone can read/write (timestamp tracking is open)
+    match /sharedData/keywordAddedAt {
       allow read: if true;
       allow write: if true;
     }

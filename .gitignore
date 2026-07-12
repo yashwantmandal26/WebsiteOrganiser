@@ -6,6 +6,13 @@ firebase-config.js
 firebase-debug.log*
 firestore-debug.log*
 
+# Dependencies
+node_modules/
+package-lock.json
+
 # OS files
 .DS_Store
 Thumbs.db
+
+# Scratch / temp
+scratch/

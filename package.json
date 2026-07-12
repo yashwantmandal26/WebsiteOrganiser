@@ -1,0 +1,11 @@
+{
+  "name": "websiteorganiser-scraper",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "scrape": "node scraper.js"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.12"
+  }
+}

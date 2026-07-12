@@ -106,6 +106,16 @@
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
+/* Prevent browser autofill background overlay */
+.google-search-input:-webkit-autofill,
+.google-search-input:-webkit-autofill:hover, 
+.google-search-input:-webkit-autofill:focus, 
+.google-search-input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+  -webkit-text-fill-color: var(--text-color) !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
 .google-search-input::placeholder {
   color: var(--placeholder-color);
   opacity: 0.7;
@@ -186,30 +196,47 @@
   font-weight: 800;
   white-space: nowrap;
   display: inline-block !important;
-  color: #FFD700 !important; /* Vivid Gold Fallback */
+  color: #7b2cbf !important; /* Premium purple fallback */
   opacity: 1 !important;
   visibility: visible !important;
   z-index: 100 !important;
   line-height: 1.2;
   position: relative;
-  /* Ultra-saturated gradient */
-  background: linear-gradient(90deg, #FFD700 0%, #00B4DB 50%, #0083B0 100%) !important;
+  /* Premium animated shifting gradient */
+  background: linear-gradient(
+    120deg, 
+    #ff007f 0%, 
+    #7b2cbf 25%, 
+    #00f2fe 50%, 
+    #ffcd3c 75%, 
+    #ff007f 100%
+  ) !important;
+  background-size: 200% auto !important;
   -webkit-background-clip: text !important;
   background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
-  background-size: 100% auto !important;
+  animation: logo-shimmer 6s linear infinite !important;
   /* Fix blurriness & sharpening */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  /* Add subtle sharp contrast shadow */
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.15)) !important;
+  /* Premium drop shadow glow */
+  filter: drop-shadow(0 2px 6px rgba(123, 44, 191, 0.25)) !important;
+}
+
+@keyframes logo-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
 }
 
 /* Add deeper shadow for dark mode */
 [data-theme="dark"] .site-title,
 [data-theme="solid-dark"] .site-title {
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4)) !important;
+  filter: drop-shadow(0 2px 8px rgba(168, 85, 247, 0.45)) !important;
 }
 
 .search-mode-toggle-switch {
@@ -392,7 +419,7 @@
   .site-title {
     font-size: clamp(1.3rem, 2.2vw, 1.8rem);
     display: inline-block !important;
-    color: #FFD700 !important;
+    color: #7b2cbf !important;
     visibility: visible !important;
     opacity: 1 !important;
   }
@@ -459,7 +486,7 @@
   .site-title {
     display: inline-block !important;
     font-size: 1.6rem;
-    color: #FFD700 !important;
+    color: #7b2cbf !important;
     visibility: visible !important;
     opacity: 1 !important;
   }
@@ -572,7 +599,7 @@
   .site-title {
       font-size: 1.45rem;
       display: inline-block !important;
-      color: #FFD700 !important;
+      color: #7b2cbf !important;
       visibility: visible !important;
       opacity: 1 !important;
     }
@@ -652,7 +679,7 @@
     font-size: 1.35rem;
     letter-spacing: -0.02em;
     display: inline-block !important;
-    color: #FFD700 !important;
+    color: #7b2cbf !important;
     visibility: visible !important;
     opacity: 1 !important;
   }
@@ -778,7 +805,7 @@
     font-size: 1.25rem;
     letter-spacing: -0.01em;
     display: inline-block !important;
-    color: #FFD700 !important;
+    color: #7b2cbf !important;
     visibility: visible !important;
     opacity: 1 !important;
   }
@@ -878,7 +905,7 @@
   .site-title {
     font-size: 1.3rem;
     display: inline-block !important;
-    color: #FFD700 !important;
+    color: #7b2cbf !important;
     visibility: visible !important;
     opacity: 1 !important;
   }
@@ -965,3 +992,5 @@
     -webkit-font-smoothing: antialiased;
   }
 }
+
+

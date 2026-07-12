@@ -97,7 +97,7 @@
     #add-keyword-modal .modal-actions {
         flex-direction: row;
         /* Keep row even on mobile for better space usage, if buttons fit */
-        justify-content: stretch;
+        justify-content: space-between;
     }
 
     #add-keyword-modal .modal-actions .btn {
