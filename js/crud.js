@@ -287,7 +287,7 @@
         if (exportBtn) {
             exportBtn.addEventListener('click', () => {
                 const data = JSON.stringify({
-                    exportDate: new Date().toISOString(), version: '4.8',
+                    exportDate: new Date().toISOString(), version: '4.9',
                     groups: WO.groups, keywordAddedAt: WO.keywordAddedAt,
                     globalClickCounts: WO.globalClickCounts, keywordDescriptions: WO.keywordDescriptions
                 }, null, 2);
