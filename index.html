@@ -58,13 +58,23 @@
         </a>
         <div class="header-brand">
           <span class="site-title">WebsiteOrganiser</span>
-          <div class="live-clock" id="live-clock" aria-live="polite" aria-label="Current time">
-            <span class="clock-hours" id="clock-hh">12</span><span class="clock-sep">:</span><span class="clock-minutes" id="clock-mm">00</span><span class="clock-sep">:</span><span class="clock-seconds" id="clock-ss">00</span><span class="clock-ampm" id="clock-ampm">&nbsp;AM</span>
-          </div>
         </div>
       </div>
 
-      <!-- Hybrid Smart Search Bar -->
+      <!-- Row 2: Timer + Theme Toggle -->
+      <div class="header-controls">
+        <div class="live-clock" id="live-clock" aria-live="polite" aria-label="Current time">
+          <span class="clock-hours" id="clock-hh">12</span><span class="clock-sep">:</span><span class="clock-minutes" id="clock-mm">00</span><span class="clock-sep">:</span><span class="clock-seconds" id="clock-ss">00</span><span class="clock-ampm" id="clock-ampm">&nbsp;AM</span>
+        </div>
+        <div class="header-right">
+          <button id="export-btn" class="btn holo-btn admin-only" style="display: none;">📤 Export</button>
+          <button id="import-btn" class="btn holo-btn admin-only" style="display: none;">📥 Import</button>
+          <input type="file" id="import-file-input" accept=".json" style="display: none;">
+          <button id="theme-toggle-btn" class="btn icon-btn holo-btn"><img src="media/theme.png" alt="Theme"
+              class="theme-icon"></button>
+        </div>
+      </div>
+      <!-- Row 3: Search Bar -->
       <div class="search-bar-container">
         <div class="search-bar-wrapper">
           <input type="text" id="google-search-input" class="google-search-input"
@@ -88,14 +98,6 @@
         <div id="search-suggestions" class="search-suggestions" style="display: none;">
           <!-- Dynamically populated -->
         </div>
-      </div>
-
-      <div class="header-right">
-        <button id="export-btn" class="btn holo-btn admin-only" style="display: none;">📤 Export</button>
-        <button id="import-btn" class="btn holo-btn admin-only" style="display: none;">📥 Import</button>
-        <input type="file" id="import-file-input" accept=".json" style="display: none;">
-        <button id="theme-toggle-btn" class="btn icon-btn holo-btn"><img src="media/theme.png" alt="Theme"
-            class="theme-icon"></button>
       </div>
     </div>
   </header>
