@@ -1,48 +1,27 @@
 // =============================================================================
-// js/search.js — Search Bar (Google + Keyword Mode), Suggestions, History
+// js/search.js — Hybrid Smart Search (Keywords first, Google fallback)
+// =============================================================================
+// Behaviour:
+//   • User types → run live keyword search against WO.groups
+//   • Keywords found  → show suggestion cards (existing keyword UI)
+//   • No keywords     → hide dropdown silently (no noise)
+//   • Empty input     → show recent Google search history
+//   • Enter           → if keyword suggestions exist → open first/selected
+//                       else → Google search
+//   • Live group card filtering still works (activeKeywordSearchQuery)
 // =============================================================================
 
 (function (WO) {
 
     WO.initSearch = function () {
-        const searchInput         = document.getElementById('google-search-input');
-        const searchModeToggle    = document.getElementById('search-mode-toggle-input');
-        const searchSubmitBtn     = document.getElementById('search-submit-btn');
-        const clearSearchBtn      = document.getElementById('clear-search-btn');
-        const searchSuggestions   = document.getElementById('search-suggestions');
+        const searchInput       = document.getElementById('google-search-input');
+        const searchSubmitBtn   = document.getElementById('search-submit-btn');
+        const clearSearchBtn    = document.getElementById('clear-search-btn');
+        const searchSuggestions = document.getElementById('search-suggestions');
 
         if (!searchInput) return;
 
-        // ── Mode Toggle ───────────────────────────────────────────────────────
-        function updateModeUI() {
-            if (!searchModeToggle) return;
-            const isKW = WO.searchMode === WO.SEARCH_MODE_KEYWORDS;
-            searchModeToggle.checked = isKW;
-            const track = searchModeToggle.nextElementSibling;
-            if (track) { track.dataset.mode = isKW ? WO.SEARCH_MODE_KEYWORDS : WO.SEARCH_MODE_GOOGLE; track.title = isKW ? 'Switch to Google search' : 'Switch to keyword search'; }
-            searchInput.placeholder = isKW ? 'Search keywords and comments...' : 'Google Search...';
-        }
-        updateModeUI();
-
-        function setSearchMode(mode) {
-            if (mode !== WO.SEARCH_MODE_GOOGLE && mode !== WO.SEARCH_MODE_KEYWORDS) return;
-            if (WO.searchMode === mode) return;
-            WO.searchMode = mode;
-            try { localStorage.setItem(WO.SEARCH_MODE_KEY, mode); } catch {}
-            updateModeUI();
-            WO.activeKeywordSearchQuery = mode === WO.SEARCH_MODE_KEYWORDS ? WO.normalizeSearchQuery(searchInput.value) : '';
-            WO.renderGroups();
-            showSuggestions(searchInput.value);
-        }
-
-        if (searchModeToggle) {
-            searchModeToggle.addEventListener('change', () => {
-                setSearchMode(searchModeToggle.checked ? WO.SEARCH_MODE_KEYWORDS : WO.SEARCH_MODE_GOOGLE);
-            });
-        }
-
         // ── History Helpers ───────────────────────────────────────────────────
-        // Cache history in memory to avoid repeated localStorage reads
         let _historyCache = null;
         function loadHistory() {
             if (_historyCache) return _historyCache;
@@ -65,7 +44,7 @@
             } catch {}
         }
 
-        // ── Suggestions ───────────────────────────────────────────────────────
+        // ── Suggestion visibility helpers ─────────────────────────────────────
         function hideSuggestions() {
             searchSuggestions.style.display = 'none';
             searchSuggestions.innerHTML = '';
@@ -75,47 +54,7 @@
             WO.currentKeywordSuggestions = [];
         }
 
-        function showSuggestions(query) {
-            if (WO.searchMode === WO.SEARCH_MODE_KEYWORDS) { showKeywordSuggestions(query); return; }
-            const history = loadHistory();
-            WO.currentSuggestions = [];
-            const tq = WO.normalizeSearchQuery(query);
-            if (!tq) {
-                if (history.length) { WO.currentSuggestions = history.slice(0, 5); renderSuggestions(WO.currentSuggestions, 'recent'); }
-                else hideSuggestions();
-                return;
-            }
-            const filtered = history.filter(i => i.toLowerCase().includes(tq.toLowerCase()));
-            if (filtered.length) { WO.currentSuggestions = filtered.slice(0, 5); renderSuggestions(WO.currentSuggestions, 'filtered'); }
-            else { WO.currentSuggestions = [tq]; renderSuggestions(WO.currentSuggestions, 'new'); }
-        }
-
-        function renderSuggestions(suggestions, type) {
-            if (!suggestions || !suggestions.length) { hideSuggestions(); return; }
-            WO.selectedSuggestionIndex = -1;
-            const isHistory = type === 'recent' || type === 'filtered';
-            let html = isHistory ? '<div class="suggestion-header"><span>Recent Searches</span></div>' : '';
-            suggestions.forEach((s, i) => {
-                const icon = isHistory
-                    ? '<svg class="suggestion-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>'
-                    : '<svg class="suggestion-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>';
-                const delBtn = isHistory ? `<button class="suggestion-delete-btn" data-action="delete-item" data-query="${WO.escapeHtml(s)}" title="Remove" aria-label="Remove from history"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>` : '';
-                html += `<div class="suggestion-item" data-index="${i}" data-query="${WO.escapeHtml(s)}" data-suggestion-mode="google">${icon}<span class="suggestion-text">${WO.escapeHtml(s)}</span>${delBtn}</div>`;
-            });
-            if (isHistory) html += `<div class="suggestion-item suggestion-clear-all" data-action="clear-history" data-suggestion-mode="google"><svg class="suggestion-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg><span class="suggestion-text">Clear all history</span></div>`;
-            searchSuggestions.innerHTML = html;
-            searchSuggestions.style.display = 'block';
-            // No per-item listeners — delegation handler set up once at init below
-        }
-
-        function showKeywordSuggestions(query) {
-            const nq = WO.normalizeSearchQuery(query);
-            WO.selectedKeywordSuggestionIndex = -1;
-            if (!nq) { WO.currentKeywordSuggestions = []; hideSuggestions(); return; }
-            WO.currentKeywordSuggestions = getKeywordSearchResults(nq);
-            renderKeywordSuggestions(WO.currentKeywordSuggestions, nq);
-        }
-
+        // ── Keyword search core ───────────────────────────────────────────────
         function getKeywordSearchResults(query) {
             const nq     = WO.normalizeSearchQuery(query);
             const tokens = nq.toLowerCase().split(/\s+/).filter(Boolean);
@@ -123,9 +62,9 @@
             WO.groups.forEach((group, gi) => {
                 group.keywords.forEach((keyword, ki) => {
                     const { displayText, targetUrl } = WO.parseKeyword(keyword);
-                    const ek = encodeURIComponent(keyword).replace(/\./g, '%2E');
+                    const ek   = encodeURIComponent(keyword).replace(/\./g, '%2E');
                     const desc = WO.keywordDescriptions[ek] || '';
-                    const st = [keyword, displayText, targetUrl, desc, group.name].join(' ').toLowerCase();
+                    const st   = [keyword, displayText, targetUrl, desc, group.name].join(' ').toLowerCase();
                     if (!WO.matchesKeywordSearch(st, tokens)) return;
                     let score = 2;
                     const ld = displayText.toLowerCase(), lk = keyword.toLowerCase(), ldc = desc.toLowerCase(), lnq = nq.toLowerCase();
@@ -139,13 +78,8 @@
         }
 
         function renderKeywordSuggestions(results, query) {
-            if (!results || !results.length) {
-                searchSuggestions.innerHTML = `<div class="suggestion-item keyword-suggestion-empty" data-suggestion-mode="keywords"><svg class="suggestion-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><span class="suggestion-text">No keywords or comments match "${WO.escapeHtml(query)}"</span></div>`;
-                searchSuggestions.style.display = 'block';
-                // No per-item listeners — delegation handler set up once at init below
-                return;
-            }
-            let html = '<div class="suggestion-header"><span>Keyword matches</span></div>';
+            if (!results || !results.length) { hideSuggestions(); return; }
+            let html = '<div class="suggestion-header"><span>Website matches</span></div>';
             results.forEach((r, i) => {
                 const snippet = r.description ? WO.buildSearchSnippet(r.description, query) : '';
                 const meta = [r.groupName && WO.escapeHtml(r.groupName), snippet && WO.highlightSearchHtml(snippet, query)].filter(Boolean).join(' &middot; ');
@@ -155,44 +89,66 @@
                         <span class="suggestion-text">${WO.highlightSearchHtml(r.displayText, query)}</span>
                         ${meta ? `<div class="keyword-suggestion-meta">${meta}</div>` : ''}
                     </div>
-                    <span class="keyword-suggestion-badge">Keyword</span>
+                    <span class="keyword-suggestion-badge">Open</span>
                 </div>`;
             });
             searchSuggestions.innerHTML = html;
             searchSuggestions.style.display = 'block';
-            // No per-item listeners — delegation handler set up once at init below
         }
 
+        // ── History suggestion (empty-input focus) ────────────────────────────
+        function renderHistorySuggestions() {
+            const history = loadHistory();
+            if (!history.length) { hideSuggestions(); return; }
+            WO.currentSuggestions = history.slice(0, 5);
+            WO.selectedSuggestionIndex = -1;
+            let html = '<div class="suggestion-header"><span>Recent Searches</span></div>';
+            WO.currentSuggestions.forEach((s, i) => {
+                const icon = '<svg class="suggestion-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
+                const delBtn = `<button class="suggestion-delete-btn" data-action="delete-item" data-query="${WO.escapeHtml(s)}" title="Remove" aria-label="Remove from history"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`;
+                html += `<div class="suggestion-item" data-index="${i}" data-query="${WO.escapeHtml(s)}" data-suggestion-mode="google">${icon}<span class="suggestion-text">${WO.escapeHtml(s)}</span>${delBtn}</div>`;
+            });
+            html += `<div class="suggestion-item suggestion-clear-all" data-action="clear-history" data-suggestion-mode="google"><svg class="suggestion-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg><span class="suggestion-text">Clear all history</span></div>`;
+            searchSuggestions.innerHTML = html;
+            searchSuggestions.style.display = 'block';
+        }
+
+        // ── Hybrid: main entry point for showing suggestions ──────────────────
+        function showSuggestions(query) {
+            const nq = WO.normalizeSearchQuery(query);
+
+            // Empty input → show history (or nothing)
+            if (!nq) {
+                WO.currentKeywordSuggestions = [];
+                renderHistorySuggestions();
+                return;
+            }
+
+            // Try keyword search first
+            const kwResults = getKeywordSearchResults(nq);
+            WO.currentKeywordSuggestions = kwResults;
+            WO.selectedKeywordSuggestionIndex = -1;
+
+            if (kwResults.length > 0) {
+                // ✅ Keyword matches → show them
+                renderKeywordSuggestions(kwResults, nq);
+            } else {
+                // ❌ No matches → hide dropdown silently (Google on Enter)
+                hideSuggestions();
+            }
+        }
+
+        // ── Selection helpers ─────────────────────────────────────────────────
         function updateSelectedSuggestion() {
             const items = searchSuggestions.querySelectorAll('.suggestion-item');
-            items.forEach((it, i) => { it.classList.toggle('selected', i === WO.selectedSuggestionIndex); if (i === WO.selectedSuggestionIndex) { searchInput.value = it.dataset.query || searchInput.value; } });
+            items.forEach((it, i) => {
+                it.classList.toggle('selected', i === WO.selectedSuggestionIndex);
+                if (i === WO.selectedSuggestionIndex) searchInput.value = it.dataset.query || searchInput.value;
+            });
         }
-
         function updateSelectedKeywordSuggestion() {
-            searchSuggestions.querySelectorAll('.suggestion-item').forEach((it, i) => it.classList.toggle('selected', i === WO.selectedKeywordSuggestionIndex));
-        }
-
-        // ── Suggestion Click Handlers (used by delegated listeners set up below) ───
-        function handleSuggestionClick(item, e) {
-            const mode = item.dataset.suggestionMode || WO.SEARCH_MODE_GOOGLE;
-            if (mode === WO.SEARCH_MODE_KEYWORDS) {
-                const r = WO.currentKeywordSuggestions[Number(item.dataset.index)];
-                if (r) { e.preventDefault(); e.stopPropagation(); WO.openURLWithBrowser(r.targetUrl, e.ctrlKey || e.metaKey); hideSuggestions(); }
-                return;
-            }
-            if (item.dataset.action === 'clear-history') { clearHistory(); hideSuggestions(); searchInput.value = ''; searchInput.focus(); return; }
-            const q = item.dataset.query; if (q) performGoogleSearch(q);
-        }
-
-        function handleSuggestionAuxClick(item, e) {
-            if (e.button !== 1) return;
-            const mode = item.dataset.suggestionMode || WO.SEARCH_MODE_GOOGLE;
-            if (mode === WO.SEARCH_MODE_KEYWORDS) {
-                const r = WO.currentKeywordSuggestions[Number(item.dataset.index)];
-                if (r) { e.preventDefault(); e.stopPropagation(); WO.openURLWithBrowser(r.targetUrl, true); }
-                return;
-            }
-            const q = item.dataset.query; if (q) { e.preventDefault(); e.stopPropagation(); performGoogleSearch(q, true); }
+            searchSuggestions.querySelectorAll('.suggestion-item').forEach((it, i) =>
+                it.classList.toggle('selected', i === WO.selectedKeywordSuggestionIndex));
         }
 
         // ── Google Search ─────────────────────────────────────────────────────
@@ -202,82 +158,113 @@
             const direct = WO.getDirectWebsiteUrl(tq);
             if (direct) { WO.openURLWithBrowser(direct, inNewTab); }
             else { saveHistory(tq); WO.openURLWithBrowser(`https://www.google.com/search?q=${encodeURIComponent(tq)}`, inNewTab); }
-            searchInput.value = ''; hideSuggestions();
+            searchInput.value = '';
+            hideSuggestions();
             if (clearSearchBtn) clearSearchBtn.style.display = 'none';
         }
 
+        // ── Submit (Enter / button click) ─────────────────────────────────────
         function submitFromBar(inNewTab = false) {
             const tq = WO.normalizeSearchQuery(searchInput.value);
             if (!tq) { searchInput.focus(); return; }
-            if (WO.searchMode === WO.SEARCH_MODE_KEYWORDS) {
-                const direct = WO.getDirectWebsiteUrl(tq);
-                if (direct) { WO.openURLWithBrowser(direct, inNewTab); searchInput.value = ''; hideSuggestions(); if (clearSearchBtn) clearSearchBtn.style.display = 'none'; return; }
-                const idx = WO.selectedKeywordSuggestionIndex >= 0 && WO.selectedKeywordSuggestionIndex < WO.currentKeywordSuggestions.length ? WO.selectedKeywordSuggestionIndex : 0;
+
+            // Direct URL shortcut (e.g. "youtube")
+            const direct = WO.getDirectWebsiteUrl(tq);
+            if (direct) { WO.openURLWithBrowser(direct, inNewTab); searchInput.value = ''; hideSuggestions(); if (clearSearchBtn) clearSearchBtn.style.display = 'none'; return; }
+
+            // Keyword suggestion selected/available → open it
+            if (WO.currentKeywordSuggestions && WO.currentKeywordSuggestions.length) {
+                const idx = WO.selectedKeywordSuggestionIndex >= 0 && WO.selectedKeywordSuggestionIndex < WO.currentKeywordSuggestions.length
+                    ? WO.selectedKeywordSuggestionIndex : 0;
                 const r = WO.currentKeywordSuggestions[idx];
-                if (r) { WO.openURLWithBrowser(r.targetUrl, inNewTab); hideSuggestions(); }
-                return;
+                if (r) { WO.openURLWithBrowser(r.targetUrl, inNewTab); searchInput.value = ''; hideSuggestions(); if (clearSearchBtn) clearSearchBtn.style.display = 'none'; return; }
             }
+
+            // Fallback → Google search
             performGoogleSearch(tq, inNewTab);
         }
 
-        // ── Input Event Listeners ─────────────────────────────────────────────
-        // Debounce timer for keyword-mode re-renders (avoids full DOM rebuild on every keystroke)
+        // ── Suggestion click handlers ─────────────────────────────────────────
+        function handleSuggestionClick(item, e) {
+            const mode = item.dataset.suggestionMode || 'google';
+            if (mode === 'keywords') {
+                const r = WO.currentKeywordSuggestions[Number(item.dataset.index)];
+                if (r) { e.preventDefault(); e.stopPropagation(); WO.openURLWithBrowser(r.targetUrl, e.ctrlKey || e.metaKey); searchInput.value = ''; hideSuggestions(); if (clearSearchBtn) clearSearchBtn.style.display = 'none'; }
+                return;
+            }
+            if (item.dataset.action === 'clear-history') { clearHistory(); hideSuggestions(); searchInput.value = ''; searchInput.focus(); return; }
+            const q = item.dataset.query; if (q) performGoogleSearch(q);
+        }
+        function handleSuggestionAuxClick(item, e) {
+            if (e.button !== 1) return;
+            const mode = item.dataset.suggestionMode || 'google';
+            if (mode === 'keywords') {
+                const r = WO.currentKeywordSuggestions[Number(item.dataset.index)];
+                if (r) { e.preventDefault(); e.stopPropagation(); WO.openURLWithBrowser(r.targetUrl, true); }
+                return;
+            }
+            const q = item.dataset.query; if (q) { e.preventDefault(); e.stopPropagation(); performGoogleSearch(q, true); }
+        }
+
+        // ── Input event ───────────────────────────────────────────────────────
         let _searchRenderTimer = null;
         searchInput.addEventListener('input', e => {
-            const q = e.target.value;
-            const tq = WO.normalizeSearchQuery(q);
-            if (clearSearchBtn) clearSearchBtn.style.display = tq.length > 0 ? 'block' : 'none';
-            if (WO.searchMode === WO.SEARCH_MODE_KEYWORDS) {
-                WO.activeKeywordSearchQuery = tq; // update state immediately
-                clearTimeout(_searchRenderTimer);
-                _searchRenderTimer = setTimeout(() => {
-                    WO.renderGroups();
-                    showSuggestions(q);
-                }, 150); // 150ms debounce — renders only after user pauses typing
-            } else {
-                showSuggestions(q); // Google mode: suggestions only, no re-render needed
-            }
+            const q  = e.target.value;
+            const nq = WO.normalizeSearchQuery(q);
+            if (clearSearchBtn) clearSearchBtn.style.display = nq.length > 0 ? 'block' : 'none';
+
+            // Update live card filtering immediately
+            WO.activeKeywordSearchQuery = nq;
+
+            clearTimeout(_searchRenderTimer);
+            _searchRenderTimer = setTimeout(() => {
+                WO.renderGroups();   // live group card highlighting
+                showSuggestions(q); // hybrid dropdown
+            }, 120);
         });
 
         searchInput.addEventListener('focus', () => {
-            if (WO.searchMode === WO.SEARCH_MODE_KEYWORDS) {
-                if (!WO.normalizeSearchQuery(searchInput.value).length) hideSuggestions();
-                else showSuggestions(searchInput.value);
-                return;
-            }
-            showSuggestions(searchInput.value.trim().length === 0 ? '' : searchInput.value);
+            showSuggestions(searchInput.value);
         });
 
+        // ── Keyboard navigation ───────────────────────────────────────────────
         searchInput.addEventListener('keydown', e => {
-            if (e.key === 'Tab') { e.preventDefault(); setSearchMode(WO.searchMode === WO.SEARCH_MODE_GOOGLE ? WO.SEARCH_MODE_KEYWORDS : WO.SEARCH_MODE_GOOGLE); return; }
             if (e.key === 'Enter') { e.preventDefault(); submitFromBar(e.ctrlKey || e.metaKey); return; }
             if (e.key === 'Escape') { hideSuggestions(); searchInput.blur(); return; }
-            if (WO.searchMode === WO.SEARCH_MODE_KEYWORDS) {
-                if (e.key === 'ArrowDown') { e.preventDefault(); if (WO.currentKeywordSuggestions.length) { WO.selectedKeywordSuggestionIndex = Math.min(WO.selectedKeywordSuggestionIndex + 1, WO.currentKeywordSuggestions.length - 1); updateSelectedKeywordSuggestion(); } }
-                else if (e.key === 'ArrowUp') { e.preventDefault(); if (WO.currentKeywordSuggestions.length) { WO.selectedKeywordSuggestionIndex = Math.max(WO.selectedKeywordSuggestionIndex - 1, -1); updateSelectedKeywordSuggestion(); } }
-                return;
+
+            const hasKW = WO.currentKeywordSuggestions && WO.currentKeywordSuggestions.length > 0;
+            const hasGoogle = WO.currentSuggestions && WO.currentSuggestions.length > 0;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (hasKW) { WO.selectedKeywordSuggestionIndex = Math.min(WO.selectedKeywordSuggestionIndex + 1, WO.currentKeywordSuggestions.length - 1); updateSelectedKeywordSuggestion(); }
+                else if (hasGoogle) { WO.selectedSuggestionIndex = Math.min(WO.selectedSuggestionIndex + 1, WO.currentSuggestions.length - 1); updateSelectedSuggestion(); }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (hasKW) { WO.selectedKeywordSuggestionIndex = Math.max(WO.selectedKeywordSuggestionIndex - 1, -1); updateSelectedKeywordSuggestion(); }
+                else if (hasGoogle) { WO.selectedSuggestionIndex = Math.max(WO.selectedSuggestionIndex - 1, -1); updateSelectedSuggestion(); }
             }
-            if (e.key === 'ArrowDown') { e.preventDefault(); if (WO.currentSuggestions.length) { WO.selectedSuggestionIndex = Math.min(WO.selectedSuggestionIndex + 1, WO.currentSuggestions.length - 1); updateSelectedSuggestion(); } }
-            else if (e.key === 'ArrowUp') { e.preventDefault(); if (WO.currentSuggestions.length) { WO.selectedSuggestionIndex = Math.max(WO.selectedSuggestionIndex - 1, -1); updateSelectedSuggestion(); } }
         });
 
+        // ── Clear button ──────────────────────────────────────────────────────
         if (clearSearchBtn) {
             clearSearchBtn.style.display = 'none';
             clearSearchBtn.addEventListener('click', () => {
-                searchInput.value = ''; clearSearchBtn.style.display = 'none'; hideSuggestions();
-                if (WO.searchMode === WO.SEARCH_MODE_KEYWORDS) { WO.activeKeywordSearchQuery = ''; WO.renderGroups(); }
+                searchInput.value = '';
+                clearSearchBtn.style.display = 'none';
+                hideSuggestions();
+                WO.activeKeywordSearchQuery = '';
+                WO.renderGroups();
                 searchInput.focus();
             });
         }
 
         if (searchSubmitBtn) searchSubmitBtn.addEventListener('click', () => submitFromBar(false));
 
-        // ── Delegated suggestion events — set up ONCE at init, not per render ────
-        // Cache the search bar wrapper reference for the outside-click handler
+        // ── Delegated suggestion events ───────────────────────────────────────
         const _searchBarWrapper = searchInput.closest('.search-bar-wrapper') || searchInput.parentElement;
 
         searchSuggestions.addEventListener('click', function(e) {
-            // Handle delete button
             const delBtn = e.target.closest('.suggestion-delete-btn');
             if (delBtn) {
                 e.stopPropagation();
@@ -294,10 +281,13 @@
             if (item) handleSuggestionAuxClick(item, e);
         });
 
-        // Close suggestions on outside click — cached ref avoids querySelector on every click
         document.addEventListener('click', e => {
             if (_searchBarWrapper && !_searchBarWrapper.contains(e.target) && !searchSuggestions.contains(e.target)) hideSuggestions();
         });
+
+        // Initialise — force hybrid mode always
+        WO.searchMode = WO.SEARCH_MODE_GOOGLE; // keep state compat, but UI is always hybrid
+        WO.activeKeywordSearchQuery = '';
     };
 
 })(window.WO);

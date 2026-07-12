@@ -64,19 +64,11 @@
         </div>
       </div>
 
-      <!-- Google Search Bar (Inline) -->
+      <!-- Hybrid Smart Search Bar -->
       <div class="search-bar-container">
         <div class="search-bar-wrapper">
-          <label class="search-mode-toggle-switch" title="Switch to keyword search">
-            <input id="search-mode-toggle-input" class="search-mode-toggle-input" type="checkbox" role="switch"
-              aria-label="Switch search mode">
-            <span class="search-mode-toggle-track" data-mode="google">
-              <span class="search-mode-toggle-option search-mode-toggle-option--left">Google</span>
-              <span class="search-mode-toggle-option search-mode-toggle-option--right">Keywords</span>
-              <span class="search-mode-toggle-thumb" aria-hidden="true"></span>
-            </span>
-          </label>
-          <input type="text" id="google-search-input" class="google-search-input" placeholder="Google Search..."
+          <input type="text" id="google-search-input" class="google-search-input"
+            placeholder="Search websites or Google..."
             autocomplete="new-password" spellcheck="false">
 
           <button type="button" id="search-submit-btn" class="search-submit-btn" aria-label="Search"
@@ -94,7 +86,7 @@
 
         <!-- Suggestions Dropdown -->
         <div id="search-suggestions" class="search-suggestions" style="display: none;">
-          <!-- Suggestions will be dynamically inserted here -->
+          <!-- Dynamically populated -->
         </div>
       </div>
 
