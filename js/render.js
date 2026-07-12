@@ -173,6 +173,15 @@
                 }
 
                 groupCard.appendChild(previewGrid);
+                groupCard.draggable = !document.body.classList.contains('is-touch');
+
+                // Create a wrapper to isolate layout shifts during animation
+                const cardWrapper = document.createElement('div');
+                cardWrapper.className = 'group-card-wrapper';
+                cardWrapper.style.position = 'relative';
+                cardWrapper.style.height = '100%';
+                cardWrapper.style.width = '100%';
+                cardWrapper.appendChild(groupCard);
 
                 // Animated hover to expand for >12 items
                 if (keywords.length > 12) {
@@ -184,33 +193,37 @@
                         if (document.body.classList.contains('is-touch')) return;
                         clearTimeout(expandTimeout);
                         
-                        // If not currently animating, measure accurate heights
                         if (!groupCard.classList.contains('is-animating') && !groupCard.classList.contains('expanded')) {
-                            collapsedHeight = groupCard.getBoundingClientRect().height;
+                            // Freeze wrapper height to completely prevent layout jumping
+                            const wrapperRect = cardWrapper.getBoundingClientRect();
+                            cardWrapper.style.height = wrapperRect.height + 'px';
+                            collapsedHeight = wrapperRect.height;
                             
                             // Measure expanded state
                             previewGrid.classList.add('expanded');
                             expandedHeight = groupCard.getBoundingClientRect().height;
                             
-                            // Reset to start state for animation
+                            // Reset and setup absolute positioning
                             previewGrid.classList.remove('expanded');
                             groupCard.style.height = collapsedHeight + 'px';
-                            groupCard.style.marginBottom = '0px';
+                            groupCard.style.position = 'absolute';
+                            groupCard.style.top = '0';
+                            groupCard.style.left = '0';
+                            groupCard.style.width = wrapperRect.width + 'px';
                         }
                         
                         groupCard.classList.add('is-animating');
                         groupCard.classList.add('expanded');
                         previewGrid.classList.add('expanded');
                         
-                        groupCard.style.overflow = 'hidden'; // Hide extra items during slide down
+                        groupCard.style.overflow = 'hidden';
                         groupCard.offsetHeight; // Force reflow
                         
-                        groupCard.style.transition = 'height 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), margin-bottom 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease';
+                        groupCard.style.transition = 'height 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease';
                         groupCard.style.zIndex = '100';
                         groupCard.style.boxShadow = '0 25px 50px rgba(0,0,0,0.5), 0 0 0 1px var(--card-border)'; 
                         
                         groupCard.style.height = expandedHeight + 'px';
-                        groupCard.style.marginBottom = `-${expandedHeight - collapsedHeight}px`;
                         
                         expandTimeout = setTimeout(() => {
                             if (groupCard.classList.contains('expanded')) {
@@ -228,24 +241,29 @@
                         groupCard.style.overflow = 'hidden';
                         
                         groupCard.style.height = collapsedHeight + 'px';
-                        groupCard.style.marginBottom = '0px';
                         groupCard.style.boxShadow = '';
                         
                         expandTimeout = setTimeout(() => {
                             groupCard.classList.remove('expanded');
                             previewGrid.classList.remove('expanded');
                             groupCard.style.height = '';
-                            groupCard.style.marginBottom = '';
                             groupCard.style.transition = '';
                             groupCard.style.overflow = 'visible';
                             groupCard.style.zIndex = '';
+                            groupCard.style.position = '';
+                            groupCard.style.top = '';
+                            groupCard.style.left = '';
+                            groupCard.style.width = '';
+                            
+                            // Unfreeze wrapper
+                            cardWrapper.style.height = '100%';
+                            
                             groupCard.classList.remove('is-animating');
                         }, 300);
                     });
                 }
 
-                groupCard.draggable = !document.body.classList.contains('is-touch');
-                fragment.appendChild(groupCard);
+                fragment.appendChild(cardWrapper);
             });
         }
 
