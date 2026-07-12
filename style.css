@@ -2749,6 +2749,11 @@ body.is-zooming .search-suggestions {
   align-content: start;
 }
 
+/* Limit to max 3 rows (3 rows * 4 cols = 12 items max) */
+.keyword-grid-preview > .keyword-grid-preview-item:nth-child(n+13) {
+  display: none !important;
+}
+
 @media (max-width: 480px) {
   .keyword-grid-preview {
     gap: 6px;
