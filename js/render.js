@@ -185,6 +185,12 @@
 
                 // Animated hover to expand for >12 items
                 if (keywords.length > 12) {
+                    // Add a visual indicator
+                    const indicator = document.createElement('div');
+                    indicator.className = 'group-expand-indicator';
+                    indicator.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>';
+                    groupCard.appendChild(indicator);
+
                     let expandTimeout;
                     let collapsedHeight = 0;
                     let expandedHeight = 0;
