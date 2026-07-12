@@ -174,35 +174,73 @@
 
                 groupCard.appendChild(previewGrid);
 
-                // Hover to expand for >12 items
+                // Animated hover to expand for >12 items
                 if (keywords.length > 12) {
-                    let beforeHeight = 0;
-
+                    let expandTimeout;
+                    let collapsedHeight = 0;
+                    let expandedHeight = 0;
+                    
                     groupCard.addEventListener('mouseenter', () => {
-                        if (document.body.classList.contains('is-touch')) return; // Opt-out for touch devices if needed, but we'll allow it for now or just rely on touch-to-hover
+                        if (document.body.classList.contains('is-touch')) return;
+                        clearTimeout(expandTimeout);
                         
-                        const isExpanded = groupCard.classList.contains('expanded');
-                        if (!isExpanded) {
-                            beforeHeight = groupCard.getBoundingClientRect().height;
-                            groupCard.classList.add('expanded');
-                            previewGrid.classList.add('expanded');
+                        // If not currently animating, measure accurate heights
+                        if (!groupCard.classList.contains('is-animating') && !groupCard.classList.contains('expanded')) {
+                            collapsedHeight = groupCard.getBoundingClientRect().height;
                             
-                            requestAnimationFrame(() => {
-                                const afterHeight = groupCard.getBoundingClientRect().height;
-                                const diff = afterHeight - beforeHeight;
-                                groupCard.style.marginBottom = `-${diff}px`;
-                                groupCard.style.zIndex = '100';
-                                groupCard.style.boxShadow = '0 25px 50px rgba(0,0,0,0.5), 0 0 0 1px var(--card-border)'; 
-                            });
+                            // Measure expanded state
+                            previewGrid.classList.add('expanded');
+                            expandedHeight = groupCard.getBoundingClientRect().height;
+                            
+                            // Reset to start state for animation
+                            previewGrid.classList.remove('expanded');
+                            groupCard.style.height = collapsedHeight + 'px';
+                            groupCard.style.marginBottom = '0px';
                         }
+                        
+                        groupCard.classList.add('is-animating');
+                        groupCard.classList.add('expanded');
+                        previewGrid.classList.add('expanded');
+                        
+                        groupCard.style.overflow = 'hidden'; // Hide extra items during slide down
+                        groupCard.offsetHeight; // Force reflow
+                        
+                        groupCard.style.transition = 'height 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), margin-bottom 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease';
+                        groupCard.style.zIndex = '100';
+                        groupCard.style.boxShadow = '0 25px 50px rgba(0,0,0,0.5), 0 0 0 1px var(--card-border)'; 
+                        
+                        groupCard.style.height = expandedHeight + 'px';
+                        groupCard.style.marginBottom = `-${expandedHeight - collapsedHeight}px`;
+                        
+                        expandTimeout = setTimeout(() => {
+                            if (groupCard.classList.contains('expanded')) {
+                                groupCard.style.overflow = 'visible';
+                            }
+                            groupCard.classList.remove('is-animating');
+                        }, 300);
                     });
 
                     groupCard.addEventListener('mouseleave', () => {
-                        groupCard.classList.remove('expanded');
-                        previewGrid.classList.remove('expanded');
-                        groupCard.style.marginBottom = '';
-                        groupCard.style.zIndex = '';
+                        clearTimeout(expandTimeout);
+                        if (!groupCard.classList.contains('expanded')) return;
+                        
+                        groupCard.classList.add('is-animating');
+                        groupCard.style.overflow = 'hidden';
+                        
+                        groupCard.style.height = collapsedHeight + 'px';
+                        groupCard.style.marginBottom = '0px';
                         groupCard.style.boxShadow = '';
+                        
+                        expandTimeout = setTimeout(() => {
+                            groupCard.classList.remove('expanded');
+                            previewGrid.classList.remove('expanded');
+                            groupCard.style.height = '';
+                            groupCard.style.marginBottom = '';
+                            groupCard.style.transition = '';
+                            groupCard.style.overflow = 'visible';
+                            groupCard.style.zIndex = '';
+                            groupCard.classList.remove('is-animating');
+                        }, 300);
                     });
                 }
 
