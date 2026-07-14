@@ -3971,7 +3971,7 @@ body.is-touch .group-expand-indicator svg {
 }
 
 [data-theme="light"] .keyword-item {
-  background: rgba(255, 255, 255, 0.22) !important;
+  background: rgba(255, 255, 255, 0.65) !important; /* Increased opacity to compensate for removed blur */
   border: 1.5px solid rgba(123, 44, 191, 0.13) !important;
   border-radius: 18px !important;
   box-shadow:
@@ -3979,8 +3979,7 @@ body.is-touch .group-expand-indicator svg {
     0 6px 24px 0 rgba(80, 80, 120, 0.10),
     0 1.5px 0 0 #fff inset,
     0 -2px 8px 0 rgba(0, 0, 0, 0.10) inset !important;
-  backdrop-filter: blur(8px) !important;
-  -webkit-backdrop-filter: blur(8px) !important;
+  /* backdrop-filter removed to fix severe mobile scrolling/rendering lag */
   position: relative;
   overflow: hidden;
 }
