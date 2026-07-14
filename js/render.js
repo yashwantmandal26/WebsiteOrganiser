@@ -196,7 +196,16 @@
                     let expandedHeight = 0;
 
                     // --- Shared expand/collapse helpers ---
+                    groupCard._collapse = doCollapse;
+
                     function doExpand() {
+                        // Auto-collapse any OTHER expanded cards (Accordion style)
+                        document.querySelectorAll('.group-card.expanded').forEach(otherCard => {
+                            if (otherCard !== groupCard && typeof otherCard._collapse === 'function') {
+                                otherCard._collapse();
+                            }
+                        });
+
                         clearTimeout(expandTimeout);
                         if (!groupCard.classList.contains('is-animating') && !groupCard.classList.contains('expanded')) {
                             const wrapperRect = cardWrapper.getBoundingClientRect();
