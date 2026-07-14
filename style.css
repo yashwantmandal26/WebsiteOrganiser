@@ -1206,21 +1206,24 @@ header h1 {
     inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
-/* 3D Violet Neon Highlight for active/hovered group */
-.group-card.expanded {
-  border-color: #b026ff !important;
+/* 3D Neon Highlight for active/hovered group */
+.group-card.expanded,
+.group-card:hover {
+  border-color: #ff003c !important;
   box-shadow: 
-    0 0 15px rgba(176, 38, 255, 0.6),
-    0 0 30px rgba(138, 43, 226, 0.4),
-    0 6px 0px rgba(123, 44, 191, 0.8),
+    0 0 15px rgba(255, 0, 60, 0.6),
+    0 0 30px rgba(220, 20, 60, 0.4),
+    0 6px 0px rgba(200, 0, 0, 0.8),
     0 25px 40px rgba(0, 0, 0, 0.3),
     inset 0 2px 4px rgba(255, 255, 255, 0.7),
-    inset 0 -2px 6px rgba(176, 38, 255, 0.3) !important;
+    inset 0 -2px 6px rgba(255, 0, 60, 0.3) !important;
   transform: translateY(-4px);
 }
 
 [data-theme="dark"] .group-card.expanded,
-[data-theme="solid-dark"] .group-card.expanded {
+[data-theme="solid-dark"] .group-card.expanded,
+[data-theme="dark"] .group-card:hover,
+[data-theme="solid-dark"] .group-card:hover {
   border-color: #b026ff !important;
   box-shadow: 
     0 0 20px rgba(176, 38, 255, 0.8),
