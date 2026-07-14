@@ -221,7 +221,7 @@
                         groupCard.style.overflow = 'hidden';
                         groupCard.offsetHeight; // Force reflow
 
-                        groupCard.style.transition = 'height 0.8s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.8s ease';
+                        groupCard.style.transition = 'height 0.7s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.7s ease';
                         groupCard.style.zIndex = '100';
                         groupCard.style.boxShadow = '0 25px 50px rgba(0,0,0,0.5), 0 0 0 1px var(--card-border)';
 
@@ -232,7 +232,7 @@
                                 groupCard.style.overflow = 'visible';
                             }
                             groupCard.classList.remove('is-animating');
-                        }, 800);
+                        }, 700);
                     }
 
                     function doCollapse() {
@@ -242,26 +242,26 @@
                         groupCard.classList.add('is-animating');
                         groupCard.style.overflow = 'hidden';
 
+                        groupCard.style.transition = 'none'; // Instant close
                         groupCard.style.height = collapsedHeight + 'px';
                         groupCard.style.boxShadow = '';
 
-                        expandTimeout = setTimeout(() => {
-                            groupCard.classList.remove('expanded');
-                            previewGrid.classList.remove('expanded');
-                            groupCard.style.height = '';
-                            groupCard.style.transition = '';
-                            groupCard.style.overflow = 'visible';
-                            groupCard.style.zIndex = '';
-                            groupCard.style.position = '';
-                            groupCard.style.top = '';
-                            groupCard.style.left = '';
-                            groupCard.style.width = '';
+                        // Execute instantly for closing
+                        groupCard.classList.remove('expanded');
+                        previewGrid.classList.remove('expanded');
+                        groupCard.style.height = '';
+                        groupCard.style.transition = '';
+                        groupCard.style.overflow = 'visible';
+                        groupCard.style.zIndex = '';
+                        groupCard.style.position = '';
+                        groupCard.style.top = '';
+                        groupCard.style.left = '';
+                        groupCard.style.width = '';
 
-                            // Unfreeze wrapper
-                            cardWrapper.style.height = '100%';
+                        // Unfreeze wrapper
+                        cardWrapper.style.height = '100%';
 
-                            groupCard.classList.remove('is-animating');
-                        }, 800);
+                        groupCard.classList.remove('is-animating');
                     }
 
                     // --- Desktop: hover ---
