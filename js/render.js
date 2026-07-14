@@ -273,9 +273,8 @@
                         doCollapse();
                     });
 
-                    // --- Mobile: tap indicator to toggle ---
+                    // --- Click/Tap indicator to toggle ---
                     indicator.addEventListener('click', (e) => {
-                        if (!document.body.classList.contains('is-touch')) return;
                         e.stopPropagation();
                         if (groupCard.classList.contains('expanded')) {
                             doCollapse();
