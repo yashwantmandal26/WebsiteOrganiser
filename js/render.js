@@ -221,9 +221,8 @@
                         groupCard.style.overflow = 'hidden';
                         groupCard.offsetHeight; // Force reflow
 
-                        groupCard.style.transition = 'height 0.7s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.7s ease';
+                        groupCard.style.transition = 'height 0.7s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.7s ease, border-color 0.7s ease';
                         groupCard.style.zIndex = '100';
-                        groupCard.style.boxShadow = '0 25px 50px rgba(0,0,0,0.5), 0 0 0 1px var(--card-border)';
 
                         groupCard.style.height = expandedHeight + 'px';
 
@@ -244,7 +243,6 @@
 
                         groupCard.style.transition = 'none'; // Instant close
                         groupCard.style.height = collapsedHeight + 'px';
-                        groupCard.style.boxShadow = '';
 
                         // Execute instantly for closing
                         groupCard.classList.remove('expanded');
