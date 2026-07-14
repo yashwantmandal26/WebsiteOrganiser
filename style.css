@@ -3171,13 +3171,13 @@ body.is-touch .group-expand-indicator svg {
   /* Always size to content — guarantees AM/PM stays inside the pill */
   width: max-content;
   /* Light-theme pill */
-  background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1.5px solid rgba(200, 200, 220, 0.6);
-  border-radius: 10px;
-  padding: 4px 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.10);
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 30px;
+  padding: 6px 16px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
   /* Monospace + tabular numbers = zero layout shift */
   font-family: 'Courier New', 'Consolas', monospace;
   font-variant-numeric: tabular-nums;
@@ -3254,9 +3254,9 @@ body.is-touch .group-expand-indicator svg {
 /* ── Dark theme overrides ─────────────────────────────── */
 [data-theme="dark"] .live-clock,
 [data-theme="solid-dark"] .live-clock {
-  background: rgba(30, 30, 45, 0.65);
-  border-color: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.25);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
 [data-theme="dark"] .clock-minutes,
@@ -3847,7 +3847,8 @@ body.is-touch .group-expand-indicator svg {
     justify-content: center;
     gap: 10px;
     width: 100%;
-    margin: 0;
+    margin: 0 0 8px 0;
+    order: 1;
   }
 
   .header-brand {
@@ -3875,6 +3876,8 @@ body.is-touch .group-expand-indicator svg {
     justify-content: center;
     gap: 12px;
     width: 100%;
+    margin-bottom: 12px;
+    order: 2;
   }
 
   /* Reset desktop absolute positioning for mobile */
@@ -3906,6 +3909,7 @@ body.is-touch .group-expand-indicator svg {
   .search-bar-container {
     width: 100%;
     margin-top: 0;
+    order: 3;
   }
 
   .header-right .btn {
