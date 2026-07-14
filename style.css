@@ -422,8 +422,6 @@ header {
     0 10px 40px rgba(0, 0, 0, 0.1),
     inset 0 1px 1px rgba(255, 255, 255, 0.3);
   transition: all 0.3s ease;
-  transform: translateZ(0); /* Hardware acceleration */
-  will-change: transform;
 }
 
 header::before {
@@ -756,6 +754,8 @@ header h1 {
   display: flex;
   align-items: center;
   background: var(--input-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--input-border);
   border-radius: 24px;
   padding: 0 16px;
@@ -1185,12 +1185,6 @@ header h1 {
   }
 }
 
-/* Massive performance boost for long lists: skips rendering off-screen cards */
-.group-card-wrapper {
-  content-visibility: auto;
-  contain-intrinsic-size: 250px;
-}
-
 .group-card {
   background: var(--card-bg);
   /* backdrop-filter removed — forces repaint on every scroll position */
@@ -1221,6 +1215,7 @@ header h1 {
 
 [data-theme="dark"] .group-card.expanded,
 [data-theme="solid-dark"] .group-card.expanded {
+  background: rgba(15, 15, 20, 0.75) !important; /* Semi-transparent so blur works */
   backdrop-filter: blur(30px);
   -webkit-backdrop-filter: blur(30px);
 }
@@ -1492,7 +1487,9 @@ li[draggable="true"][data-keyword-index]:active {
   right: 30px;
   width: 60px;
   height: 60px;
-  background: rgba(40, 40, 40, 0.85);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   color: var(--text-color);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 50%;
@@ -1511,7 +1508,7 @@ li[draggable="true"][data-keyword-index]:active {
     inset 0 -2px 5px rgba(0, 0, 0, 0.2);
   cursor: pointer;
   transition: all var(--transition-normal);
-  transform: translateY(0) translateZ(0); /* Hardware acceleration */
+  transform: translateY(0);
 }
 
 @media (hover: hover) {
@@ -1664,7 +1661,9 @@ li[draggable="true"][data-keyword-index]:active {
   width: 50px;
   /* Slightly smaller than main FAB */
   height: 50px;
-  background: rgba(40, 40, 40, 0.85);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   color: var(--text-color);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 50%;
