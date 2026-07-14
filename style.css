@@ -3929,7 +3929,7 @@ body.is-touch .group-expand-indicator svg {
     max-width: 44px !important;
     height: 44px !important;
     padding: 0 !important;
-    border-radius: 50% !important;
+    border-radius: 8px !important;
   }
 }
 
