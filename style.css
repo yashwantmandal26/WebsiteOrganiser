@@ -1207,11 +1207,23 @@ header h1 {
 }
 
 /* 3D Neon Highlight for active/hovered group */
-.group-card.expanded,
-.group-card:hover {
+/* Opaque background only for expanded cards to obscure grid beneath */
+.group-card.expanded {
   background: rgba(255, 255, 255, 0.95) !important;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+}
+
+[data-theme="dark"] .group-card.expanded,
+[data-theme="solid-dark"] .group-card.expanded {
+  background: rgba(10, 10, 15, 0.98) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* 3D Neon Highlight for active/hovered group */
+.group-card.expanded,
+.group-card:hover {
   border-color: #ff003c !important;
   box-shadow: 
     0 0 15px rgba(255, 0, 60, 0.6),
@@ -1226,9 +1238,6 @@ header h1 {
 [data-theme="solid-dark"] .group-card.expanded,
 [data-theme="dark"] .group-card:hover,
 [data-theme="solid-dark"] .group-card:hover {
-  background: rgba(10, 10, 15, 0.98) !important;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border-color: #b026ff !important;
   box-shadow: 
     0 0 20px rgba(176, 38, 255, 0.8),
