@@ -3100,11 +3100,14 @@ body.is-touch .group-expand-indicator svg {
   margin-left: 12px; /* align with brand text */
 }
 
-/* Search bar: col 2, spans both rows */
+/* Search bar: col 2, spans both rows, centered */
 .search-bar-container {
   grid-column: 2;
   grid-row: 1 / 3;
   align-self: center;
+  justify-self: center;
+  width: 100%;
+  max-width: 650px;
 }
 
 /* Toggle / header-right: col 3, spans both rows */
