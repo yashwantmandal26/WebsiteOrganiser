@@ -1,15 +1,6 @@
 /* Updated Search Bar Styles - Inline Header Version */
 
-.search-bar-container {
-  flex: 1 1 0% !important;
-  min-width: 200px !important;
-  max-width: 750px !important;
-  width: 100% !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  position: relative;
-  flex-shrink: 1;
-}
+
 
 .search-bar-wrapper {
   position: relative;
@@ -153,31 +144,10 @@
 }
 
 /* Header Layout Updates */
-.header-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between !important; /* Distribute items across the header */
-  gap: 20px;
-  width: 100%;
-  max-width: 100%; /* Allow full width use */
-  margin: 0 auto;
-  padding: 0 30px;
-  box-sizing: border-box;
-  min-height: 75px;
-  flex-wrap: nowrap;
-  overflow: visible;
-}
 
 
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex: 0 0 auto !important; /* Force it to stay visible and not be crushed */
-  justify-content: flex-start;
-  min-width: fit-content;
-  overflow: visible;
-}
+
+
 
 .site-logo-link {
   flex: 0 0 auto;
@@ -248,15 +218,7 @@
   }
 }
 
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex: 0 0 auto; /* Don't grow, don't shrink */
-  flex-wrap: nowrap;
-  min-width: fit-content;
-  justify-content: flex-end;
-}
+
 
 /* Mobile Responsive - Phone Optimization */
 @media (max-width: 1024px) {
