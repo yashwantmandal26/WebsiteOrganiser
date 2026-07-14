@@ -183,7 +183,7 @@
                 cardWrapper.style.width = '100%';
                 cardWrapper.appendChild(groupCard);
 
-                // Animated hover to expand for >12 items
+                // Animated hover/tap to expand for >12 items
                 if (keywords.length > 12) {
                     // Add a visual indicator
                     const indicator = document.createElement('div');
@@ -194,22 +194,18 @@
                     let expandTimeout;
                     let collapsedHeight = 0;
                     let expandedHeight = 0;
-                    
-                    groupCard.addEventListener('mouseenter', () => {
-                        if (document.body.classList.contains('is-touch')) return;
+
+                    // --- Shared expand/collapse helpers ---
+                    function doExpand() {
                         clearTimeout(expandTimeout);
-                        
                         if (!groupCard.classList.contains('is-animating') && !groupCard.classList.contains('expanded')) {
-                            // Freeze wrapper height to completely prevent layout jumping
                             const wrapperRect = cardWrapper.getBoundingClientRect();
                             cardWrapper.style.height = wrapperRect.height + 'px';
                             collapsedHeight = wrapperRect.height;
-                            
-                            // Measure expanded state
+
                             previewGrid.classList.add('expanded');
                             expandedHeight = groupCard.getBoundingClientRect().height;
-                            
-                            // Reset and setup absolute positioning
+
                             previewGrid.classList.remove('expanded');
                             groupCard.style.height = collapsedHeight + 'px';
                             groupCard.style.position = 'absolute';
@@ -217,38 +213,38 @@
                             groupCard.style.left = '0';
                             groupCard.style.width = wrapperRect.width + 'px';
                         }
-                        
+
                         groupCard.classList.add('is-animating');
                         groupCard.classList.add('expanded');
                         previewGrid.classList.add('expanded');
-                        
+
                         groupCard.style.overflow = 'hidden';
                         groupCard.offsetHeight; // Force reflow
-                        
+
                         groupCard.style.transition = 'height 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease';
                         groupCard.style.zIndex = '100';
-                        groupCard.style.boxShadow = '0 25px 50px rgba(0,0,0,0.5), 0 0 0 1px var(--card-border)'; 
-                        
+                        groupCard.style.boxShadow = '0 25px 50px rgba(0,0,0,0.5), 0 0 0 1px var(--card-border)';
+
                         groupCard.style.height = expandedHeight + 'px';
-                        
+
                         expandTimeout = setTimeout(() => {
                             if (groupCard.classList.contains('expanded')) {
                                 groupCard.style.overflow = 'visible';
                             }
                             groupCard.classList.remove('is-animating');
                         }, 300);
-                    });
+                    }
 
-                    groupCard.addEventListener('mouseleave', () => {
+                    function doCollapse() {
                         clearTimeout(expandTimeout);
                         if (!groupCard.classList.contains('expanded')) return;
-                        
+
                         groupCard.classList.add('is-animating');
                         groupCard.style.overflow = 'hidden';
-                        
+
                         groupCard.style.height = collapsedHeight + 'px';
                         groupCard.style.boxShadow = '';
-                        
+
                         expandTimeout = setTimeout(() => {
                             groupCard.classList.remove('expanded');
                             previewGrid.classList.remove('expanded');
@@ -260,12 +256,43 @@
                             groupCard.style.top = '';
                             groupCard.style.left = '';
                             groupCard.style.width = '';
-                            
+
                             // Unfreeze wrapper
                             cardWrapper.style.height = '100%';
-                            
+
                             groupCard.classList.remove('is-animating');
                         }, 300);
+                    }
+
+                    // --- Desktop: hover ---
+                    groupCard.addEventListener('mouseenter', () => {
+                        if (document.body.classList.contains('is-touch')) return;
+                        doExpand();
+                    });
+
+                    groupCard.addEventListener('mouseleave', () => {
+                        if (document.body.classList.contains('is-touch')) return;
+                        doCollapse();
+                    });
+
+                    // --- Mobile: tap indicator to toggle ---
+                    indicator.addEventListener('click', (e) => {
+                        if (!document.body.classList.contains('is-touch')) return;
+                        e.stopPropagation();
+                        if (groupCard.classList.contains('expanded')) {
+                            doCollapse();
+                        } else {
+                            doExpand();
+                        }
+                    });
+
+                    // Close expanded card when tapping outside on mobile
+                    document.addEventListener('click', (e) => {
+                        if (!document.body.classList.contains('is-touch')) return;
+                        if (!groupCard.classList.contains('expanded')) return;
+                        if (!groupCard.contains(e.target) && !indicator.contains(e.target)) {
+                            doCollapse();
+                        }
                     });
                 }
 

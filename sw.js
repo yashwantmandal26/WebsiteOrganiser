@@ -15,7 +15,7 @@
 //   The activate event will wipe all old caches automatically.
 // =====================================================
 
-const CACHE_VERSION = 'wo-v27';
+const CACHE_VERSION = 'wo-v28';
 const CACHE_NAME = `websiteorganiser-${CACHE_VERSION}`;
 
 // Files to pre-cache on install (app shell — enough to show something offline)
