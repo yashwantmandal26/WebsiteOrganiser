@@ -1209,16 +1209,14 @@ header h1 {
 /* 3D Neon Highlight for active/hovered group */
 /* Opaque background only for expanded cards to obscure grid beneath */
 .group-card.expanded {
-  background: rgba(255, 255, 255, 0.95) !important;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
 }
 
 [data-theme="dark"] .group-card.expanded,
 [data-theme="solid-dark"] .group-card.expanded {
-  background: rgba(10, 10, 15, 0.98) !important;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
 }
 
 /* 3D Neon Highlight for active/hovered group */
