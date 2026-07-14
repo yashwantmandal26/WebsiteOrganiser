@@ -257,10 +257,6 @@
   #theme-toggle-btn {
     width: 48px;
     height: 48px;
-    border-radius: 10px !important;
-    display: flex;
-    width: 48px;
-    height: 48px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -465,7 +461,6 @@
   #theme-toggle-btn {
     width: 42px; /* Match search bar height */
     height: 42px; /* Match search bar height */
-    border-radius: 10px !important;
     min-width: 42px;
     display: flex;
     align-items: center;
@@ -805,11 +800,3 @@
 }
 
 
-
-/* Make toggle button a rectangular pill on mobile */
-@media (max-width: 1024px) {
-  #theme-toggle-btn {
-    border-radius: 10px !important;
-    width: 64px !important;
-  }
-}

@@ -2763,7 +2763,7 @@ body.is-zooming .search-suggestions {
   margin-bottom: -4px;
   color: var(--text-color);
   opacity: 0.6;
-  transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.5s ease;
+  transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.8s ease;
   cursor: pointer;
 }
 

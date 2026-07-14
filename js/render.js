@@ -221,7 +221,7 @@
                         groupCard.style.overflow = 'hidden';
                         groupCard.offsetHeight; // Force reflow
 
-                        groupCard.style.transition = 'height 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.5s ease';
+                        groupCard.style.transition = 'height 0.8s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.8s ease';
                         groupCard.style.zIndex = '100';
                         groupCard.style.boxShadow = '0 25px 50px rgba(0,0,0,0.5), 0 0 0 1px var(--card-border)';
 
@@ -232,7 +232,7 @@
                                 groupCard.style.overflow = 'visible';
                             }
                             groupCard.classList.remove('is-animating');
-                        }, 500);
+                        }, 800);
                     }
 
                     function doCollapse() {
@@ -261,7 +261,7 @@
                             cardWrapper.style.height = '100%';
 
                             groupCard.classList.remove('is-animating');
-                        }, 500);
+                        }, 800);
                     }
 
                     // --- Desktop: hover ---
