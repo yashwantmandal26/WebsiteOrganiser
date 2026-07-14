@@ -228,6 +228,15 @@ body::after {
   opacity: 0.06;
 }
 
+/* Perf fix: Disable heavy GPU animations and blurs on mobile backgrounds */
+@media (max-width: 768px) {
+  body::before,
+  body::after {
+    animation: none !important;
+    filter: none !important;
+  }
+}
+
 [data-theme="dark"],
 [data-theme="solid-dark"] {
   background-color: #0a0a0a !important;
