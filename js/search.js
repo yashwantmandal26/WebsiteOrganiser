@@ -190,6 +190,7 @@
             if (direct) { WO.openURLWithBrowser(direct, inNewTab); }
             else { saveHistory(tq); WO.openURLWithBrowser(`https://www.google.com/search?q=${encodeURIComponent(tq)}`, inNewTab); }
             searchInput.value = '';
+            searchInput.blur();
             hideSuggestions();
             if (clearSearchBtn) clearSearchBtn.style.display = 'none';
         }
@@ -206,7 +207,7 @@
             // Direct URL shortcut (e.g. "youtube") — only when no trailing space
             if (!hasTrailingSpace) {
                 const direct = WO.getDirectWebsiteUrl(tq);
-                if (direct) { WO.openURLWithBrowser(direct, inNewTab); searchInput.value = ''; hideSuggestions(); if (clearSearchBtn) clearSearchBtn.style.display = 'none'; return; }
+                if (direct) { WO.openURLWithBrowser(direct, inNewTab); searchInput.value = ''; searchInput.blur(); hideSuggestions(); if (clearSearchBtn) clearSearchBtn.style.display = 'none'; return; }
             }
 
             // Keyword suggestion selected via arrow keys → open it; otherwise open first suggestion
@@ -214,7 +215,7 @@
             if (!hasTrailingSpace && WO.currentKeywordSuggestions && WO.currentKeywordSuggestions.length) {
                 const idx = WO.selectedKeywordSuggestionIndex >= 0 ? WO.selectedKeywordSuggestionIndex : 0;
                 const r = WO.currentKeywordSuggestions[idx];
-                if (r) { WO.openURLWithBrowser(r.targetUrl, inNewTab); searchInput.value = ''; hideSuggestions(); if (clearSearchBtn) clearSearchBtn.style.display = 'none'; return; }
+                if (r) { WO.openURLWithBrowser(r.targetUrl, inNewTab); searchInput.value = ''; searchInput.blur(); hideSuggestions(); if (clearSearchBtn) clearSearchBtn.style.display = 'none'; return; }
             }
 
             // Fallback → Google search
@@ -226,7 +227,7 @@
             const mode = item.dataset.suggestionMode || 'google';
             if (mode === 'keywords') {
                 const r = WO.currentKeywordSuggestions[Number(item.dataset.index)];
-                if (r) { e.preventDefault(); e.stopPropagation(); WO.openURLWithBrowser(r.targetUrl, e.ctrlKey || e.metaKey); searchInput.value = ''; hideSuggestions(); if (clearSearchBtn) clearSearchBtn.style.display = 'none'; }
+                if (r) { e.preventDefault(); e.stopPropagation(); WO.openURLWithBrowser(r.targetUrl, e.ctrlKey || e.metaKey); searchInput.value = ''; searchInput.blur(); hideSuggestions(); if (clearSearchBtn) clearSearchBtn.style.display = 'none'; }
                 return;
             }
             if (item.dataset.action === 'clear-history') { clearHistory(); hideSuggestions(); searchInput.value = ''; searchInput.focus(); return; }
