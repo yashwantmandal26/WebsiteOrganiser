@@ -11,6 +11,7 @@
     WO.globalClickCounts  = {};   // { encodedKeyword: count }
     WO.keywordDescriptions= {};   // { encodedKeyword: "description text" }
     WO.keywordAddedAt     = {};   // { encodedKeyword: unixTimestampMs }
+    WO.keywordDeletedStatus= {};  // { encodedKeyword: true } (soft deleted by users)
     WO.localGroupOrder    = [];   // Per-browser group display order
     WO.dynamicLinkMap     = {};   // { staticUrl: dynamicUrl } from dynamic-links.json
 

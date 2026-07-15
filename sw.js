@@ -15,7 +15,7 @@
 //   The activate event will wipe all old caches automatically.
 // =====================================================
 
-const CACHE_VERSION = 'wo-v28';
+const CACHE_VERSION = 'wo-v1002';
 const CACHE_NAME = `websiteorganiser-${CACHE_VERSION}`;
 
 // Files to pre-cache on install (app shell — enough to show something offline)
@@ -25,18 +25,18 @@ const PRECACHE_URLS = [
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',
-  '/style.css?v=120',
-  '/add-keyword-modal.css?v=67',
-  '/search-bar-update.css?v=80',
-  '/js/config.js?v=120',
-  '/js/state.js?v=120',
-  '/js/utils.js?v=120',
-  '/js/firebase-sync.js?v=120',
-  '/js/render.js?v=120',
-  '/js/crud.js?v=120',
-  '/js/ui.js?v=120',
-  '/js/search.js?v=120',
-  '/js/app.js?v=120',
+  '/style.css?v=1001',
+  '/add-keyword-modal.css?v=1001',
+  '/search-bar-update.css?v=1001',
+  '/js/config.js?v=1001',
+  '/js/state.js?v=1001',
+  '/js/utils.js?v=1001',
+  '/js/firebase-sync.js?v=1001',
+  '/js/render.js?v=1001',
+  '/js/crud.js?v=1001',
+  '/js/ui.js?v=1001',
+  '/js/search.js?v=1001',
+  '/js/app.js?v=1001',
 ];
 
 // ─── Install ──────────────────────────────────────────────────────────────────

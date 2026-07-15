@@ -53,6 +53,7 @@
             WO.currentSuggestions = [];
             WO.currentKeywordSuggestions = [];
         }
+        WO.hideSuggestions = hideSuggestions; // expose for global keyboard shortcuts
 
         // ── Keyword search core ───────────────────────────────────────────────
         function getKeywordSearchResults(query) {
@@ -77,14 +78,29 @@
             return results.sort((a, b) => a.score !== b.score ? a.score - b.score : a.displayText.localeCompare(b.displayText)).slice(0, WO.MAX_SEARCH_RESULTS);
         }
 
+        // ── Favicon helper ────────────────────────────────────────────────────
+        function getFaviconUrl(targetUrl) {
+            try {
+                const url = targetUrl.startsWith('http') ? targetUrl : 'https://' + targetUrl;
+                const hostname = new URL(url).hostname;
+                return `https://www.google.com/s2/favicons?domain=${hostname}&sz=32`;
+            } catch { return null; }
+        }
+
         function renderKeywordSuggestions(results, query) {
             if (!results || !results.length) { hideSuggestions(); return; }
             let html = '<div class="suggestion-header"><span>Website matches</span></div>';
             results.forEach((r, i) => {
                 const snippet = r.description ? WO.buildSearchSnippet(r.description, query) : '';
                 const meta = [r.groupName && WO.escapeHtml(r.groupName), snippet && WO.highlightSearchHtml(snippet, query)].filter(Boolean).join(' &middot; ');
+                const faviconUrl = r.targetUrl ? getFaviconUrl(r.targetUrl) : null;
+                const iconHtml = faviconUrl
+                    ? `<img class="suggestion-favicon" src="${WO.escapeHtml(faviconUrl)}" alt="" loading="lazy"
+                           onerror="this.style.display='none';this.nextElementSibling.style.display='inline-block'"
+                       /><svg class="suggestion-icon suggestion-icon-fallback" style="display:none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`
+                    : `<svg class="suggestion-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>`;
                 html += `<div class="suggestion-item keyword-suggestion-item" data-index="${i}" data-suggestion-mode="keywords" data-group-index="${r.groupIndex}" data-keyword-index="${r.keywordIndex}" data-target-url="${WO.escapeHtml(r.targetUrl || '')}">
-                    <svg class="suggestion-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                    ${iconHtml}
                     <div class="keyword-suggestion-content">
                         <span class="suggestion-text">${WO.highlightSearchHtml(r.displayText, query)}</span>
                         ${meta ? `<div class="keyword-suggestion-meta">${meta}</div>` : ''}
@@ -124,6 +140,14 @@
                 return;
             }
 
+            // Trailing space → user wants Google search, hide suggestions
+            if (query !== query.trimEnd()) {
+                WO.currentKeywordSuggestions = [];
+                WO.selectedKeywordSuggestionIndex = -1;
+                hideSuggestions();
+                return;
+            }
+
             // Try keyword search first
             const kwResults = getKeywordSearchResults(nq);
             WO.currentKeywordSuggestions = kwResults;
@@ -143,12 +167,19 @@
             const items = searchSuggestions.querySelectorAll('.suggestion-item');
             items.forEach((it, i) => {
                 it.classList.toggle('selected', i === WO.selectedSuggestionIndex);
-                if (i === WO.selectedSuggestionIndex) searchInput.value = it.dataset.query || searchInput.value;
+                if (i === WO.selectedSuggestionIndex) {
+                    searchInput.value = it.dataset.query || searchInput.value;
+                    it.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                }
             });
         }
         function updateSelectedKeywordSuggestion() {
-            searchSuggestions.querySelectorAll('.suggestion-item').forEach((it, i) =>
-                it.classList.toggle('selected', i === WO.selectedKeywordSuggestionIndex));
+            searchSuggestions.querySelectorAll('.suggestion-item').forEach((it, i) => {
+                it.classList.toggle('selected', i === WO.selectedKeywordSuggestionIndex);
+                if (i === WO.selectedKeywordSuggestionIndex) {
+                    it.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                }
+            });
         }
 
         // ── Google Search ─────────────────────────────────────────────────────
@@ -165,16 +196,24 @@
 
         // ── Submit (Enter / button click) ─────────────────────────────────────
         function submitFromBar(inNewTab = false) {
-            const tq = WO.normalizeSearchQuery(searchInput.value);
+            const rawValue = searchInput.value;
+            const tq = WO.normalizeSearchQuery(rawValue);
             if (!tq) { searchInput.focus(); return; }
 
-            // Direct URL shortcut (e.g. "youtube")
-            const direct = WO.getDirectWebsiteUrl(tq);
-            if (direct) { WO.openURLWithBrowser(direct, inNewTab); searchInput.value = ''; hideSuggestions(); if (clearSearchBtn) clearSearchBtn.style.display = 'none'; return; }
+            // Trailing space → user explicitly wants Google search, skip keyword suggestions
+            const hasTrailingSpace = rawValue !== rawValue.trimEnd();
 
-            // Keyword suggestion explicitly selected via arrow keys → open it
-            if (WO.selectedKeywordSuggestionIndex >= 0 && WO.currentKeywordSuggestions && WO.currentKeywordSuggestions.length) {
-                const r = WO.currentKeywordSuggestions[WO.selectedKeywordSuggestionIndex];
+            // Direct URL shortcut (e.g. "youtube") — only when no trailing space
+            if (!hasTrailingSpace) {
+                const direct = WO.getDirectWebsiteUrl(tq);
+                if (direct) { WO.openURLWithBrowser(direct, inNewTab); searchInput.value = ''; hideSuggestions(); if (clearSearchBtn) clearSearchBtn.style.display = 'none'; return; }
+            }
+
+            // Keyword suggestion selected via arrow keys → open it; otherwise open first suggestion
+            // Skip entirely if user typed a trailing space (explicit Google search intent)
+            if (!hasTrailingSpace && WO.currentKeywordSuggestions && WO.currentKeywordSuggestions.length) {
+                const idx = WO.selectedKeywordSuggestionIndex >= 0 ? WO.selectedKeywordSuggestionIndex : 0;
+                const r = WO.currentKeywordSuggestions[idx];
                 if (r) { WO.openURLWithBrowser(r.targetUrl, inNewTab); searchInput.value = ''; hideSuggestions(); if (clearSearchBtn) clearSearchBtn.style.display = 'none'; return; }
             }
 
@@ -216,10 +255,12 @@
 
             clearTimeout(_searchRenderTimer);
             _searchRenderTimer = setTimeout(() => {
-                WO.renderGroups();   // live group card highlighting
+                // Use lightweight in-place updater to avoid favicon blink from full DOM rebuild
+                WO.updateSearchHighlighting();
                 showSuggestions(q); // hybrid dropdown
             }, 120);
         });
+
 
         searchInput.addEventListener('focus', () => {
             showSuggestions(searchInput.value);

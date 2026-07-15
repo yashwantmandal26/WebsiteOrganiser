@@ -56,8 +56,8 @@
     WO.setTheme = function (theme, { persist = true } = {}) {
         document.documentElement.dataset.theme = theme;
         if (persist) { try { localStorage.setItem(WO.THEME_STORAGE_KEY, theme); } catch {} }
-        // Guard: only re-render if groups are loaded (avoids empty render on initial theme apply)
-        if (typeof WO.renderGroups === 'function' && WO.groups && WO.groups.length > 0) WO.renderGroups();
+        // Use lightweight in-place color patcher — avoids full DOM rebuild and favicon blink
+        if (typeof WO.updateThemeColors === 'function' && WO.groups && WO.groups.length > 0) WO.updateThemeColors();
     };
 
     // ── Modal Helpers ────────────────────────────────────────────────────
@@ -115,9 +115,11 @@
         document.querySelectorAll('.admin-only').forEach(el => { el.style.display = WO.adminLoggedIn ? 'inline-flex' : 'none'; });
         const fab = document.getElementById('add-fab');
         if (fab) fab.style.display = 'flex';
-        // Visual hint on clock when admin is logged in
+        // Visual hint on logo area when admin is logged in
+        const headerLeft = document.querySelector('.header-left');
+        if (headerLeft) headerLeft.style.textShadow = WO.adminLoggedIn ? '0 0 12px rgba(76,175,80,0.8)' : '';
         const clock = document.getElementById('live-clock');
-        if (clock) clock.style.boxShadow = WO.adminLoggedIn ? '0 0 12px rgba(76,175,80,0.6)' : '';
+        if (clock) clock.style.boxShadow = ''; // Ensure clock has no shadow
     };
 
     // ── URL Opening ───────────────────────────────────────────────────────
@@ -198,6 +200,37 @@
             });
         }
 
+        // ── Global Keyboard Shortcuts ─────────────────────────────────────────
+        document.addEventListener('keydown', (e) => {
+            const active = document.activeElement;
+            const inInput = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable);
+
+            // Alt → cycle theme (works everywhere)
+            if (e.key === 'Alt') {
+                e.preventDefault();
+                const t = document.documentElement.dataset.theme;
+                WO.setTheme(t === 'light' ? 'dark' : t === 'dark' ? 'solid-dark' : 'light');
+                return;
+            }
+
+            // Delete → reset search bar (only when NOT typing in an input)
+            if (e.key === 'Delete' && !inInput) {
+                e.preventDefault();
+                const si     = document.getElementById('google-search-input');
+                const clrBtn = document.getElementById('clear-search-btn');
+                if (!si) return;
+                si.value = '';
+                if (clrBtn) clrBtn.style.display = 'none';
+                WO.activeKeywordSearchQuery = '';
+                WO.renderGroups();
+                if (typeof WO.hideSuggestions === 'function') WO.hideSuggestions();
+                si.focus();
+                return;
+            }
+        });
+
+
+
         // Modals Init
         ensureScrollUnlocked();
         window.addEventListener('load', ensureScrollUnlocked);
@@ -218,11 +251,12 @@
             });
         }
 
-        // Admin login/logout — triggered by clicking the live clock
-        const liveClock = document.getElementById('live-clock');
-        if (liveClock) {
-            liveClock.style.cursor = 'pointer';
-            liveClock.addEventListener('click', () => {
+        // Admin login/logout — triggered by clicking the logo / title
+        const headerLeft = document.querySelector('.header-left');
+        if (headerLeft) {
+            headerLeft.style.cursor = 'pointer';
+            headerLeft.addEventListener('click', (e) => {
+                e.preventDefault(); // Prevent the <a> tag from refreshing the page
                 if (WO.adminLoggedIn) {
                     if (typeof firebase !== 'undefined' && firebase.auth) {
                         firebase.auth().signOut().catch(e => console.error('Signout failed:', e));
@@ -239,10 +273,17 @@
                 WO.toggleModal(adminModal, true); adminIdInput.focus();
             });
         }
+        
+        // Remove pointer cursor from clock since it's no longer clickable
+        const liveClock = document.getElementById('live-clock');
+        if (liveClock) {
+            liveClock.style.cursor = 'default';
+        }
+        
         // Keep adminBtn handler as fallback if element exists
         if (adminBtn) {
             adminBtn.addEventListener('click', () => {
-                if (liveClock) liveClock.click();
+                if (headerLeft) headerLeft.click();
             });
         }
         const adminLoginForm = document.getElementById('admin-login-form');
@@ -429,7 +470,8 @@
 
             contextMenu.appendChild(mkItem('edit-comment-option', '<img src="media/comment.png" style="width:20px;height:20px;margin-right:10px;vertical-align:middle;">Edit Comment', '#4a90e2'));
             contextMenu.appendChild(mkItem('rename-option', '<img src="media/rename.png" style="width:20px;height:20px;margin-right:10px;vertical-align:middle;">Rename', '#7b2cbf'));
-            contextMenu.appendChild(mkItem('delete-option', '<img src="media/delete.png" style="width:20px;height:20px;margin-right:10px;vertical-align:middle;">Delete', '#ff4d4f'));
+            contextMenu.appendChild(mkItem('restore-option', '<svg viewBox="0 0 24 24" width="20" height="20" style="margin-right:10px;vertical-align:middle;" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>Restore', '#4CAF50'));
+            contextMenu.appendChild(mkItem('delete-option', '<img src="media/delete.png" style="width:20px;height:20px;margin-right:10px;vertical-align:middle;"><span class="delete-text">Delete</span>', '#ff4d4f'));
             document.body.appendChild(contextMenu);
             return contextMenu;
         }
@@ -447,13 +489,35 @@
 
             const editEl   = menu.querySelector('.edit-comment-option');
             const renameEl = menu.querySelector('.rename-option');
+            const restoreEl = menu.querySelector('.restore-option');
             const deleteEl = menu.querySelector('.delete-option');
+            const deleteText = deleteEl.querySelector('.delete-text');
+
+            const ek = WO.getKeywordEncodedKey(keyword);
+            const isSoftDeleted = WO.keywordDeletedStatus && WO.keywordDeletedStatus[ek] === true;
 
             editEl.style.display = 'block';
             editEl.onclick = () => { hideContextMenu(); WO.renameKeyword(groupIndex, keywordIndex, keyword, true); };
-            renameEl.style.display = WO.adminLoggedIn ? 'block' : 'none';
+            
+            renameEl.style.display = 'block';
             renameEl.onclick = () => { hideContextMenu(); WO.renameKeyword(groupIndex, keywordIndex, keyword, false); };
-            deleteEl.style.display = WO.adminLoggedIn ? 'block' : 'none';
+
+            if (isSoftDeleted) {
+                if (WO.adminLoggedIn) {
+                    restoreEl.style.display = 'block';
+                    restoreEl.onclick = () => { hideContextMenu(); WO.restoreKeyword(groupIndex, keywordIndex); };
+                    deleteEl.style.display = 'block';
+                    deleteText.textContent = 'Delete Permanently';
+                } else {
+                    restoreEl.style.display = 'none';
+                    deleteEl.style.display = 'none';
+                }
+            } else {
+                restoreEl.style.display = 'none';
+                deleteEl.style.display = 'block';
+                deleteText.textContent = 'Delete';
+            }
+            
             deleteEl.onclick = () => { hideContextMenu(); WO.deleteKeyword(groupIndex, keywordIndex); };
         }
 

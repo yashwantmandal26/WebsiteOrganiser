@@ -153,7 +153,6 @@
 
     // ─── Keyword Rename ───────────────────────────────────────────────────────
     WO.renameKeyword = async function (groupIndex, keywordIndex, oldKeyword, commentOnly = false) {
-        if (!commentOnly && !WO.adminLoggedIn) { window.showToast('Admin access required to rename keywords', 3000); return; }
         const renameModal        = document.getElementById('rename-modal');
         const renameKeywordInput = document.getElementById('rename-keyword-input');
         const renameKeywordDescInput = document.getElementById('rename-keyword-desc-input');
@@ -211,7 +210,6 @@
             WO.renderGroups();
             return;
         }
-        if (!WO.adminLoggedIn) { window.showToast('Admin access required to rename keywords', 3000); return; }
 
         WO.groups[WO.renameTargetGroupIndex].keywords[WO.renameTargetKeywordIndex] = newKeyword;
         if (WO.keywordAddedAt[oldEncoded] !== undefined) { WO.keywordAddedAt[newEncoded] = WO.keywordAddedAt[oldEncoded]; delete WO.keywordAddedAt[oldEncoded]; }
@@ -238,14 +236,7 @@
     };
 
     // ─── Keyword Delete ───────────────────────────────────────────────────────
-    WO.deleteKeyword = async function (groupIndex, keywordIndex) {
-        if (!WO.adminLoggedIn) { window.showToast('Admin access required to delete keywords', 3000); return; }
-        if (!confirm('Delete this keyword?')) return;
-        if (!WO.groups[groupIndex] || !WO.groups[groupIndex].keywords[keywordIndex]) { window.showToast('⚠️ Data changed. Try again.', 3000); return; }
-
-        const kw = WO.groups[groupIndex].keywords[keywordIndex];
-
-        // Animate out the deleted keyword first
+    WO.animateKeywordOut = async function(groupIndex, kw) {
         const groupsContainer = document.getElementById('groups-container');
         if (groupsContainer) {
             const groupCard = groupsContainer.querySelector(`.group-card[data-group-index="${groupIndex}"]`);
@@ -258,23 +249,51 @@
                 }
             }
         }
+    };
+
+    WO.deleteKeyword = async function (groupIndex, keywordIndex) {
+        if (!WO.groups[groupIndex] || !WO.groups[groupIndex].keywords[keywordIndex]) { window.showToast('⚠️ Data changed. Try again.', 3000); return; }
+        const kw = WO.groups[groupIndex].keywords[keywordIndex];
+        const ek = WO.getKeywordEncodedKey(kw);
+        const isSoftDeleted = WO.keywordDeletedStatus && WO.keywordDeletedStatus[ek] === true;
+
+        if (!WO.adminLoggedIn) {
+            if (!confirm('Delete this keyword?')) return;
+            await WO.animateKeywordOut(groupIndex, kw);
+            await WO.saveKeywordDeletedStatus(kw, true);
+            WO.renderGroups();
+            return;
+        }
+
+        if (!confirm(isSoftDeleted ? 'Permanently delete this keyword?' : 'Delete this keyword?')) return;
+        
+        await WO.animateKeywordOut(groupIndex, kw);
 
         WO.groups[groupIndex].keywords.splice(keywordIndex, 1);
         const existsElsewhere = WO.groups.some(g => g.keywords.includes(kw));
         if (!existsElsewhere) {
-            const ek = encodeURIComponent(kw).replace(/\./g, '%2E');
             try {
                 await Promise.all([
                     WO.clickCountsRef.update({ [ek]: WO.firestoreFieldValue.delete() }),
                     WO.descriptionsRef.update({ [ek]: WO.firestoreFieldValue.delete() }),
-                    WO.keywordAddedAtRef.update({ [ek]: WO.firestoreFieldValue.delete() })
+                    WO.keywordAddedAtRef.update({ [ek]: WO.firestoreFieldValue.delete() }),
+                    WO.deletedStatusRef.update({ [ek]: WO.firestoreFieldValue.delete() })
                 ]);
                 delete WO.keywordAddedAt[ek];
                 delete WO.keywordDescriptions[ek];
                 delete WO.globalClickCounts[ek];
+                if (WO.keywordDeletedStatus) delete WO.keywordDeletedStatus[ek];
             } catch (e) { console.error('Failed to delete keyword data:', e); }
         }
         await WO.syncAndSaveGroups();
+        WO.renderGroups();
+    };
+
+    WO.restoreKeyword = async function (groupIndex, keywordIndex) {
+        if (!WO.adminLoggedIn) return;
+        const kw = WO.groups[groupIndex].keywords[keywordIndex];
+        if (!kw) return;
+        await WO.saveKeywordDeletedStatus(kw, false);
         WO.renderGroups();
     };
 

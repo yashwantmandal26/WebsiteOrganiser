@@ -1003,6 +1003,17 @@ header h1 {
   flex-shrink: 0;
 }
 
+.suggestion-favicon {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  object-fit: contain;
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.08);
+  padding: 2px;
+}
+
+
 .suggestion-text {
   flex: 1;
   font-size: 14px;
@@ -1066,10 +1077,11 @@ header h1 {
 
 .keyword-search-highlight {
   display: inline;
-  padding: 0 3px;
-  border-radius: 4px;
-  background: rgba(255, 215, 0, 0.28);
-  color: inherit;
+  padding: 1px 0;
+  border-radius: 3px;
+  background: rgba(250, 42, 85, 0.15);
+  color: #FA2A55;
+  font-weight: 600;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
 }
@@ -3813,13 +3825,15 @@ body.is-touch .group-expand-indicator svg {
 }
 
 @media (max-width: 700px) {
-  /* 3 clean stacked rows, all centered — override the desktop grid */
+  /* Extremely compact mobile header */
   .header-row {
     display: flex !important;
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 10px;
-    padding: 0 12px;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 10px;
     min-height: unset;
     grid-template-columns: unset;
     grid-template-rows: unset;
@@ -3836,16 +3850,17 @@ body.is-touch .group-expand-indicator svg {
     align-self: unset !important;
   }
 
-  /* Row 1: Logo + Title side by side, centered */
+  /* Logo + Title */
   .header-left {
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: center;
-    gap: 10px;
-    width: 100%;
-    margin: 0 0 8px 0;
+    justify-content: flex-start;
+    gap: 6px;
+    width: auto;
+    margin: 0;
     order: 1;
+    position: static;
   }
 
   .header-brand {
@@ -3854,55 +3869,54 @@ body.is-touch .group-expand-indicator svg {
     align-items: flex-start;
   }
 
-  .site-logo { height: 55px; }
+  .site-logo { height: 35px; }
 
   .site-logo-refresh-dot {
-    width: 12px; height: 12px; top: 1px; right: 1px;
+    width: 10px; height: 10px; top: 1px; right: 1px;
   }
 
   .site-title {
-    font-size: 1.7rem;
+    font-size: 1.15rem;
     line-height: 1.1;
   }
 
-  /* Row 2: Timer + Toggle in a shared wrapper, centered */
+  /* Timer + Toggle on one line */
   .header-controls {
     display: flex;
     flex-direction: row;
+    flex-wrap: nowrap;
     align-items: center;
-    justify-content: center;
-    gap: 12px;
-    width: 100%;
-    margin-bottom: 12px;
+    justify-content: flex-end;
+    gap: 6px;
+    width: auto;
+    margin-bottom: 0;
     order: 2;
   }
 
-  /* Reset desktop absolute positioning for mobile */
-  .header-left {
-    position: static;
-  }
-
   .live-clock {
-    position: static;
-    transform: none;
-    bottom: auto;
-    left: auto;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    height: 40px;
+    box-sizing: border-box;
+    padding: 0 12px;
     margin: 0;
-    font-size: 1.4rem;
   }
 
   .header-right {
     display: flex;
     flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     width: auto;
     margin: 0;
-    flex-wrap: nowrap;
     overflow: visible;
   }
 
-  /* Row 3: Search bar full width */
+  /* Search bar full width on its own row */
   .search-bar-container {
     width: 100%;
     margin-top: 0;
@@ -3910,11 +3924,11 @@ body.is-touch .group-expand-indicator svg {
   }
 
   .header-right .btn {
-    font-size: 0.85rem;
-    padding: 8px 6px;
+    font-size: 0.8rem;
+    padding: 6px 6px;
     border-radius: 8px;
     margin: 0;
-    height: 44px;
+    height: 40px;
     box-sizing: border-box;
     display: flex;
     align-items: center;
@@ -3924,11 +3938,11 @@ body.is-touch .group-expand-indicator svg {
   }
 
   .header-right #theme-toggle-btn {
-    flex: 0 0 44px !important;
-    width: 44px !important;
-    min-width: 44px !important;
-    max-width: 44px !important;
-    height: 44px !important;
+    flex: 0 0 40px !important;
+    width: 40px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
+    height: 40px !important;
     padding: 0 !important;
     border-radius: 8px !important;
   }
@@ -4997,20 +5011,21 @@ textarea {
   }
 
   .header-controls {
-    gap: 8px;
+    flex-wrap: nowrap;
+    gap: 6px;
   }
 
-  .header-left h1 {
-    font-size: 1.4rem;
+  .site-title {
+    font-size: 1.1rem;
     letter-spacing: -0.5px;
   }
 
   .site-logo {
-    height: 50px;
+    height: 30px;
   }
 
   .header-right {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 4px;
   }
 
@@ -5860,4 +5875,12 @@ header {
 /* Smooth scrolling — html only, not * wildcard */
 html {
   scroll-behavior: smooth;
+}
+
+/* Soft Deleted Keywords (Admin View) */
+.keyword-soft-deleted {
+  opacity: 0.4 !important;
+  text-decoration: line-through;
+  text-decoration-color: #ff4d4f;
+  text-decoration-thickness: 2px;
 }

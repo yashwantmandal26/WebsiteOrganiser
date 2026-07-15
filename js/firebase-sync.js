@@ -23,6 +23,7 @@
     WO.clickCountsRef   = cloudSyncEnabled ? db.collection('sharedData').doc('clickCounts')        : _offline();
     WO.descriptionsRef  = cloudSyncEnabled ? db.collection('sharedData').doc('keywordDescriptions'): _offline();
     WO.keywordAddedAtRef= cloudSyncEnabled ? db.collection('sharedData').doc('keywordAddedAt')     : _offline();
+    WO.deletedStatusRef = cloudSyncEnabled ? db.collection('sharedData').doc('keywordDeletedStatus'): _offline();
 
     // One-time cleanup of old localStorage cache keys
     ['websiteorganiser_groups_cache','websiteorganiser_clicks_cache','websiteorganiser_keyword_added_at_cache']
@@ -75,7 +76,8 @@
                 groups:              cloneForStorage(WO.groups, []),
                 globalClickCounts:   cloneForStorage(WO.globalClickCounts, {}),
                 keywordDescriptions: cloneForStorage(WO.keywordDescriptions, {}),
-                keywordAddedAt:      cloneForStorage(WO.keywordAddedAt, {})
+                keywordAddedAt:      cloneForStorage(WO.keywordAddedAt, {}),
+                keywordDeletedStatus: cloneForStorage(WO.keywordDeletedStatus, {})
             }));
         } catch (e) { console.warn('Failed to save local backup:', e); }
     };
@@ -93,6 +95,7 @@
         if (backup.globalClickCounts)   WO.globalClickCounts   = cloneForStorage(backup.globalClickCounts, {});
         if (backup.keywordDescriptions) WO.keywordDescriptions = cloneForStorage(backup.keywordDescriptions, {});
         if (backup.keywordAddedAt)      WO.keywordAddedAt      = cloneForStorage(backup.keywordAddedAt, {});
+        if (backup.keywordDeletedStatus) WO.keywordDeletedStatus = cloneForStorage(backup.keywordDeletedStatus, {});
         return WO.groups.length > 0;
     };
 
@@ -196,8 +199,8 @@
 
     WO.loadGroups = async function () {
         try {
-            const [groupsDoc, clicksDoc, descriptionsDoc, addedAtDoc] = await Promise.all([
-                WO.groupsRef.get(), WO.clickCountsRef.get(), WO.descriptionsRef.get(), WO.keywordAddedAtRef.get()
+            const [groupsDoc, clicksDoc, descriptionsDoc, addedAtDoc, deletedStatusDoc] = await Promise.all([
+                WO.groupsRef.get(), WO.clickCountsRef.get(), WO.descriptionsRef.get(), WO.keywordAddedAtRef.get(), WO.deletedStatusRef.get()
             ]);
             let changed = false;
             if (clicksDoc.exists) {
@@ -211,6 +214,10 @@
             if (addedAtDoc.exists) {
                 const n = addedAtDoc.data() || {};
                 if (shallowObjectChanged(WO.keywordAddedAt, n)) { WO.keywordAddedAt = n; changed = true; }
+            }
+            if (deletedStatusDoc.exists) {
+                const n = deletedStatusDoc.data() || {};
+                if (shallowObjectChanged(WO.keywordDeletedStatus, n)) { WO.keywordDeletedStatus = n; changed = true; }
             }
             if (groupsDoc.exists && Array.isArray(groupsDoc.data().data)) {
                 const newGroups = groupsDoc.data().data;
@@ -295,6 +302,13 @@
                 if (shallowObjectChanged(WO.keywordAddedAt, n)) { WO.keywordAddedAt = n; WO.saveLocalDataBackup(); WO.debouncedSnapshotRender(); }
             }
         }, (e) => console.warn('AddedAt snapshot error:', e));
+
+        WO.deletedStatusRef.onSnapshot((doc) => {
+            if (doc.exists) {
+                const n = doc.data() || {};
+                if (shallowObjectChanged(WO.keywordDeletedStatus, n)) { WO.keywordDeletedStatus = n; WO.saveLocalDataBackup(); WO.debouncedSnapshotRender(); }
+            }
+        }, (e) => console.warn('DeletedStatus snapshot error:', e));
     };
 
     // ─── Keyword Metadata Helpers ─────────────────────────────────────────────
@@ -327,6 +341,24 @@
         WO.saveLocalDataBackup();
         try { await WO.descriptionsRef.set({ [ek]: description }, { merge: true }); }
         catch (e) { console.error('Failed to save keyword description:', e); }
+    };
+
+    WO.saveKeywordDeletedStatus = async function (keyword, isDeleted) {
+        if (!keyword) return;
+        const ek = WO.getKeywordEncodedKey(keyword);
+        if (isDeleted) {
+            WO.keywordDeletedStatus[ek] = true;
+        } else {
+            delete WO.keywordDeletedStatus[ek];
+        }
+        WO.saveLocalDataBackup();
+        try {
+            if (isDeleted) {
+                await WO.deletedStatusRef.set({ [ek]: true }, { merge: true });
+            } else {
+                await WO.deletedStatusRef.update({ [ek]: WO.firestoreFieldValue.delete() });
+            }
+        } catch (e) { console.error('Failed to sync deleted status:', e); }
     };
 
     WO.incrementKeywordClick = async function (groupIndex, keyword) {

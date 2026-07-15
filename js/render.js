@@ -31,10 +31,11 @@
                 const { displayText, targetUrl } = WO.parseKeyword(keyword);
                 const ek          = WO.getKeywordEncodedKey(keyword);
                 const description = WO.keywordDescriptions[ek] || '';
+                const isSoftDeleted = WO.keywordDeletedStatus && WO.keywordDeletedStatus[ek] === true;
                 const isNew       = WO.isKeywordNew(keyword);
                 const addedAt     = WO.keywordAddedAt[ek] || 0;
                 const searchText  = [keyword, displayText, targetUrl, description, group.name].join(' ').toLowerCase();
-                return { keyword, keywordIndex, displayText, targetUrl, description, ek, isNew, addedAt, searchText };
+                return { keyword, keywordIndex, displayText, targetUrl, description, ek, isNew, addedAt, searchText, isSoftDeleted };
             }).sort((a, b) => {
                 const ca = WO.globalClickCounts[a.ek] || 0;
                 const cb = WO.globalClickCounts[b.ek] || 0;
@@ -48,7 +49,10 @@
                 // Both have clicks: more clicks first, then alphabetical
                 if (cb !== ca) return cb - ca;
                 return a.displayText.localeCompare(b.displayText, undefined, { sensitivity: 'base' });
-            }).filter(e => !isKeywordSearchActive || WO.matchesKeywordSearch(e.searchText, searchTokens));
+            }).filter(e => {
+                if (e.isSoftDeleted && !WO.adminLoggedIn) return false;
+                return !isKeywordSearchActive || WO.matchesKeywordSearch(e.searchText, searchTokens);
+            });
             return { ...group, _originalIndex: originalIndex, _previewKeywords: previewKeywords };
         }).filter(g => !isKeywordSearchActive || g._previewKeywords.length > 0);
 
@@ -141,9 +145,10 @@
                     else                            previewGrid.classList.add('size-large');
 
                     keywords.forEach(entry => {
-                        const { keyword, keywordIndex, displayText, targetUrl, description, ek, isNew } = entry;
+                        const { keyword, keywordIndex, displayText, targetUrl, description, ek, isNew, isSoftDeleted } = entry;
                         const item = document.createElement('a');
                         item.className = 'keyword-grid-preview-item';
+                        if (isSoftDeleted) item.classList.add('keyword-soft-deleted');
                         item.href = WO.resolveDynamicURL(targetUrl) || '#';
                         item.target = '_blank';
                         item.rel = 'noopener';
@@ -271,16 +276,7 @@
                         groupCard.classList.remove('is-animating');
                     }
 
-                    // --- Desktop: hover ---
-                    groupCard.addEventListener('mouseenter', () => {
-                        if (document.body.classList.contains('is-touch')) return;
-                        doExpand();
-                    });
-
-                    groupCard.addEventListener('mouseleave', () => {
-                        if (document.body.classList.contains('is-touch')) return;
-                        doCollapse();
-                    });
+                    // Hover expand removed — expand/collapse is button-click only
 
                     // --- Click/Tap indicator to toggle ---
                     indicator.addEventListener('click', (e) => {
@@ -292,14 +288,14 @@
                         }
                     });
 
-                    // Close expanded card when tapping outside on mobile
+                    // Close expanded card when clicking outside (desktop + mobile)
                     document.addEventListener('click', (e) => {
-                        if (!document.body.classList.contains('is-touch')) return;
                         if (!groupCard.classList.contains('expanded')) return;
-                        if (!groupCard.contains(e.target) && !indicator.contains(e.target)) {
+                        if (!groupCard.contains(e.target)) {
                             doCollapse();
                         }
                     });
+
                 }
 
                 fragment.appendChild(cardWrapper);
@@ -351,4 +347,77 @@
         WO.lastAddedGroupIndex = null;
     };
 
+
+    // ── Lightweight in-place search highlight updater ──────────────────────────
+    // Called on every keystroke INSTEAD of renderGroups() to avoid full DOM rebuild
+    // which causes favicon <img> nodes to flicker/reload.
+    WO.updateSearchHighlighting = function () {
+        if (!_groupsContainerCache) _groupsContainerCache = document.getElementById('groups-container');
+        const container = _groupsContainerCache;
+        if (!container) return;
+
+        const normalizedQuery = WO.searchMode === WO.SEARCH_MODE_KEYWORDS
+            ? WO.normalizeSearchQuery(WO.activeKeywordSearchQuery)
+            : '';
+        const searchTokens = normalizedQuery ? normalizedQuery.split(/\s+/).filter(Boolean) : [];
+        const isActive = WO.searchMode === WO.SEARCH_MODE_KEYWORDS && searchTokens.length > 0;
+
+        // Update every keyword item in-place — no DOM destroy/rebuild
+        container.querySelectorAll('.keyword-grid-preview-item').forEach(item => {
+            const keyword   = item.dataset.keywordValue || '';
+            const targetUrl = item.dataset.targetUrl   || '';
+            const { displayText } = WO.parseKeyword(keyword);
+            const ek          = WO.getKeywordEncodedKey(keyword);
+            const description = WO.keywordDescriptions[ek] || '';
+            const searchText  = [keyword, displayText, targetUrl, description].join(' ').toLowerCase();
+
+            // Show/hide based on search match
+            const matches = !isActive || WO.matchesKeywordSearch(searchText, searchTokens);
+            item.style.display = matches ? '' : 'none';
+
+            // Update label text only — leave icon DOM untouched (no flicker)
+            const textEl = item.querySelector('.keyword-grid-text');
+            if (textEl) {
+                textEl.innerHTML = isActive
+                    ? WO.highlightSearchHtml(displayText, normalizedQuery)
+                    : WO.escapeHtml(displayText);
+            }
+        });
+
+        // Show/hide entire group card wrappers based on whether any items remain visible
+        container.querySelectorAll('.group-card').forEach(card => {
+            const hasVisible = Array.from(card.querySelectorAll('.keyword-grid-preview-item'))
+                .some(it => it.style.display !== 'none');
+            const wrapper = card.closest('.group-card-wrapper') || card;
+            wrapper.style.display = (!isActive || hasVisible) ? '' : 'none';
+        });
+    };
+
+    // ── Lightweight in-place theme color updater ───────────────────────────────
+    // Called by setTheme() INSTEAD of renderGroups() — only patches card backgrounds.
+    // Icons (<img> nodes) are never touched, so no blink/reload occurs.
+    WO.updateThemeColors = function () {
+        if (!_groupsContainerCache) _groupsContainerCache = document.getElementById('groups-container');
+        const container = _groupsContainerCache;
+        if (!container) return;
+
+        const theme = document.documentElement.dataset.theme;
+        const usedColors = new Set();
+
+        container.querySelectorAll('.group-card').forEach(card => {
+            const gi = card.dataset.groupIndex;
+            const group = WO.groups[gi];
+            if (!group) return;
+            const groupColor = WO.getGroupColor(group.name, usedColors);
+            if (theme === 'dark') {
+                card.style.background = WO.darkenColor(groupColor, 0.6);
+            } else if (theme === 'solid-dark') {
+                card.style.background = WO.darkenColor(groupColor, 0.75);
+            } else {
+                card.style.background = groupColor;
+            }
+        });
+    };
+
 })(window.WO);
+

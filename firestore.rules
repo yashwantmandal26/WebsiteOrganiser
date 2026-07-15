@@ -28,6 +28,12 @@ service cloud.firestore {
       allow write: if true;
     }
 
+    // keywordDeletedStatus: anyone can read/write (soft deletes)
+    match /sharedData/keywordDeletedStatus {
+      allow read: if true;
+      allow write: if true;
+    }
+
     // Default read access for other docs in sharedData
     match /sharedData/{document=**} {
       allow read: if true;
