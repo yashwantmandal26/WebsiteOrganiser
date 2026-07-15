@@ -2777,17 +2777,30 @@ body.is-zooming .search-suggestions {
   font-size: 0.72rem;
   font-weight: 600;
   color: var(--text-color);
-  word-break: break-word;
   letter-spacing: -0.01em;
   line-height: 1.2;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
   text-align: center;
   margin-top: 2px;
+  width: 100%;
+  
+  /* Restrict to single line with two dots by default */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* fallback */
+  text-overflow: '..'; /* modern browsers support custom string */
+  display: block;
+}
+
+/* On hover, show the full text on a single line (it will bleed horizontally) */
+.keyword-grid-preview-item:hover .keyword-grid-text,
+.keyword-grid-item:hover .keyword-grid-text {
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  z-index: 20;
+  position: relative;
+  /* Adding a subtle text-shadow helps readability when it overlaps other elements */
+  text-shadow: 0 0 8px var(--bg-color), 0 0 4px var(--bg-color);
 }
 
 .keyword-grid-preview {
@@ -3126,6 +3139,8 @@ body.is-touch .group-expand-indicator svg {
   align-items: center;
   gap: 12px;
   justify-content: flex-start;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 /* Brand block: title only (clock moved to header-controls) */
@@ -4683,8 +4698,6 @@ body.is-touch .group-card[draggable="true"] {
     font-size: 0.7rem;
     line-height: 1.2;
     margin-top: 4px;
-    -webkit-line-clamp: 1;
-    line-clamp: 1;
   }
 
   /* Optimize list view for mobile */
@@ -5111,20 +5124,20 @@ textarea {
 
   .group-card .keyword-grid-text {
     font-size: 0.65rem !important;
-    max-height: 28px !important; /* Allow space for 2 lines */
-    min-height: 12px !important; /* Reduced from 24px to allow 1-line cards to be smaller */
+    min-height: 12px !important;
     font-weight: 500 !important;
     line-height: 1.1 !important;
     margin-top: 4px !important;
-    display: -webkit-box !important;
-    -webkit-line-clamp: 2 !important;
-    -webkit-box-orient: vertical !important;
-    overflow: hidden !important;
     text-align: center !important;
-    word-break: break-word !important;
-    white-space: normal !important;
+    
+    /* Single line with ellipsis/two-dots for group cards too */
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important; /* fallback */
+    text-overflow: '..' !important;
+    display: block !important;
   }
-
+  
   /* List view adjustments */
   .group-card li {
     padding: 12px 10px;

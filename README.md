@@ -1,4 +1,4 @@
-# 🌐 WebsiteOrganiser — v1.0.3
+# 🌐 WebsiteOrganiser — v1.0.4
 
 A professional, high-performance Progressive Web Application (PWA) designed to organize, manage, and synchronize your favorite websites, bookmarks, and search keywords. Built with a focus on modern UI/UX, real-time cloud sync, and offline reliability.
 
@@ -55,7 +55,7 @@ A professional, high-performance Progressive Web Application (PWA) designed to o
 *Located in the root directory.*
 - **Frontend Core**: Vanilla JavaScript (ES6+), HTML5, CSS3 — modular IIFE architecture.
 - **Database**: Firebase Firestore (NoSQL Cloud Storage).
-- **PWA Engine**: Service Workers (`wo-v1003`), Web App Manifest.
+- **PWA Engine**: Service Workers (`wo-v1004`), Web App Manifest.
 - **Hosting**: Firebase Hosting with optimized cache headers.
 
 ---
@@ -64,11 +64,11 @@ A professional, high-performance Progressive Web Application (PWA) designed to o
 
 ```text
 WebsiteOrganiser/
-├── index.html              # Main application shell (v1003)
+├── index.html              # Main application shell (v1004)
 ├── style.css               # Base styles and 3D glass theme
 ├── add-keyword-modal.css   # Modal interaction styles
 ├── search-bar-update.css   # Enhanced search interface styles
-├── sw.js                   # Service Worker (cache: wo-v1003)
+├── sw.js                   # Service Worker (cache: wo-v1004)
 ├── manifest.json           # PWA configuration and metadata
 ├── firebase-config.js      # (Local Only) Firebase credentials
 ├── firestore.rules         # Security rules for cloud data
@@ -109,6 +109,10 @@ Administrative actions are protected to maintain organization integrity.
 ---
 
 ## 📋 Changelog
+
+### v1.0.4 (2026-07-15)
+- ✅ **Keyword Text Truncation** — Long keywords are now strictly contained to a single line with `..` instead of wrapping to a second line. On hover, the full text expands on a single line horizontally, preventing layout shifts.
+- ✅ **Unselectable Logo** — Made the main WebsiteOrganiser logo text unselectable (`user-select: none`), preventing accidental text highlighting when executing the triple-click admin login.
 
 ### v1.0.3 (2026-07-15)
 - ✅ **Dark Theme Refinement** — Darkened keyword tiles to a cohesive charcoal grey and propagated this balanced darkness to the search bar, clock, and header.
