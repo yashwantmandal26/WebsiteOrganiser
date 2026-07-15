@@ -1,4 +1,4 @@
-# 🌐 WebsiteOrganiser — v1.0.2
+# 🌐 WebsiteOrganiser — v1.0.3
 
 A professional, high-performance Progressive Web Application (PWA) designed to organize, manage, and synchronize your favorite websites, bookmarks, and search keywords. Built with a focus on modern UI/UX, real-time cloud sync, and offline reliability.
 
@@ -55,7 +55,7 @@ A professional, high-performance Progressive Web Application (PWA) designed to o
 *Located in the root directory.*
 - **Frontend Core**: Vanilla JavaScript (ES6+), HTML5, CSS3 — modular IIFE architecture.
 - **Database**: Firebase Firestore (NoSQL Cloud Storage).
-- **PWA Engine**: Service Workers (`wo-v1002`), Web App Manifest.
+- **PWA Engine**: Service Workers (`wo-v1003`), Web App Manifest.
 - **Hosting**: Firebase Hosting with optimized cache headers.
 
 ---
@@ -64,11 +64,11 @@ A professional, high-performance Progressive Web Application (PWA) designed to o
 
 ```text
 WebsiteOrganiser/
-├── index.html              # Main application shell (v1002)
+├── index.html              # Main application shell (v1003)
 ├── style.css               # Base styles and 3D glass theme
 ├── add-keyword-modal.css   # Modal interaction styles
 ├── search-bar-update.css   # Enhanced search interface styles
-├── sw.js                   # Service Worker (cache: wo-v1002)
+├── sw.js                   # Service Worker (cache: wo-v1003)
 ├── manifest.json           # PWA configuration and metadata
 ├── firebase-config.js      # (Local Only) Firebase credentials
 ├── firestore.rules         # Security rules for cloud data
@@ -109,6 +109,10 @@ Administrative actions are protected to maintain organization integrity.
 ---
 
 ## 📋 Changelog
+
+### v1.0.3 (2026-07-15)
+- ✅ **Dark Theme Refinement** — Darkened keyword tiles to a cohesive charcoal grey and propagated this balanced darkness to the search bar, clock, and header.
+- ✅ **Triple-Click Admin Login** — Admin login/logout from the top-left logo now requires a deliberate triple-click or triple-tap to prevent accidental triggers.
 
 ### v1.0.2 (2026-07-15)
 - ✅ **Group expand on button-click only** — removed hover-expand; only the ↓ button expands/collapses a group card.

@@ -251,26 +251,43 @@
             });
         }
 
-        // Admin login/logout — triggered by clicking the logo / title
+        // Admin login/logout — triggered by clicking the logo / title (Requires TRIPLE CLICK / TAP)
         const headerLeft = document.querySelector('.header-left');
         if (headerLeft) {
             headerLeft.style.cursor = 'pointer';
+            
+            let clickCount = 0;
+            let clickTimer = null;
+
             headerLeft.addEventListener('click', (e) => {
                 e.preventDefault(); // Prevent the <a> tag from refreshing the page
-                if (WO.adminLoggedIn) {
-                    if (typeof firebase !== 'undefined' && firebase.auth) {
-                        firebase.auth().signOut().catch(e => console.error('Signout failed:', e));
-                    } else {
-                        WO.adminLoggedIn = false;
-                        WO.updateAdminButton();
-                        WO.renderGroups();
-                    }
-                    return;
+                
+                clickCount++;
+                if (clickCount === 1) {
+                    clickTimer = setTimeout(() => {
+                        clickCount = 0;
+                    }, 800); // 800ms window to complete 3 taps
                 }
-                adminIdInput.value = ''; adminPasswordInput.value = '';
-                adminErrorMsg.textContent = 'Invalid credentials';
-                adminErrorMsg.style.display = 'none';
-                WO.toggleModal(adminModal, true); adminIdInput.focus();
+                
+                if (clickCount >= 3) {
+                    clearTimeout(clickTimer);
+                    clickCount = 0;
+
+                    if (WO.adminLoggedIn) {
+                        if (typeof firebase !== 'undefined' && firebase.auth) {
+                            firebase.auth().signOut().catch(e => console.error('Signout failed:', e));
+                        } else {
+                            WO.adminLoggedIn = false;
+                            WO.updateAdminButton();
+                            WO.renderGroups();
+                        }
+                        return;
+                    }
+                    adminIdInput.value = ''; adminPasswordInput.value = '';
+                    adminErrorMsg.textContent = 'Invalid credentials';
+                    adminErrorMsg.style.display = 'none';
+                    WO.toggleModal(adminModal, true); adminIdInput.focus();
+                }
             });
         }
         
