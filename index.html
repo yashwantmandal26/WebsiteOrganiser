@@ -19,16 +19,8 @@
   <meta name="msapplication-TileColor" content="#7b2cbf">
   <meta name="msapplication-tap-highlight" content="no">
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="dns-prefetch" href="//www.gstatic.com">
-  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-  <link rel="preconnect" href="https://www.google.com" crossorigin>
-  <link rel="dns-prefetch" href="//www.google.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-  <link rel="stylesheet" href="style.css?v=1005">
-  <link rel="stylesheet" href="add-keyword-modal.css?v=1005">
-  <link rel="stylesheet" href="search-bar-update.css?v=1005">
+  <link rel="stylesheet" href="fonts/inter.css">
+  <link rel="stylesheet" href="bundle.min.css?v=1009">
 
   <link rel="manifest" href="manifest.json">
 
@@ -36,12 +28,12 @@
   <meta name="theme-color" media="(prefers-color-scheme: light)" content="#7b2cbf">
   <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#121212">
   <meta name="color-scheme" content="light dark">
-  <link rel="icon" type="image/png" href="media/logo.png">
+  <link rel="icon" type="image/png" href="icon-192.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-192.png">
 
   <!-- Apple Touch Icons -->
-  <link rel="apple-touch-icon" href="media/logo.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="apple-touch-icon" sizes="152x152" href="icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-192.png">
   <link rel="apple-touch-icon" sizes="167x167" href="icon-192.png">
@@ -54,7 +46,7 @@
     <div class="header-row">
       <div class="header-left">
         <a href="./" class="site-logo-link" title="Tap the red dot on the WebsiteOrganiser icon to refresh cached changes">
-          <img src="media/logo.png" alt="WebsiteOrganiser Logo" class="site-logo">
+          <img src="icon-192.png" alt="WebsiteOrganiser Logo" class="site-logo">
           <span class="site-logo-refresh-dot" aria-hidden="true" hidden></span>
         </a>
         <div class="header-brand">
@@ -79,7 +71,7 @@
       <div class="search-bar-container">
         <div class="search-bar-wrapper">
           <input type="text" id="google-search-input" class="google-search-input"
-            placeholder="Search websites or Google..."
+            placeholder="Find anything..."
             autocomplete="new-password" spellcheck="false">
 
           <button type="button" id="search-submit-btn" class="search-submit-btn" aria-label="Search"
@@ -224,30 +216,9 @@
     </div>
   </div>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-  
-  <!-- Separate configuration file -->
-  <script src="firebase-config.js"></script>
-
+  <!-- Modular Firebase Config -->
+  <script type="module" src="firebase-config.js"></script>
   <script>
-    // Initialize Firebase with error handling
-    let db;
-    try {
-      if (typeof firebaseConfig === 'undefined') {
-        console.warn('Firebase configuration not found. Running in local-only mode.');
-        db = null;
-      } else {
-        firebase.initializeApp(firebaseConfig);
-        db = firebase.firestore();
-      }
-    } catch (error) {
-      console.warn('Firebase initialization failed. Running in local-only mode.', error);
-      db = null;
-    }
-
     // Register Service Worker for offline support and cache-first performance
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(err => {
@@ -310,16 +281,8 @@
       clockInterval = setInterval(updateClock, 1000);
     })();
   </script>
-  <!-- Application Modules -->
-  <script defer src="js/config.js?v=1005"></script>
-  <script defer src="js/state.js?v=1005"></script>
-  <script defer src="js/utils.js?v=1005"></script>
-  <script defer src="js/firebase-sync.js?v=1005"></script>
-  <script defer src="js/render.js?v=1005"></script>
-  <script defer src="js/crud.js?v=1005"></script>
-  <script defer src="js/ui.js?v=1005"></script>
-  <script defer src="js/search.js?v=1005"></script>
-  <script defer src="js/app.js?v=1005"></script>
+  <!-- Application Bundle -->
+  <script defer src="bundle.min.js?v=1009"></script>
 
   <div id="toast-container"></div>
   <!-- Global keyword tooltip portal — lives at body level to avoid contain:paint clipping -->

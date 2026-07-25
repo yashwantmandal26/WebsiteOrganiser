@@ -3,9 +3,15 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "scrape": "node scraper.js"
+    "scrape": "node scraper.js",
+    "build": "node build.js"
   },
   "dependencies": {
     "cheerio": "^1.0.0-rc.12"
+  },
+  "devDependencies": {
+    "clean-css": "^5.3.3",
+    "sharp": "^0.35.3",
+    "terser": "^5.49.0"
   }
 }

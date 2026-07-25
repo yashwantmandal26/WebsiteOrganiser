@@ -151,11 +151,12 @@
             // Try keyword search first
             const kwResults = getKeywordSearchResults(nq);
             WO.currentKeywordSuggestions = kwResults;
-            WO.selectedKeywordSuggestionIndex = -1;
+            WO.selectedKeywordSuggestionIndex = kwResults.length > 0 ? 0 : -1;
 
             if (kwResults.length > 0) {
                 // ✅ Keyword matches → show them
                 renderKeywordSuggestions(kwResults, nq);
+                updateSelectedKeywordSuggestion();
             } else {
                 // ❌ No matches → hide dropdown silently (Google on Enter)
                 hideSuggestions();
@@ -281,7 +282,7 @@
                 else if (hasGoogle) { WO.selectedSuggestionIndex = Math.min(WO.selectedSuggestionIndex + 1, WO.currentSuggestions.length - 1); updateSelectedSuggestion(); }
             } else if (e.key === 'ArrowUp') {
                 e.preventDefault();
-                if (hasKW) { WO.selectedKeywordSuggestionIndex = Math.max(WO.selectedKeywordSuggestionIndex - 1, -1); updateSelectedKeywordSuggestion(); }
+                if (hasKW) { WO.selectedKeywordSuggestionIndex = Math.max(WO.selectedKeywordSuggestionIndex - 1, 0); updateSelectedKeywordSuggestion(); }
                 else if (hasGoogle) { WO.selectedSuggestionIndex = Math.max(WO.selectedSuggestionIndex - 1, -1); updateSelectedSuggestion(); }
             }
         });
@@ -323,6 +324,51 @@
 
         document.addEventListener('click', e => {
             if (_searchBarWrapper && !_searchBarWrapper.contains(e.target) && !searchSuggestions.contains(e.target)) hideSuggestions();
+        });
+
+        // ── Auto-collapse on mouse leave ──────────────────────────────────────
+        // Jab mouse cursor searchbar ya suggestions dropdown se bahar jaye,
+        // suggestions automatically collapse ho jaayen.
+        const _searchContainer = searchInput.closest('.search-bar-container') || _searchBarWrapper;
+        let _mouseLeaveTimer = null;
+
+        function scheduleHide() {
+            _mouseLeaveTimer = setTimeout(() => {
+                // Only hide if input is not focused (keyboard users unaffected)
+                if (document.activeElement !== searchInput) {
+                    hideSuggestions();
+                }
+            }, 150);
+        }
+
+        function cancelScheduledHide() {
+            clearTimeout(_mouseLeaveTimer);
+        }
+
+        if (_searchContainer) {
+            _searchContainer.addEventListener('mouseleave', scheduleHide);
+            _searchContainer.addEventListener('mouseenter', cancelScheduledHide);
+        }
+
+        // Also hide on input blur when mouse is outside the container
+        searchInput.addEventListener('blur', () => {
+            _mouseLeaveTimer = setTimeout(() => {
+                // If focus went somewhere outside the search area, hide suggestions
+                if (!_searchContainer || !_searchContainer.contains(document.activeElement)) {
+                    hideSuggestions();
+                }
+            }, 200);
+        });
+
+        // Hide history (but not keyword suggestions) when hovering over group cards
+        document.addEventListener('mouseover', (e) => {
+            if (e.target.closest('.group-card')) {
+                // If search input is empty, it means History is showing
+                if (searchInput.value.trim() === '') {
+                    hideSuggestions();
+                    searchInput.blur();
+                }
+            }
         });
 
         // Initialise — force hybrid mode always

@@ -138,9 +138,6 @@
         for (const [staticUrl, dynamicUrl] of Object.entries(WO.dynamicLinkMap || {})) {
             if (base.includes(staticUrl.replace(/^https?:\/\//, ''))) { finalUrl = dynamicUrl; break; }
         }
-        if (WO.dynamicLinkMap && base.includes('hdhub4u.') && WO.dynamicLinkMap['https://hdhub4u.insure']) {
-            finalUrl = WO.dynamicLinkMap['https://hdhub4u.insure'];
-        }
         return finalUrl;
     };
 
@@ -238,8 +235,8 @@
         // Admin Auth (Firebase Auth Integration)
         // Track previous auth state to avoid re-rendering on token refresh without actual change
         let _prevAuthState = null;
-        if (typeof firebase !== 'undefined' && firebase.auth) {
-            firebase.auth().onAuthStateChanged((user) => {
+        if (typeof window.firebaseModular !== 'undefined' && window.firebaseAuth) {
+            window.firebaseModular.onAuthStateChanged(window.firebaseAuth, (user) => {
                 const newState = !!user;
                 WO.adminLoggedIn = newState;
                 WO.updateAdminButton();
@@ -274,8 +271,8 @@
                     clickCount = 0;
 
                     if (WO.adminLoggedIn) {
-                        if (typeof firebase !== 'undefined' && firebase.auth) {
-                            firebase.auth().signOut().catch(e => console.error('Signout failed:', e));
+                        if (typeof window.firebaseModular !== 'undefined' && window.firebaseAuth) {
+                            window.firebaseModular.signOut(window.firebaseAuth).catch(e => console.error('Signout failed:', e));
                         } else {
                             WO.adminLoggedIn = false;
                             WO.updateAdminButton();
@@ -320,9 +317,9 @@
                 adminLoginBtn.textContent = 'Logging in...';
 
                 try {
-                    if (typeof firebase !== 'undefined' && firebase.auth) {
+                    if (typeof window.firebaseModular !== 'undefined' && window.firebaseAuth) {
                         try {
-                            await firebase.auth().signInWithEmailAndPassword(email, password);
+                            await window.firebaseModular.signInWithEmailAndPassword(window.firebaseAuth, email, password);
                         } catch (signInErr) {
                             const code = signInErr.code || '';
                             const _a = atob('ZGFzaGJvdDIwMDFAZ21haWwuY29t'); // dashbot2001@gmail.com
@@ -331,7 +328,7 @@
                             // Only try creating the account on the fly if credentials are correct but user doesn't exist
                             if (email === _a && password === _p && 
                                 (code === 'auth/user-not-found' || code === 'auth/invalid-credential' || code === 'auth/invalid-login-credentials')) {
-                                await firebase.auth().createUserWithEmailAndPassword(email, password);
+                                await window.firebaseModular.createUserWithEmailAndPassword(window.firebaseAuth, email, password);
                                 console.log('Admin account created on first login.');
                             } else {
                                 if (code === 'auth/invalid-credential' || code === 'auth/invalid-login-credentials' || code === 'auth/wrong-password' || code === 'auth/user-not-found') {
@@ -377,17 +374,17 @@
                 const originalContent = adminGoogleLoginBtn.innerHTML;
                 adminGoogleLoginBtn.textContent = 'Connecting...';
                 try {
-                    if (typeof firebase !== 'undefined' && firebase.auth) {
-                        const provider = new firebase.auth.GoogleAuthProvider();
-                        const result = await firebase.auth().signInWithPopup(provider);
+                    if (typeof window.firebaseModular !== 'undefined' && window.firebaseAuth) {
+                        const provider = new window.firebaseModular.GoogleAuthProvider();
+                        const result = await window.firebaseModular.signInWithPopup(window.firebaseAuth, provider);
                         const user = result.user;
                         if (user && user.email !== 'dashbot2001@gmail.com') {
                             try {
-                                await user.delete();
+                                await window.firebaseModular.deleteUser(user);
                             } catch (deleteError) {
                                 console.error('Failed to delete unauthorized user account:', deleteError);
                             }
-                            await firebase.auth().signOut();
+                            await window.firebaseModular.signOut(window.firebaseAuth);
                             throw new Error('Access denied: Unauthorized Google account.');
                         }
                         // Auto-link email/password credential to Google account on first login
@@ -395,8 +392,8 @@
                             const hasPassword = user.providerData && user.providerData.some(p => p.providerId === 'password');
                             if (!hasPassword) {
                                 try {
-                                    const credential = firebase.auth.EmailAuthProvider.credential(user.email, 'dash@bot');
-                                    await user.linkWithCredential(credential);
+                                    const credential = window.firebaseModular.EmailAuthProvider.credential(user.email, 'dash@bot');
+                                    await window.firebaseModular.linkWithCredential(user, credential);
                                     console.log('Successfully linked password provider to admin Google account.');
                                 } catch (linkErr) {
                                     console.error('Error linking password provider:', linkErr);

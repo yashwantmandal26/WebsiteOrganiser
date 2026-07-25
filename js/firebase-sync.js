@@ -5,8 +5,12 @@
 (function (WO) {
 
     // ─── Firestore Setup ──────────────────────────────────────────────────────
-    const cloudSyncEnabled = typeof db !== 'undefined' && db && typeof db.collection === 'function';
-    WO.firestoreFieldValue = cloudSyncEnabled ? firebase.firestore.FieldValue : {
+    const cloudSyncEnabled = typeof window.firebaseModular !== 'undefined' && window.db;
+    WO.firestoreFieldValue = cloudSyncEnabled ? {
+        increment: (v) => window.firebaseModular.increment(v),
+        delete:    () => window.firebaseModular.deleteField(),
+        serverTimestamp: () => window.firebaseModular.serverTimestamp()
+    } : {
         increment: (v) => v,
         delete:    () => undefined,
         serverTimestamp: () => null
@@ -19,11 +23,30 @@
         onSnapshot: () => () => {}
     });
 
-    WO.groupsRef        = cloudSyncEnabled ? db.collection('sharedData').doc('groups')             : _offline();
-    WO.clickCountsRef   = cloudSyncEnabled ? db.collection('sharedData').doc('clickCounts')        : _offline();
-    WO.descriptionsRef  = cloudSyncEnabled ? db.collection('sharedData').doc('keywordDescriptions'): _offline();
-    WO.keywordAddedAtRef= cloudSyncEnabled ? db.collection('sharedData').doc('keywordAddedAt')     : _offline();
-    WO.deletedStatusRef = cloudSyncEnabled ? db.collection('sharedData').doc('keywordDeletedStatus'): _offline();
+    const _wrapSnap = (snap) => ({
+        exists: typeof snap.exists === 'function' ? snap.exists() : snap.exists,
+        data: typeof snap.data === 'function' ? snap.data.bind(snap) : () => snap.data
+    });
+
+    const _makeRef = (col, docName) => {
+        if (!cloudSyncEnabled) return _offline();
+        const dRef = window.firebaseModular.doc(window.db, col, docName);
+        return {
+            set: async (data, opts) => window.firebaseModular.setDoc(dRef, data, opts),
+            update: async (data) => window.firebaseModular.updateDoc(dRef, data),
+            get: async () => {
+                const snap = await window.firebaseModular.getDoc(dRef);
+                return _wrapSnap(snap);
+            },
+            onSnapshot: (cb) => window.firebaseModular.onSnapshot(dRef, (snap) => cb(_wrapSnap(snap)))
+        };
+    };
+
+    WO.groupsRef        = _makeRef('sharedData', 'groups');
+    WO.clickCountsRef   = _makeRef('sharedData', 'clickCounts');
+    WO.descriptionsRef  = _makeRef('sharedData', 'keywordDescriptions');
+    WO.keywordAddedAtRef= _makeRef('sharedData', 'keywordAddedAt');
+    WO.deletedStatusRef = _makeRef('sharedData', 'keywordDeletedStatus');
 
     // One-time cleanup of old localStorage cache keys
     ['websiteorganiser_groups_cache','websiteorganiser_clicks_cache','websiteorganiser_keyword_added_at_cache']

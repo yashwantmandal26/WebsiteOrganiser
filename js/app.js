@@ -125,11 +125,33 @@
         }
     }
 
-    // ─── Dynamic Links Fetch ──────────────────────────────────────────────────
-    fetch('./dynamic-links.json')
-        .then(res => res.json())
-        .then(data => { WO.dynamicLinkMap = data; })
-        .catch(() => {});
+    // ─── Dynamic Links Fetch (cached with 1-hour TTL) ─────────────────────────
+    (function loadDynamicLinks() {
+        const CACHE_KEY = 'wo_dynamic_links';
+        const TTL_MS = 60 * 60 * 1000; // 1 hour
+
+        // 1. Load instantly from localStorage
+        try {
+            const cached = JSON.parse(localStorage.getItem(CACHE_KEY));
+            if (cached && cached.data) {
+                WO.dynamicLinkMap = cached.data;
+            }
+        } catch { }
+
+        // 2. Refresh from network if stale or missing
+        try {
+            const cached = JSON.parse(localStorage.getItem(CACHE_KEY));
+            if (cached && cached.ts && (Date.now() - cached.ts < TTL_MS)) return; // Still fresh
+        } catch { }
+
+        fetch('./dynamic-links.json')
+            .then(res => res.json())
+            .then(data => {
+                WO.dynamicLinkMap = data;
+                try { localStorage.setItem(CACHE_KEY, JSON.stringify({ data, ts: Date.now() })); } catch { }
+            })
+            .catch(() => {});
+    })();
 
     // ─── App Initialization ───────────────────────────────────────────────────
     document.addEventListener('DOMContentLoaded', () => {

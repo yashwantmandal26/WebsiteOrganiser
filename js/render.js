@@ -7,6 +7,18 @@
     // Cache container reference — avoids repeated getElementById on every render
     let _groupsContainerCache = null;
 
+    // Single delegated click handler for collapsing expanded cards (prevents memory leak)
+    let _outsideClickHandlerRegistered = false;
+    function _handleOutsideClick(e) {
+        const expandedCards = document.querySelectorAll('.group-card.expanded');
+        expandedCards.forEach(card => {
+            if (!card.contains(e.target)) {
+                const indicator = card.querySelector('.group-expand-indicator');
+                if (indicator) indicator.click();
+            }
+        });
+    }
+
     WO.renderGroups = function () {
         if (!_groupsContainerCache) _groupsContainerCache = document.getElementById('groups-container');
         const groupsContainer = _groupsContainerCache;
@@ -255,25 +267,32 @@
                         groupCard.classList.add('is-animating');
                         groupCard.style.overflow = 'hidden';
 
-                        groupCard.style.transition = 'none'; // Instant close
-                        groupCard.style.height = collapsedHeight + 'px';
+                        // Capture current expanded height before removing class
+                        const currentHeight = groupCard.getBoundingClientRect().height;
+                        groupCard.style.height = currentHeight + 'px';
+                        groupCard.offsetHeight; // Force reflow
 
-                        // Execute instantly for closing
+                        // Remove expanded class first (collapses grid items)
                         groupCard.classList.remove('expanded');
                         previewGrid.classList.remove('expanded');
-                        groupCard.style.height = '';
-                        groupCard.style.transition = '';
-                        groupCard.style.overflow = 'visible';
-                        groupCard.style.zIndex = '';
-                        groupCard.style.position = '';
-                        groupCard.style.top = '';
-                        groupCard.style.left = '';
-                        groupCard.style.width = '';
 
-                        // Unfreeze wrapper
-                        cardWrapper.style.height = '100%';
+                        // Animate height back to collapsed size
+                        groupCard.style.transition = 'height 0.45s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.45s ease, border-color 0.45s ease';
+                        groupCard.style.height = collapsedHeight + 'px';
 
-                        groupCard.classList.remove('is-animating');
+                        expandTimeout = setTimeout(() => {
+                            // Reset all inline styles after animation completes
+                            groupCard.style.height = '';
+                            groupCard.style.transition = '';
+                            groupCard.style.overflow = 'visible';
+                            groupCard.style.zIndex = '';
+                            groupCard.style.position = '';
+                            groupCard.style.top = '';
+                            groupCard.style.left = '';
+                            groupCard.style.width = '';
+                            cardWrapper.style.height = '100%';
+                            groupCard.classList.remove('is-animating');
+                        }, 460);
                     }
 
                     // Hover expand removed — expand/collapse is button-click only
@@ -288,13 +307,11 @@
                         }
                     });
 
-                    // Close expanded card when clicking outside (desktop + mobile)
-                    document.addEventListener('click', (e) => {
-                        if (!groupCard.classList.contains('expanded')) return;
-                        if (!groupCard.contains(e.target)) {
-                            doCollapse();
-                        }
-                    });
+                    // Close expanded card when clicking outside — uses single delegated handler (no leak)
+                    if (!_outsideClickHandlerRegistered) {
+                        document.addEventListener('click', _handleOutsideClick);
+                        _outsideClickHandlerRegistered = true;
+                    }
 
                 }
 
