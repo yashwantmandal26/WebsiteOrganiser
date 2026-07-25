@@ -132,13 +132,7 @@
     }
 
     WO.resolveDynamicURL = function (url) {
-        if (!url) return '';
-        let finalUrl = url;
-        const base = url.replace(/\/$/, '');
-        for (const [staticUrl, dynamicUrl] of Object.entries(WO.dynamicLinkMap || {})) {
-            if (base.includes(staticUrl.replace(/^https?:\/\//, ''))) { finalUrl = dynamicUrl; break; }
-        }
-        return finalUrl;
+        return url || '';
     };
 
     WO.openURLWithBrowser = function (url, inNewTab = false) {

@@ -13,7 +13,7 @@
     WO.keywordAddedAt     = {};   // { encodedKeyword: unixTimestampMs }
     WO.keywordDeletedStatus= {};  // { encodedKeyword: true } (soft deleted by users)
     WO.localGroupOrder    = [];   // Per-browser group display order
-    WO.dynamicLinkMap     = {};   // { staticUrl: dynamicUrl } from dynamic-links.json
+
 
     // ─── UI / Interaction State ───────────────────────────────────────────────
     WO.adminLoggedIn       = false;

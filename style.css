@@ -997,20 +997,20 @@ header h1 {
 }
 
 .suggestion-icon {
-  width: 18px;
-  height: 18px;
+  width: 24px;
+  height: 24px;
   color: var(--icon-color);
   flex-shrink: 0;
 }
 
 .suggestion-favicon {
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
   object-fit: contain;
   flex-shrink: 0;
   background: rgba(255,255,255,0.08);
-  padding: 2px;
+  padding: 3px;
 }
 
 
@@ -3231,13 +3231,8 @@ body.is-touch .group-expand-indicator svg {
   flex-shrink: 0;
 }
 
-/* Hour digits – red */
-.clock-hours {
-  color: #d40000;
-  text-shadow: 0 0 8px rgba(212, 0, 0, 0.3);
-}
-
-/* Minute and second digits – near-black (light theme) */
+/* Clock digits – near-black (light theme) */
+.clock-hours,
 .clock-minutes,
 .clock-seconds {
   color: #1a1a2e;
@@ -3303,11 +3298,11 @@ body.is-touch .group-expand-indicator svg {
   color: #bbb;
 }
 
-/* Hour stays red in dark too, slightly brighter */
+/* Hour matches minutes/seconds in dark mode */
 [data-theme="dark"] .clock-hours,
 [data-theme="solid-dark"] .clock-hours {
-  color: #ff4444;
-  text-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
+  color: #e8e8f0;
+  text-shadow: none;
 }
 
 .site-logo-link {
