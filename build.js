@@ -19,7 +19,6 @@ async function build() {
 
     const imagesToCompress = [
         'icon-192.png',
-        'media/mic.png',
         'media/rename.png',
         'media/theme.png',
         'media/google.png',

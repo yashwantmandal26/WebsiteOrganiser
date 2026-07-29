@@ -1,7 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 
 <head>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('wo-theme');
+        document.documentElement.dataset.theme = (t === 'dark' || t === 'light' || t === 'solid-dark') ? t : 'light';
+      } catch (e) {
+        document.documentElement.dataset.theme = 'light';
+      }
+    })();
+  </script>
   <meta charset="UTF-8">
   <meta name="viewport"
     content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
@@ -101,39 +111,7 @@
 
 
   <main class="container">
-    <!-- Loading Overlay -->
-    <div id="loading-overlay" class="loading-overlay">
-      <div class="lo-bg-orbs">
-        <span class="lo-orb lo-orb1"></span>
-        <span class="lo-orb lo-orb2"></span>
-        <span class="lo-orb lo-orb3"></span>
-      </div>
-      <div class="lo-card">
-        <div class="lo-logo-wrap">
-          <svg class="lo-logo-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <rect width="48" height="48" rx="14" fill="url(#lg1)"/>
-            <rect x="10" y="10" width="12" height="12" rx="4" fill="#fff" fill-opacity="0.9"/>
-            <rect x="26" y="10" width="12" height="12" rx="4" fill="#fff" fill-opacity="0.7"/>
-            <rect x="10" y="26" width="12" height="12" rx="4" fill="#fff" fill-opacity="0.7"/>
-            <rect x="26" y="26" width="12" height="12" rx="4" fill="#fff" fill-opacity="0.5"/>
-            <defs>
-              <linearGradient id="lg1" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
-                <stop stop-color="#7b2cbf"/>
-                <stop offset="1" stop-color="#a855f7"/>
-              </linearGradient>
-            </defs>
-          </svg>
-          <div class="lo-logo-pulse"></div>
-        </div>
-        <div class="lo-brand">
-          <span class="lo-brand-website">Website</span><span class="lo-brand-organiser">Organiser</span>
-        </div>
-        <div class="lo-bar-track">
-          <div class="lo-bar-fill"></div>
-        </div>
-        <p class="loading-text">Loading your websites…</p>
-      </div>
-    </div>
+
 
     <div id="groups-container" class="groups-grid">
       <!-- Keyword groups will be dynamically inserted here -->

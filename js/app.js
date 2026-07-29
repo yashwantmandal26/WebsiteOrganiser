@@ -132,7 +132,7 @@
         WO.resetKeywordStates();
 
         // Apply saved theme immediately
-        const theme = document.documentElement.dataset.theme;
+        const theme = document.documentElement.dataset.theme || 'light';
         WO.setTheme(theme, { persist: false });
 
         // Initialize all UI modules

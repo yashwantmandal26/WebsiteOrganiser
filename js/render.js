@@ -90,6 +90,11 @@
                 const theme = document.documentElement.dataset.theme;
                 groupCard.style.background = (theme === 'dark') ? WO.darkenColor(groupColor, 0.6) : groupColor;
                 groupCard.style.color = '#222';
+                // Expose group color as CSS vars for header divider, border glow, tile tint, and accent strip
+                groupCard.style.setProperty('--group-color', groupColor);
+                groupCard.style.setProperty('--group-header-color', groupColor + 'aa');
+                // Store raw hex color on dataset for CSS usage
+                groupCard.dataset.groupColor = groupColor;
 
                 // ── Header ──
                 const header = document.createElement('div');
@@ -433,8 +438,11 @@
             } else {
                 card.style.background = groupColor;
             }
+            // Keep all color CSS vars in sync
+            card.style.setProperty('--group-color', groupColor);
+            card.style.setProperty('--group-header-color', groupColor + 'aa');
+            card.dataset.groupColor = groupColor;
         });
     };
 
 })(window.WO);
-

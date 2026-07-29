@@ -33,29 +33,30 @@ textarea,
   --bounce-effect: cubic-bezier(0.34, 1.56, 0.64, 1);
   
   /* Dark Theme Variables (Default) */
-  --bg-color: #0a0a0a;
+  --bg-color: #0c0b12;               /* Improvement 1: deep purple-tinted dark instead of flat black */
   --text-color: #f0f0f0;
-  --header-bg: rgba(26, 26, 30, 0.85);
+  --header-bg: rgba(18, 16, 28, 0.88);
   --header-border: rgba(255, 255, 255, 0.1);
-  --card-bg: rgba(255, 255, 255, 0.05);
-  --card-border: rgba(255, 255, 255, 0.1);
+  --card-bg: rgba(255, 255, 255, 0.08); /* Improvement 2: was 0.05, slightly more visible */
+  --card-border: rgba(255, 255, 255, 0.13);
   --modal-bg: rgba(30, 30, 30, 0.8);
   --modal-border: rgba(255, 255, 255, 0.1);
-  --input-bg: rgba(32, 32, 37, 0.85);
+  --input-bg: rgba(28, 26, 40, 0.92); /* Improvement 4: slightly purple-tinted input */
   --input-border: rgba(255, 255, 255, 0.2);
-  --button-bg: #000000;
+  --button-bg: #0e0d18;
   --button-border: rgba(255, 255, 255, 0.2);
-  --button-hover-bg: #111111;
+  --button-hover-bg: #1a1830;
   --secondary-button-bg: transparent;
   --secondary-button-border: rgba(255, 255, 255, 0.2);
   --fab-bg: #7b2cbf;
   --fab-hover-bg: #9d4edd;
   --icon-color: #aaa;
   --icon-hover-color: #fff;
-  --placeholder-color: #aaa;
-  --search-focus-border: #7b2cbf;
-  --search-focus-shadow: rgba(123, 44, 191, 0.5);
-  --shadow-color: rgba(0, 0, 0, 0.37);
+  --placeholder-color: #888;
+  --search-focus-border: #b388ff;
+  --search-focus-shadow: rgba(179, 136, 255, 0.55);
+  --search-idle-shadow: rgba(123, 44, 191, 0.18); /* Improvement 4: idle glow variable */
+  --shadow-color: rgba(0, 0, 0, 0.45);
   --toast-bg: rgba(0, 0, 0, 0.7);
   --keyword-item-bg: rgba(140, 140, 150, 0.98);
   /* Much brighter for clear visibility */
@@ -63,8 +64,8 @@ textarea,
   /* Even more distinct border */
   --keyword-item-shadow: rgba(0, 0, 0, 0.5);
   /* Stronger shadow for depth */
-  --btn-glow-color: rgba(138, 43, 226, 0.4);
-  --btn-border-hover: rgba(138, 43, 226, 0.8);
+  --btn-glow-color: rgba(138, 43, 226, 0.45);
+  --btn-border-hover: rgba(179, 136, 255, 0.85);
   --selection-bg: rgba(123, 44, 191, 0.3);
 }
 
@@ -74,7 +75,7 @@ textarea,
 }
 
 [data-theme="light"] {
-  --bg-color: #F8F9FA; /* Brighter background for white mode */
+  --bg-color: #F8F9FA;
   --text-color: #2a2a2a;
   --header-bg: rgba(255, 255, 255, 0.5);
   --header-border: rgba(255, 255, 255, 0.6);
@@ -108,7 +109,7 @@ textarea,
 [data-theme="light"] body::before {
   opacity: 0.45 !important;
   filter: blur(6px) saturate(3.5) brightness(1.1) !important;
-  mix-blend-mode: multiply !important; /* Vivid colors on white background */
+  mix-blend-mode: multiply !important;
 }
 
 [data-theme="light"] body::after {
@@ -121,7 +122,13 @@ textarea,
 html {
   scroll-behavior: smooth;
   min-height: 100%;
-  background-color: var(--bg-color); /* Set background here */
+  background-color: var(--bg-color);
+}
+
+/* Improvement 1: Richer deep radial gradient background for dark mode */
+[data-theme="dark"] html,
+[data-theme="dark"] body::before ~ html {
+  background: radial-gradient(ellipse at 40% 30%, #1a1030 0%, #0c0b12 55%, #070710 100%) !important;
 }
 
 body {
@@ -196,7 +203,7 @@ body::before {
 
 [data-theme="dark"] body::before,
 [data-theme="solid-dark"] body::before {
-  opacity: 0.08;
+  opacity: 0.13; /* Improvement 6: was 0.08, now subtly more visible */
 }
 
 body::after {
@@ -225,7 +232,7 @@ body::after {
 
 [data-theme="dark"] body::after,
 [data-theme="solid-dark"] body::after {
-  opacity: 0.06;
+  opacity: 0.09; /* Improvement 6: was 0.06, more depth */
 }
 
 /* Perf fix: Disable heavy GPU animations and blurs on mobile backgrounds */
@@ -239,7 +246,23 @@ body::after {
 
 [data-theme="dark"],
 [data-theme="solid-dark"] {
-  background-color: #0a0a0a !important;
+  /* Improvement 1: richer deep dark with purple undertone instead of flat #0a0a0a */
+  background: radial-gradient(ellipse at 40% 30%, #1a1030 0%, #0c0b12 55%, #070710 100%) !important;
+}
+
+/* ─── Improvement 6: Ambient multi-color glow blobs behind the dark colored theme grid ─── */
+[data-theme="dark"] body::before {
+  background:
+    radial-gradient(ellipse 60% 40% at 15% 25%, rgba(102, 217, 217, 0.12) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 35% at 82% 60%, rgba(176, 38, 255, 0.10) 0%, transparent 65%),
+    radial-gradient(ellipse 55% 45% at 50% 90%, rgba(102, 230, 102, 0.08) 0%, transparent 70%),
+    linear-gradient(90deg, transparent 0%, #ff0080 50%, transparent 100%),
+    linear-gradient(180deg, transparent 0%, #00ff80 50%, transparent 100%),
+    linear-gradient(45deg, transparent 0%, #8000ff 50%, transparent 100%),
+    linear-gradient(-45deg, transparent 0%, #ff8000 50%, transparent 100%);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 200% 200%, 200% 200%, 200% 200%, 200% 200%;
+  opacity: 0.28 !important;
+  animation: neonFlow 12s linear infinite;
 }
 
 [data-theme="solid-dark"] {
@@ -769,20 +792,52 @@ header h1 {
   border-radius: 24px;
   padding: 0 16px;
   transition: all var(--transition-normal);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); /* Diffused lightweight shadow */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+/* Dark/solid-dark idle glow ring */
+[data-theme="dark"] .search-bar-wrapper {
+  border-color: rgba(123, 44, 191, 0.35);
+  box-shadow:
+    0 0 0 1px rgba(123, 44, 191, 0.18),
+    0 4px 16px rgba(0, 0, 0, 0.45);
+}
+[data-theme="solid-dark"] .search-bar-wrapper {
+  border-color: rgba(123, 44, 191, 0.35);
+  box-shadow:
+    0 0 0 1px rgba(123, 44, 191, 0.18),
+    0 4px 16px rgba(0, 0, 0, 0.45);
 }
 
 .search-bar-wrapper:hover,
 .search-bar-wrapper:focus-within {
   border-color: var(--search-focus-border);
-  box-shadow: 0 6px 30px rgba(123, 44, 191, 0.15); /* Sleek diffused hover */
+  box-shadow: 0 6px 30px rgba(123, 44, 191, 0.15);
 }
 
 [data-theme="dark"] .search-bar-wrapper:hover, [data-theme="solid-dark"] .search-bar-wrapper:hover,
 [data-theme="dark"] .search-bar-wrapper:focus-within , [data-theme="solid-dark"] .search-bar-wrapper:focus-within {
-  background: rgba(18, 18, 22, 0.98);
+  background: rgba(20, 18, 34, 0.98);
   border-color: #b388ff;
-  box-shadow: 0 6px 30px rgba(179, 136, 255, 0.2);
+  box-shadow:
+    0 0 0 2px rgba(179, 136, 255, 0.3),
+    0 6px 30px rgba(179, 136, 255, 0.25);
+}
+
+/* White Colored Theme — strong visible lavender border on search bar */
+[data-theme="light"] .search-bar-wrapper {
+  border: 2px solid rgba(130, 80, 200, 0.55) !important;
+  box-shadow:
+    0 0 0 0px transparent,
+    0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .search-bar-wrapper:hover,
+[data-theme="light"] .search-bar-wrapper:focus-within {
+  border-color: #7b2cbf !important;
+  box-shadow:
+    0 0 0 4px rgba(123, 44, 191, 0.15),
+    0 6px 24px rgba(123, 44, 191, 0.20) !important;
 }
 
 .search-icon {
@@ -1200,7 +1255,6 @@ header h1 {
 
 .group-card {
   background: var(--card-bg);
-  /* backdrop-filter removed — forces repaint on every scroll position */
   border: 1px solid var(--card-border);
   border-radius: 16px;
   padding: clamp(12px, 3vw, 20px);
@@ -1212,12 +1266,29 @@ header h1 {
   min-width: 0;
   position: relative;
   overflow: visible; /* MUST stay visible — tooltip appears above card */
-  /* contain:style only — prevents style cascade without affecting layout or paint */
   contain: style;
   box-shadow:
     0 8px 20px rgba(0, 0, 0, 0.18),
     inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
+
+/* Improvement 2 + Dark Colored Theme: card-color border, stronger shadow */
+[data-theme="dark"] .group-card {
+  /* Improvement 4: border uses the group's own color */
+  border: 1.5px solid color-mix(in srgb, var(--group-color, #7b2cbf) 35%, transparent) !important;
+  box-shadow:
+    0 8px 28px rgba(0, 0, 0, 0.55),
+    0 2px 8px rgba(0, 0, 0, 0.4),
+    0 0 0 1px color-mix(in srgb, var(--group-color, #7b2cbf) 20%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+[data-theme="solid-dark"] .group-card {
+  box-shadow:
+    0 8px 28px rgba(0, 0, 0, 0.55),
+    0 2px 8px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
 
 /* 3D Neon Highlight for active/hovered group */
 /* Opaque background only for expanded cards to obscure grid beneath */
@@ -1227,9 +1298,15 @@ header h1 {
   -webkit-backdrop-filter: blur(24px) !important;
 }
 
-[data-theme="dark"] .group-card.expanded,
+/* Dark Colored Theme: expanded card keeps its original group color background (set by JS) */
+[data-theme="dark"] .group-card.expanded {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  /* background intentionally NOT overridden — JS sets it to the darkenColor(groupColor, 0.6) */
+}
+
 [data-theme="solid-dark"] .group-card.expanded {
-  background: #0a0a0f !important; /* Completely solid dark color for maximum performance */
+  background: #0a0a0f !important; /* Black theme keeps its solid dark on expand */
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
@@ -1247,9 +1324,33 @@ header h1 {
     inset 0 -2px 6px rgba(255, 0, 60, 0.3) !important;
 }
 
+/* Improvement 5: Dark Colored Theme — card hover/expand glows with its own group color */
 [data-theme="dark"] .group-card.expanded,
+[data-theme="dark"] .group-card:hover {
+  border-color: color-mix(in srgb, var(--group-color, #b026ff) 90%, white) !important;
+  box-shadow: 
+    0 0 20px color-mix(in srgb, var(--group-color, #b026ff) 70%, transparent),
+    0 0 40px color-mix(in srgb, var(--group-color, #b026ff) 45%, transparent),
+    0 6px 0px color-mix(in srgb, var(--group-color, #b026ff) 60%, black),
+    0 25px 50px rgba(0, 0, 0, 0.85),
+    inset 0 2px 4px rgba(255, 255, 255, 0.18),
+    inset 0 -2px 6px color-mix(in srgb, var(--group-color, #b026ff) 30%, transparent) !important;
+}
+
+/* Improvement 3: White Colored Theme — card hover glows in its own group color */
+[data-theme="light"] .group-card.expanded,
+[data-theme="light"] .group-card:hover {
+  border-color: color-mix(in srgb, var(--group-color, #7b2cbf) 70%, white) !important;
+  box-shadow:
+    0 0 18px color-mix(in srgb, var(--group-color, #7b2cbf) 45%, transparent),
+    0 0 36px color-mix(in srgb, var(--group-color, #7b2cbf) 22%, transparent),
+    0 10px 30px rgba(0, 0, 0, 0.12),
+    inset 0 2px 4px rgba(255, 255, 255, 0.9),
+    inset 0 -2px 6px color-mix(in srgb, var(--group-color, #7b2cbf) 12%, transparent) !important;
+}
+
+/* Black theme keeps the static purple glow */
 [data-theme="solid-dark"] .group-card.expanded,
-[data-theme="dark"] .group-card:hover,
 [data-theme="solid-dark"] .group-card:hover {
   border-color: #b026ff !important;
   box-shadow: 
@@ -1259,6 +1360,16 @@ header h1 {
     0 25px 50px rgba(0, 0, 0, 0.9),
     inset 0 2px 4px rgba(255, 255, 255, 0.2),
     inset 0 -2px 6px rgba(176, 38, 255, 0.5) !important;
+}
+
+/* White Colored Theme — vivid colored border + colored drop shadow, matching dark colored theme philosophy */
+[data-theme="light"] .group-card {
+  border: 2px solid color-mix(in srgb, var(--group-color, #7b2cbf) 55%, rgba(255,255,255,0.5)) !important;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--group-color, #7b2cbf) 20%, transparent),
+    0 10px 35px color-mix(in srgb, var(--group-color, #7b2cbf) 30%, transparent),
+    0 4px 12px rgba(0, 0, 0, 0.10),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.9);
 }
 
 .group-card::before {
@@ -1274,6 +1385,8 @@ header h1 {
   opacity: 0.6;
   z-index: 0;
 }
+
+
 
 [data-theme="dark"] .group-card::before , [data-theme="solid-dark"] .group-card::before {
   opacity: 0.65;
@@ -1301,6 +1414,21 @@ header h1 {
   z-index: 1;
 }
 
+/* White Colored Theme tiles — pastel group-color tint + colored border (mirrors dark colored theme) */
+[data-theme="light"] .group-card .keyword-grid-preview-item,
+[data-theme="light"] .group-card .keyword-grid-preview-more {
+  background: linear-gradient(
+    150deg,
+    color-mix(in srgb, var(--group-color, #7b2cbf) 10%, #ffffff) 0%,
+    color-mix(in srgb, var(--group-color, #7b2cbf) 5%, #f5f4f8) 100%
+  ) !important;
+  border: 1.5px solid color-mix(in srgb, var(--group-color, #7b2cbf) 25%, rgba(255,255,255,0.6)) !important;
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.12),
+    inset 0 2px 0 rgba(255, 255, 255, 1),
+    inset 0 -1px 0 color-mix(in srgb, var(--group-color, #7b2cbf) 10%, rgba(0,0,0,0.04)) !important;
+}
+
 /* Consistent app tiles — simplified box-shadow for faster scroll paint */
 .group-card .keyword-grid-preview-item,
 .group-card .keyword-grid-preview-more {
@@ -1314,13 +1442,30 @@ header h1 {
   will-change: transform;
 }
 
-[data-theme="dark"] .group-card .keyword-grid-preview-item, [data-theme="solid-dark"] .group-card .keyword-grid-preview-item,
-[data-theme="dark"] .group-card .keyword-grid-preview-more , [data-theme="solid-dark"] .group-card .keyword-grid-preview-more {
-  background: linear-gradient(150deg, rgba(32, 32, 37, 0.95) 0%, rgba(24, 24, 29, 0.92) 100%) !important;
-  border: 2px solid rgba(255, 255, 255, 0.12) !important;
+/* Improvement 3: Dark Colored Theme tiles — group-color tinted dark + top gloss shine */
+[data-theme="dark"] .group-card .keyword-grid-preview-item,
+[data-theme="dark"] .group-card .keyword-grid-preview-more {
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--group-color, #7b2cbf) 12%, rgba(38,35,52,1)) 0%,
+    color-mix(in srgb, var(--group-color, #7b2cbf) 6%, rgba(18,16,28,1)) 100%
+  ) !important;
+  border: 1.5px solid color-mix(in srgb, var(--group-color, #b388ff) 28%, rgba(255,255,255,0.1)) !important;
   box-shadow:
-    0 8px 20px rgba(0, 0, 0, 0.55),
-    inset 0 1px 2px rgba(255, 255, 255, 0.09) !important;
+    0 8px 22px rgba(0, 0, 0, 0.65),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Black theme tiles keep original flat dark style (no color tint) */
+[data-theme="solid-dark"] .group-card .keyword-grid-preview-item,
+[data-theme="solid-dark"] .group-card .keyword-grid-preview-more {
+  background: linear-gradient(160deg, rgba(42, 40, 58, 1) 0%, rgba(22, 20, 32, 1) 100%) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.14) !important;
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.65),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.4) !important;
 }
 
 
@@ -1354,10 +1499,43 @@ header h1 {
       inset 0 -2px 6px rgba(0, 0, 0, 0.1) !important;
   }
 
-  [data-theme="dark"] .group-card .keyword-grid-preview-item:hover, [data-theme="solid-dark"] .group-card .keyword-grid-preview-item:hover,
-  [data-theme="dark"] .group-card .keyword-grid-preview-item:focus-visible, [data-theme="solid-dark"] .group-card .keyword-grid-preview-item:focus-visible,
-  [data-theme="dark"] .group-card .keyword-grid-preview-more:hover, [data-theme="solid-dark"] .group-card .keyword-grid-preview-more:hover,
-  [data-theme="dark"] .group-card .keyword-grid-preview-more:focus-visible , [data-theme="solid-dark"] .group-card .keyword-grid-preview-more:focus-visible {
+  /* Dark Colored Theme: tile hover glows with the card's group color */
+  [data-theme="dark"] .group-card .keyword-grid-preview-item:hover,
+  [data-theme="dark"] .group-card .keyword-grid-preview-item:focus-visible,
+  [data-theme="dark"] .group-card .keyword-grid-preview-more:hover,
+  [data-theme="dark"] .group-card .keyword-grid-preview-more:focus-visible {
+    transform: scale(1.04) translateY(-3px);
+    background: color-mix(in srgb, var(--group-color, #7b2cbf) 18%, rgba(12,10,20,1)) !important;
+    border-color: color-mix(in srgb, var(--group-color, #b388ff) 80%, white) !important;
+    filter: saturate(1.7) brightness(1.05);
+    box-shadow:
+      0 25px 50px rgba(0, 0, 0, 0.65),
+      0 0 20px color-mix(in srgb, var(--group-color, #7b2cbf) 50%, transparent),
+      inset 0 2px 4px rgba(255, 255, 255, 0.18),
+      inset 0 -2px 6px rgba(0, 0, 0, 0.35) !important;
+  }
+
+  /* White Colored Theme: tile hover — pops up with a white card + group color glow */
+  [data-theme="light"] .group-card .keyword-grid-preview-item:hover,
+  [data-theme="light"] .group-card .keyword-grid-preview-item:focus-visible,
+  [data-theme="light"] .group-card .keyword-grid-preview-more:hover,
+  [data-theme="light"] .group-card .keyword-grid-preview-more:focus-visible {
+    transform: scale(1.06) translateY(-4px);
+    background: #ffffff !important;
+    border-color: color-mix(in srgb, var(--group-color, #7b2cbf) 90%, white) !important;
+    filter: saturate(1.2) brightness(1.02);
+    box-shadow:
+      0 16px 36px rgba(0, 0, 0, 0.16),
+      0 0 16px color-mix(in srgb, var(--group-color, #7b2cbf) 35%, transparent),
+      inset 0 2px 0 rgba(255, 255, 255, 1),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.05) !important;
+  }
+
+  /* Black theme tile hover stays purple */
+  [data-theme="solid-dark"] .group-card .keyword-grid-preview-item:hover,
+  [data-theme="solid-dark"] .group-card .keyword-grid-preview-item:focus-visible,
+  [data-theme="solid-dark"] .group-card .keyword-grid-preview-more:hover,
+  [data-theme="solid-dark"] .group-card .keyword-grid-preview-more:focus-visible {
     transform: scale(1.04) translateY(-3px);
     background: #000000 !important;
     border-color: #b388ff !important;
@@ -1418,13 +1596,37 @@ li[draggable="true"][data-keyword-index]:active {
   justify-content: space-between;
   align-items: center;
   margin: 0 0 15px;
-  border-bottom: none;
   padding-bottom: 10px;
-}
-
-.group-card-header {
   cursor: pointer;
   transition: color 0.3s;
+  /* Improvement 5: thin colored divider line under group title in dark mode */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+/* In dark mode, the divider picks up the card's group color via a gradient */
+[data-theme="dark"] .group-card-header,
+[data-theme="solid-dark"] .group-card-header {
+  border-bottom: none;
+  background-image: linear-gradient(90deg, var(--group-header-color, rgba(179, 136, 255, 0.4)) 0%, transparent 80%);
+  background-repeat: no-repeat;
+  background-size: 100% 1px;
+  background-position: 0 100%;
+}
+
+/* White Colored Theme — vivid colored group title underline using card's group color */
+[data-theme="light"] .group-card-header {
+  border-bottom: none !important;
+  padding-bottom: 10px;
+  background-image: linear-gradient(
+    90deg,
+    var(--group-color, rgba(123, 44, 191, 1)) 0%,
+    var(--group-color, rgba(123, 44, 191, 1)) 40%,
+    color-mix(in srgb, var(--group-color, rgba(123,44,191,1)) 30%, transparent) 70%,
+    transparent 90%
+  ) !important;
+  background-repeat: no-repeat !important;
+  background-size: 100% 3px !important;
+  background-position: 0 100% !important;
 }
 
 
@@ -1439,6 +1641,25 @@ li[draggable="true"][data-keyword-index]:active {
   font-size: 1.15rem;
   font-weight: 700;
   flex: 1 1 auto;
+}
+
+/* Dark Colored Theme — title text color is clean white, no glow/shadow */
+[data-theme="dark"] .group-card-header h3 {
+  color: #ffffff;
+}
+
+/* Improvement 7: Vivid 2px colored underline under group title (dark colored theme only) */
+[data-theme="dark"] .group-card-header {
+  border-bottom: none;
+  background-image: linear-gradient(
+    90deg,
+    var(--group-color, rgba(179, 136, 255, 1)) 0%,
+    color-mix(in srgb, var(--group-color, rgba(179,136,255,1)) 60%, transparent) 50%,
+    transparent 85%
+  );
+  background-repeat: no-repeat;
+  background-size: 100% 2px;
+  background-position: 0 100%;
 }
 
 .group-actions .icon-btn {
@@ -1520,25 +1741,27 @@ li[draggable="true"][data-keyword-index]:active {
 }
 
 @media (hover: hover) {
+  /* Base fab hover — premium purple lift (overridden per-theme below) */
   .fab:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: scale(1.08) translateY(-5px);
-    border: 2.5px solid #ff3131 !important; /* Bright Red Border */
+    transform: scale(1.1) translateY(-5px);
     box-shadow:
-      0 0 25px rgba(255, 49, 49, 0.7), /* Red Shadow */
-      0 20px 40px rgba(0, 0, 0, 0.3),
-      inset 0 2px 4px rgba(255, 255, 255, 0.2),
-      inset 0 -2px 6px rgba(0, 0, 0, 0.1);
-    animation: none !important; /* Remove any conflicting glow animations */
+      0 0 0 3px rgba(168, 85, 247, 0.35),
+      0 0 25px rgba(123, 44, 191, 0.55),
+      0 20px 45px rgba(0, 0, 0, 0.25),
+      inset 0 2px 4px rgba(255, 255, 255, 0.3);
+    animation: none !important;
   }
 
-  [data-theme="dark"] .fab:hover , [data-theme="solid-dark"] .fab:hover {
-    border: 2.5px solid #ff3131 !important;
+  [data-theme="dark"] .fab:hover,
+  [data-theme="solid-dark"] .fab:hover {
+    background: #4a4a4a;
     box-shadow:
-      0 0 30px rgba(255, 49, 49, 0.8), /* Red Shadow */
-      0 25px 50px rgba(0, 0, 0, 0.6),
-      inset 0 2px 4px rgba(255, 255, 255, 0.15),
+      0 0 0 3px rgba(168, 85, 247, 0.4),
+      0 0 30px rgba(168, 85, 247, 0.6),
+      0 20px 50px rgba(0, 0, 0, 0.6),
+      inset 0 2px 4px rgba(255, 255, 255, 0.2),
       inset 0 -2px 6px rgba(0, 0, 0, 0.3);
+    border: none !important;
   }
 }
 
@@ -1580,34 +1803,36 @@ li[draggable="true"][data-keyword-index]:active {
     inset 0 -2px 6px rgba(0, 0, 0, 0.4);
 }
 
+/* White Colored Theme FAB hover — deeper purple glow, no red */
 [data-theme="light"] .fab:hover,
 [data-theme="light"] #add-keyword-modal-fab:hover {
-  background: linear-gradient(145deg, rgba(240, 240, 240, 1), rgba(230, 230, 230, 1));
-  color: #ff3131;
-  transform: translateY(-5px) scale(1.08);
+  background: linear-gradient(135deg, #6a1fad 0%, #9333ea 100%);
+  color: #fff;
+  transform: translateY(-6px) scale(1.1);
+  border: none !important;
   box-shadow:
-    0 0 25px rgba(255, 49, 49, 0.7), /* Red Shadow */
-    0 20px 50px rgba(0, 0, 0, 0.25),
-    0 25px 60px rgba(0, 0, 0, 0.2),
-    0 10px 20px rgba(0, 0, 0, 0.2),
-    inset 0 4px 6px rgba(255, 255, 255, 0.9),
-    inset 0 -4px 8px rgba(0, 0, 0, 0.15);
-  border: 2.5px solid #ff3131 !important; /* Bright Red Border */
+    0 0 0 4px rgba(168, 85, 247, 0.30),
+    0 0 28px rgba(123, 44, 191, 0.65),
+    0 0 55px rgba(168, 85, 247, 0.25),
+    0 20px 45px rgba(0, 0, 0, 0.18),
+    inset 0 3px 5px rgba(255, 255, 255, 0.35),
+    inset 0 -2px 5px rgba(0, 0, 0, 0.15);
   animation: none !important;
 }
 
+/* Dark / Black Theme FAB hover — glowing purple aura */
 [data-theme="dark"] .fab:hover, [data-theme="solid-dark"] .fab:hover,
-[data-theme="dark"] #add-keyword-modal-fab:hover , [data-theme="solid-dark"] #add-keyword-modal-fab:hover {
-  background: #444444; /* Slightly lighter grey on hover */
-  transform: translateY(-5px) scale(1.08);
+[data-theme="dark"] #add-keyword-modal-fab:hover, [data-theme="solid-dark"] #add-keyword-modal-fab:hover {
+  background: #4a4a4a;
+  transform: translateY(-6px) scale(1.1);
+  border: none !important;
   box-shadow:
-    0 0 30px rgba(255, 49, 49, 0.8), /* Red Shadow */
-    0 20px 50px rgba(0, 0, 0, 0.6),
-    0 25px 60px rgba(0, 0, 0, 0.5),
-    0 10px 20px rgba(0, 0, 0, 0.5),
-    inset 0 3px 5px rgba(255, 255, 255, 0.25),
-    inset 0 -3px 7px rgba(0, 0, 0, 0.5);
-  border: 2.5px solid #ff3131 !important; /* Bright Red Border */
+    0 0 0 4px rgba(168, 85, 247, 0.35),
+    0 0 30px rgba(168, 85, 247, 0.65),
+    0 0 60px rgba(123, 44, 191, 0.30),
+    0 20px 50px rgba(0, 0, 0, 0.55),
+    inset 0 3px 5px rgba(255, 255, 255, 0.2),
+    inset 0 -3px 7px rgba(0, 0, 0, 0.4);
   animation: none !important;
 }
 

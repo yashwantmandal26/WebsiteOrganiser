@@ -53,11 +53,26 @@
     WO.playClickSound = () => { if (!clickAudio) return; clickAudio.currentTime = 0; clickAudio.play().catch(() => tryUnlockAudio()); };
 
     // ── Theme ────────────────────────────────────────────────────────────
+    // Friendly display names for each theme
+    const THEME_NAMES = {
+        'light':      'White Colored Theme',
+        'dark':       'Dark Colored Theme',
+        'solid-dark': 'Black Theme'
+    };
+
     WO.setTheme = function (theme, { persist = true } = {}) {
         document.documentElement.dataset.theme = theme;
         if (persist) { try { localStorage.setItem(WO.THEME_STORAGE_KEY, theme); } catch {} }
         // Use lightweight in-place color patcher — avoids full DOM rebuild and favicon blink
         if (typeof WO.updateThemeColors === 'function' && WO.groups && WO.groups.length > 0) WO.updateThemeColors();
+        // Show friendly theme name as a toast (only on manual switch, not on persist=false)
+        if (persist && typeof window.showToast === 'function') {
+            window.showToast(THEME_NAMES[theme] || theme, 1800);
+        }
+        // Update toggle button tooltip
+        const btn = document.getElementById('theme-toggle-btn');
+        const nextTheme = theme === 'light' ? 'dark' : theme === 'dark' ? 'solid-dark' : 'light';
+        if (btn) btn.title = 'Switch to ' + (THEME_NAMES[nextTheme] || nextTheme);
     };
 
     // ── Modal Helpers ────────────────────────────────────────────────────
@@ -179,7 +194,7 @@
                 const s = localStorage.getItem(WO.THEME_STORAGE_KEY);
                 if (s === 'dark' || s === 'light' || s === 'solid-dark') return s;
             } catch {}
-            return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            return 'light';
         })();
         document.documentElement.dataset.theme = savedTheme;
 
