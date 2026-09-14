@@ -719,7 +719,25 @@ header h1 {
 }
 
 [data-theme="light"] .icon-btn--add-keyword {
-  color: #2a1850;
+  background: #ffffff !important;
+  color: #222 !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.95) !important;
+  box-shadow:
+    0 3px 10px rgba(0, 0, 0, 0.15),
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95) !important;
+}
+
+[data-theme="light"] .icon-btn--add-keyword:hover {
+  background: #ffffff !important;
+  transform: scale(1.08) translateY(-2px);
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.2),
+    0 0 12px rgba(255, 255, 255, 0.9) !important;
+}
+
+[data-theme="light"] .icon-btn--add-keyword .icon-plus {
+  color: #222 !important;
 }
 
 .icon-btn--add-keyword:hover {

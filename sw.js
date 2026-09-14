@@ -15,7 +15,7 @@
 //   The activate event will wipe all old caches automatically.
 // =====================================================
 
-const CACHE_VERSION = 'wo-v1022';
+const CACHE_VERSION = 'wo-v1023';
 const CACHE_NAME = `websiteorganiser-${CACHE_VERSION}`;
 
 // Files to pre-cache on install (app shell — enough to show something offline)
@@ -25,8 +25,8 @@ const PRECACHE_URLS = [
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',
-  '/bundle.min.css?v=1022',
-  '/bundle.min.js?v=1022',
+  '/bundle.min.css?v=1023',
+  '/bundle.min.js?v=1023',
 ];
 
 // ─── Install ──────────────────────────────────────────────────────────────────

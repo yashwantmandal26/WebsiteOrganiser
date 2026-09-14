@@ -143,55 +143,6 @@
         return WO.KEYWORD_GRADIENTS[idx];
     };
 
-    // Favicon verified/failed host tracking with sessionStorage persistence
-    const _loadedFaviconHosts = new Set();
-    const _failedFaviconHosts = new Set();
-    try {
-        const savedOk = sessionStorage.getItem('wo-favicons-ok');
-        if (savedOk) JSON.parse(savedOk).forEach(h => _loadedFaviconHosts.add(h));
-        const savedBad = sessionStorage.getItem('wo-favicons-bad');
-        if (savedBad) JSON.parse(savedBad).forEach(h => _failedFaviconHosts.add(h));
-    } catch {}
-
-    function _persistFaviconHosts() {
-        try {
-            sessionStorage.setItem('wo-favicons-ok', JSON.stringify(Array.from(_loadedFaviconHosts).slice(-200)));
-            sessionStorage.setItem('wo-favicons-bad', JSON.stringify(Array.from(_failedFaviconHosts).slice(-200)));
-        } catch {}
-    }
-
-    WO.onFaviconLoad = function (img, host) {
-        if (!img) return;
-        if (img.naturalWidth <= 1) {
-            _failedFaviconHosts.add(host);
-            img.style.display = 'none';
-            const fallback = img.previousElementSibling;
-            if (fallback && fallback.classList.contains('keyword-fallback-container')) {
-                fallback.style.display = 'flex';
-            }
-            _persistFaviconHosts();
-            return;
-        }
-        _loadedFaviconHosts.add(host);
-        img.style.display = 'block';
-        const fallback = img.previousElementSibling;
-        if (fallback && fallback.classList.contains('keyword-fallback-container')) {
-            fallback.style.display = 'none';
-        }
-        _persistFaviconHosts();
-    };
-
-    WO.onFaviconError = function (img, host) {
-        if (!img) return;
-        _failedFaviconHosts.add(host);
-        img.style.display = 'none';
-        const fallback = img.previousElementSibling;
-        if (fallback && fallback.classList.contains('keyword-fallback-container')) {
-            fallback.style.display = 'flex';
-        }
-        _persistFaviconHosts();
-    };
-
     // Memoize favicon/emoji HTML — same keyword always produces same HTML string
     const _faviconCache = new Map();
     WO.getFaviconOrEmoji = function (keyword) {
@@ -211,25 +162,10 @@
             const fl = host.charAt(0).toUpperCase();
             const g  = WO.getKeywordGradient(host);
             const letterFallback = `<span class='keyword-letter' style='background: linear-gradient(135deg, ${g[0]}, ${g[1]}); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;'>${fl}</span>`;
-            
-            if (_failedFaviconHosts.has(host)) {
-                // Known failed host: zero network waste, instant colorful letter badge
-                result = `<div class='keyword-fallback-container' style='display:flex;width:100%;height:100%;align-items:center;justify-content:center;'>${letterFallback}</div>`;
-            } else {
-                const defAvatar = encodeURIComponent('https://upload.wikimedia.org/wikipedia/commons/4/47/Transparent.png');
-                const faviconUrl = `https://favicon.im/${host}?larger=true&default-avatar=${defAvatar}`;
-                const isCached = _loadedFaviconHosts.has(host);
-
-                if (isCached) {
-                    // Already loaded & verified: render image directly without lazy observer
-                    result = `<div class='keyword-fallback-container' style='display:none;width:100%;height:100%;align-items:center;justify-content:center;'>${letterFallback}</div>`
-                           + `<img src='${faviconUrl}' class='keyword-favicon' decoding='async' onload="WO.onFaviconLoad(this, '${host}')" onerror="WO.onFaviconError(this, '${host}')">`;
-                } else {
-                    // Progressive lazy hydration: show letter avatar immediately, load favicon when nearing viewport
-                    result = `<div class='keyword-fallback-container' style='display:flex;width:100%;height:100%;align-items:center;justify-content:center;'>${letterFallback}</div>`
-                           + `<img data-src='${faviconUrl}' class='keyword-favicon lazy-favicon' decoding='async' style='display:none;' onload="WO.onFaviconLoad(this, '${host}')" onerror="WO.onFaviconError(this, '${host}')">`;
-                }
-            }
+            const defAvatar = encodeURIComponent('https://upload.wikimedia.org/wikipedia/commons/4/47/Transparent.png');
+            const faviconUrl = `https://favicon.im/${host}?larger=true&default-avatar=${defAvatar}`;
+            result = `<img src='${faviconUrl}' class='keyword-favicon' loading='lazy' decoding='async' onload="if(this.naturalWidth===1){this.style.display='none';this.nextElementSibling.style.display='flex';}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">`
+                   + `<div class='keyword-fallback-container' style='display:none;width:100%;height:100%;align-items:center;justify-content:center;'>${letterFallback}</div>`;
         } else {
             const fl = keyword.charAt(0).toUpperCase();
             const g  = WO.getKeywordGradient(keyword);
@@ -239,45 +175,6 @@
         _faviconCache.set(keyword, result);
         return result;
     };
-
-    // Shared singleton IntersectionObserver for lazy favicons
-    let _faviconObserver = null;
-    WO.observeLazyFavicons = function (container) {
-        const root = container || document;
-        const lazyImgs = root.querySelectorAll('img.lazy-favicon[data-src]');
-        if (!lazyImgs.length) return;
-
-        if (!('IntersectionObserver' in window)) {
-            lazyImgs.forEach(img => {
-                if (img.dataset.src) {
-                    img.src = img.dataset.src;
-                    img.removeAttribute('data-src');
-                }
-            });
-            return;
-        }
-
-        if (!_faviconObserver) {
-            _faviconObserver = new IntersectionObserver((entries, observer) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const img = entry.target;
-                        observer.unobserve(img);
-                        if (img.dataset.src) {
-                            img.src = img.dataset.src;
-                            img.removeAttribute('data-src');
-                        }
-                    }
-                });
-            }, {
-                rootMargin: '250px 0px', // start downloading slightly before tile enters screen
-                threshold: 0.01
-            });
-        }
-
-        lazyImgs.forEach(img => _faviconObserver.observe(img));
-    };
-
     // Allow external code to invalidate the cache when keywords change
     WO.clearFaviconCache = function () { _faviconCache.clear(); };
 

@@ -119,7 +119,7 @@
                 let addBtnBg;
                 if (theme === 'solid-dark')  addBtnBg = WO.darkenColor(groupColor, 0.75);
                 else if (theme === 'dark')   addBtnBg = WO.darkenColor(groupColor, 0.45);
-                else                         addBtnBg = groupColor;
+                else                         addBtnBg = '#ffffff';
 
                 // Create add-keyword button programmatically — avoids innerHTML+querySelector antipattern
                 const addBtn = document.createElement('button');
@@ -360,11 +360,6 @@
         groupsContainer.innerHTML = '';
         groupsContainer.appendChild(fragment);
 
-        // Lazily hydrate visible & near-viewport favicons via IntersectionObserver
-        if (typeof WO.observeLazyFavicons === 'function') {
-            WO.observeLazyFavicons(groupsContainer);
-        }
-
         // Schedule highlight AFTER DOM is updated — rAF ensures it runs in the next paint
         if (WO.lastAddedKeyword !== null) {
             requestAnimationFrame(WO.highlightRecentlyAddedKeyword);
@@ -451,11 +446,6 @@
             const wrapper = card.closest('.group-card-wrapper') || card;
             wrapper.style.display = (!isActive || hasVisible) ? '' : 'none';
         });
-
-        // Hydrate favicons for matching items revealed by search
-        if (isActive && typeof WO.observeLazyFavicons === 'function') {
-            WO.observeLazyFavicons(container);
-        }
     };
 
     // ── Lightweight in-place theme color updater ───────────────────────────────
@@ -485,6 +475,16 @@
             card.style.setProperty('--group-color', groupColor);
             card.style.setProperty('--group-header-color', groupColor + 'aa');
             card.dataset.groupColor = groupColor;
+
+            // Sync add-keyword button background with theme
+            const addBtn = card.querySelector('.icon-btn--add-keyword');
+            if (addBtn) {
+                let addBtnBg;
+                if (theme === 'solid-dark')  addBtnBg = WO.darkenColor(groupColor, 0.75);
+                else if (theme === 'dark')   addBtnBg = WO.darkenColor(groupColor, 0.45);
+                else                         addBtnBg = '#ffffff';
+                addBtn.style.setProperty('background', addBtnBg, 'important');
+            }
         });
     };
 
