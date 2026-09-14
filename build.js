@@ -13,41 +13,60 @@ const ROOT = __dirname;
 async function build() {
     console.log('=== WebsiteOrganiser Build Script ===\n');
 
-    // ─── 1. Compress Images ─────────────────────────────────────────────────
-    console.log('1. Compressing images...');
+    // ─── 1. Compress & Properly Size Images ───────────────────────────────────
+    console.log('1. Compressing and properly sizing images...');
     const sharp = require('sharp');
 
-    const imagesToCompress = [
-        'icon-192.png',
-        'media/rename.png',
-        'media/theme.png',
-        'media/google.png',
-        'media/comment.png',
-        'media/delete.png',
+    const icon192Path = path.join(ROOT, 'icon-192.png');
+    const icon512Path = path.join(ROOT, 'icon-512.png');
+
+    // If icon-512.png doesn't exist yet, derive it from original high-res icon-192.png
+    if (fs.existsSync(icon192Path) && !fs.existsSync(icon512Path)) {
+        try {
+            const meta = await sharp(icon192Path).metadata();
+            if (meta.width >= 512) {
+                const buf512 = await sharp(icon192Path)
+                    .resize(512, 512)
+                    .png({ compressionLevel: 9, adaptiveFiltering: true, palette: true, quality: 85 })
+                    .toBuffer();
+                fs.writeFileSync(icon512Path, buf512);
+                console.log(`  ✅ Created icon-512.png: ${(buf512.length / 1024).toFixed(1)} KB`);
+            }
+        } catch (e) {
+            console.warn('  ⚠ Failed creating icon-512.png:', e.message);
+        }
+    }
+
+    const imagesToProcess = [
+        { file: 'icon-192.png', width: 192, height: 192 },
+        { file: 'media/rename.png', width: 96, height: 96 },
+        { file: 'media/theme.png', width: 96, height: 96 },
+        { file: 'media/google.png', width: 96, height: 96 },
+        { file: 'media/comment.png', width: 96, height: 96 },
+        { file: 'media/delete.png', width: 96, height: 96 },
     ];
 
     let totalImgSaved = 0;
-    for (const img of imagesToCompress) {
-        const fullPath = path.join(ROOT, img);
+    for (const item of imagesToProcess) {
+        const fullPath = path.join(ROOT, item.file);
         if (!fs.existsSync(fullPath)) {
-            console.log(`  ⚠ ${img}: not found, skipping`);
+            console.log(`  ⚠ ${item.file}: not found, skipping`);
             continue;
         }
 
         const originalSize = fs.statSync(fullPath).size;
-        // Read and re-encode with maximum PNG compression + palette quantization
         const buffer = await sharp(fullPath)
-            .png({ compressionLevel: 9, adaptiveFiltering: true, palette: true, quality: 80, effort: 10 })
+            .resize(item.width, item.height)
+            .png({ compressionLevel: 9, adaptiveFiltering: true, palette: true, quality: 85, effort: 10 })
             .toBuffer();
 
-        // Only write if we actually made it smaller
         if (buffer.length < originalSize) {
             fs.writeFileSync(fullPath, buffer);
             const saved = originalSize - buffer.length;
             totalImgSaved += saved;
-            console.log(`  ✅ ${img}: ${(originalSize / 1024).toFixed(1)} KB → ${(buffer.length / 1024).toFixed(1)} KB (saved ${(saved / 1024).toFixed(1)} KB)`);
+            console.log(`  ✅ ${item.file}: ${(originalSize / 1024).toFixed(1)} KB → ${(buffer.length / 1024).toFixed(1)} KB (saved ${(saved / 1024).toFixed(1)} KB)`);
         } else {
-            console.log(`  ⏭ ${img}: already optimized (${(originalSize / 1024).toFixed(1)} KB)`);
+            console.log(`  ⏭ ${item.file}: already optimized (${(originalSize / 1024).toFixed(1)} KB)`);
         }
     }
     console.log(`  Total image savings: ${(totalImgSaved / 1024).toFixed(1)} KB\n`);
@@ -128,7 +147,33 @@ async function build() {
         console.error('  ❌ JS minification failed');
     }
 
-    console.log('✅ Build complete! Update index.html to reference bundle.min.css and bundle.min.js');
+    // ─── 4. Sync Cache Versions in index.html & sw.js ──────────────────────
+    console.log('4. Syncing cache versions in index.html & sw.js...');
+    const indexPath = path.join(ROOT, 'index.html');
+    const swPath    = path.join(ROOT, 'sw.js');
+
+    let indexContent = fs.readFileSync(indexPath, 'utf8');
+    const versionMatch = indexContent.match(/bundle\.min\.js\?v=(\d+)/);
+    const currentVersion = versionMatch ? parseInt(versionMatch[1], 10) : 1013;
+    const newVersion = currentVersion + 1;
+
+    indexContent = indexContent
+        .replace(/bundle\.min\.css\?v=\d+/g, `bundle.min.css?v=${newVersion}`)
+        .replace(/bundle\.min\.js\?v=\d+/g, `bundle.min.js?v=${newVersion}`);
+    fs.writeFileSync(indexPath, indexContent);
+    console.log(`  ✅ index.html updated: ?v=${newVersion}`);
+
+    if (fs.existsSync(swPath)) {
+        let swContent = fs.readFileSync(swPath, 'utf8');
+        swContent = swContent
+            .replace(/const CACHE_VERSION = 'wo-v\d+';/, `const CACHE_VERSION = 'wo-v${newVersion}';`)
+            .replace(/'\/bundle\.min\.css\?v=\d+'/, `'\/bundle.min.css?v=${newVersion}'`)
+            .replace(/'\/bundle\.min\.js\?v=\d+'/, `'\/bundle.min.js?v=${newVersion}'`);
+        fs.writeFileSync(swPath, swContent);
+        console.log(`  ✅ sw.js updated: CACHE_VERSION = 'wo-v${newVersion}'\n`);
+    }
+
+    console.log(`✅ Build complete! All assets and cache versions synced to v${newVersion}.`);
 }
 
 build().catch(err => {

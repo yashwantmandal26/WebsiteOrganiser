@@ -15,7 +15,7 @@
 //   The activate event will wipe all old caches automatically.
 // =====================================================
 
-const CACHE_VERSION = 'wo-v1011';
+const CACHE_VERSION = 'wo-v1022';
 const CACHE_NAME = `websiteorganiser-${CACHE_VERSION}`;
 
 // Files to pre-cache on install (app shell — enough to show something offline)
@@ -24,8 +24,9 @@ const PRECACHE_URLS = [
   '/index.html',
   '/manifest.json',
   '/icon-192.png',
-  '/bundle.min.css?v=1011',
-  '/bundle.min.js?v=1011',
+  '/icon-512.png',
+  '/bundle.min.css?v=1022',
+  '/bundle.min.js?v=1022',
 ];
 
 // ─── Install ──────────────────────────────────────────────────────────────────
@@ -94,13 +95,6 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // ── 3. dynamic-links.json → Network-First ──────────────────────────────────
-  // This file is updated daily by GitHub Actions — always serve fresh.
-  // Falls back to cache only when offline.
-  if (path.includes('dynamic-links.json')) {
-    event.respondWith(networkFirst(req));
-    return;
-  }
 
   // ── 4. Versioned JS / CSS (has ?v= in URL) → Cache-First ──────────────────
   // The ?v= query string changes every time the developer updates the file,

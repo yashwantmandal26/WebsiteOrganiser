@@ -247,14 +247,25 @@
                 newGroups.forEach(g => { if (g.clickCounts) delete g.clickCounts; });
                 if (JSON.stringify(newGroups) !== JSON.stringify(WO.groups)) { WO.groups = newGroups; changed = true; }
             } else {
-                // groupsDoc NOT exist — transient failure or genuine first install.
+                // groupsDoc NOT exist — transient failure, offline mode, or file:// protocol.
                 // NEVER call saveGroups() here — it would overwrite real data during a quota blip.
                 const backup = WO.loadLocalDataBackup();
                 const backupRestored = WO.applyLocalDataBackup(backup);
-                if (!backupRestored) WO.groups = JSON.parse(JSON.stringify(WO.DEFAULT_GROUPS));
+                if (!backupRestored) {
+                    WO.groups = JSON.parse(JSON.stringify(WO.DEFAULT_GROUPS || []));
+                    if (WO.DEFAULT_CLICK_COUNTS && Object.keys(WO.globalClickCounts).length === 0) {
+                        WO.globalClickCounts = JSON.parse(JSON.stringify(WO.DEFAULT_CLICK_COUNTS));
+                    }
+                    if (WO.DEFAULT_KEYWORD_DESCRIPTIONS && Object.keys(WO.keywordDescriptions).length === 0) {
+                        WO.keywordDescriptions = JSON.parse(JSON.stringify(WO.DEFAULT_KEYWORD_DESCRIPTIONS));
+                    }
+                    if (WO.DEFAULT_KEYWORD_ADDED_AT && Object.keys(WO.keywordAddedAt).length === 0) {
+                        WO.keywordAddedAt = JSON.parse(JSON.stringify(WO.DEFAULT_KEYWORD_ADDED_AT));
+                    }
+                }
                 const isFromCache = groupsDoc.metadata && groupsDoc.metadata.fromCache;
-                if (!groupsDoc.exists && !isFromCache && !backupRestored) {
-                    // Genuine fresh install — seed Firestore after short delay
+                if (!groupsDoc.exists && !isFromCache && !backupRestored && typeof window.db !== 'undefined' && window.db) {
+                    // Genuine fresh install with connected DB — seed Firestore after short delay
                     setTimeout(() => WO.saveGroups(), 2000);
                 }
                 changed = true;
@@ -265,7 +276,18 @@
             console.error('Error loading groups:', error);
             const backup = WO.loadLocalDataBackup();
             if (WO.applyLocalDataBackup(backup)) return true;
-            if (WO.groups.length === 0) WO.groups = JSON.parse(JSON.stringify(WO.DEFAULT_GROUPS));
+            if (WO.groups.length === 0) {
+                WO.groups = JSON.parse(JSON.stringify(WO.DEFAULT_GROUPS || []));
+                if (WO.DEFAULT_CLICK_COUNTS && Object.keys(WO.globalClickCounts).length === 0) {
+                    WO.globalClickCounts = JSON.parse(JSON.stringify(WO.DEFAULT_CLICK_COUNTS));
+                }
+                if (WO.DEFAULT_KEYWORD_DESCRIPTIONS && Object.keys(WO.keywordDescriptions).length === 0) {
+                    WO.keywordDescriptions = JSON.parse(JSON.stringify(WO.DEFAULT_KEYWORD_DESCRIPTIONS));
+                }
+                if (WO.DEFAULT_KEYWORD_ADDED_AT && Object.keys(WO.keywordAddedAt).length === 0) {
+                    WO.keywordAddedAt = JSON.parse(JSON.stringify(WO.DEFAULT_KEYWORD_ADDED_AT));
+                }
+            }
             return false;
         }
     };

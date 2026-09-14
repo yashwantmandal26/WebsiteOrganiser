@@ -5,23 +5,106 @@
 (function (WO) {
 
     // ─── Group CRUD ───────────────────────────────────────────────────────────
+
+    // ── Initialise palette swatches (once) ──────────────────────────────────
+    let _swatchesBuilt = false;
+    function _buildSwatches() {
+        if (_swatchesBuilt) return;
+        _swatchesBuilt = true;
+        const container = document.getElementById('group-color-swatches');
+        if (!container) return;
+        WO.GROUP_COLORS.forEach(hex => {
+            const btn = document.createElement('button');
+            btn.type  = 'button';
+            btn.className = 'group-color-swatch';
+            btn.style.background = hex;
+            btn.title = hex;
+            btn.dataset.color = hex;
+            btn.addEventListener('click', () => {
+                const inp = document.getElementById('group-color-input');
+                if (inp) { inp.value = hex; inp.dispatchEvent(new Event('input')); }
+            });
+            container.appendChild(btn);
+        });
+    }
+
     WO.openGroupModal = function (mode, index = null) {
         const groupModal      = document.getElementById('group-modal');
         const groupModalTitle = document.getElementById('group-modal-title');
         const groupNameInput  = document.getElementById('group-name-input');
+        const colorRow        = document.getElementById('group-color-picker-row');
+        const colorInput      = document.getElementById('group-color-input');
         if (mode === 'edit' && (index == null || !WO.groups[index])) { window.showToast('⚠️ Group not found.', 3000); return; }
         if (mode === 'edit' && !WO.adminLoggedIn) { alert('Admin access required to rename groups.'); return; }
         WO.groupModalMode    = mode;
         WO.currentGroupIndex = index;
         groupModalTitle.textContent = mode === 'add' ? 'Create New Group' : 'Rename Group';
         groupNameInput.value = mode === 'edit' ? WO.groups[index].name : '';
+
+        // ── Colour picker ────────────────────────────────────────────────────
+        if (mode === 'edit' && WO.adminLoggedIn && colorRow && colorInput) {
+            _buildSwatches();
+            colorRow.style.display = '';
+            // Show custom colour, or fall back to the current auto-generated colour
+            const group = WO.groups[index];
+            const usedColors = new Set();
+            const currentColor = group.color || WO.getGroupColor(group, usedColors, index);
+            colorInput.value = currentColor.startsWith('#') ? currentColor : _rgbToHex(currentColor);
+            _highlightSwatch(colorInput.value);
+            // Keep swatch highlight in sync while user adjusts the native picker
+            colorInput.addEventListener('input', _onColorInputChange);
+        } else if (colorRow) {
+            colorRow.style.display = 'none';
+        }
+
         WO.toggleModal(groupModal, true);
         groupNameInput.focus();
     };
 
+    // Live-update swatch highlight as native picker changes
+    function _onColorInputChange() {
+        _highlightSwatch(this.value);
+    }
+
+    function _highlightSwatch(hex) {
+        document.querySelectorAll('.group-color-swatch').forEach(s => {
+            s.classList.toggle('group-color-swatch--active', s.dataset.color.toLowerCase() === hex.toLowerCase());
+        });
+    }
+
+    // Convert "rgb(r, g, b)" → "#rrggbb" for the native color input
+    function _rgbToHex(rgb) {
+        const m = rgb.match(/rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/);
+        if (!m) return '#ffffff';
+        return '#' + [m[1], m[2], m[3]].map(n => parseInt(n).toString(16).padStart(2, '0')).join('');
+    }
+
+    // Reset to auto colour
+    document.addEventListener('DOMContentLoaded', () => {
+        const resetBtn = document.getElementById('group-color-reset-btn');
+        const colorInput = document.getElementById('group-color-input');
+        if (resetBtn && colorInput) {
+            resetBtn.addEventListener('click', () => {
+                // Compute auto colour for current group
+                const idx = WO.currentGroupIndex;
+                if (idx != null && WO.groups[idx]) {
+                    const usedColors = new Set();
+                    const auto = WO.getGroupColor(WO.groups[idx], usedColors, idx);
+                    colorInput.value = auto.startsWith('#') ? auto : _rgbToHex(auto);
+                    colorInput.dispatchEvent(new Event('input'));
+                    // Mark as "no custom colour" via a special sentinel
+                    colorInput.dataset.autoReset = 'true';
+                }
+            });
+            colorInput.addEventListener('input', () => { delete colorInput.dataset.autoReset; });
+        }
+    });
+
+
     WO.saveGroup = async function () {
         const groupModal     = document.getElementById('group-modal');
         const groupNameInput = document.getElementById('group-name-input');
+        const colorInput     = document.getElementById('group-color-input');
         if (WO.groupModalMode === 'edit' && !WO.adminLoggedIn) { alert('Admin access required to rename groups.'); return; }
         const newName = groupNameInput.value.trim();
         if (!newName) { alert('Group name cannot be empty.'); return; }
@@ -36,9 +119,20 @@
             const oldName = WO.groups[WO.currentGroupIndex].name;
             WO.groups[WO.currentGroupIndex].name = newName;
             WO.renameLocalGroupOrder(oldName, newName);
+
+            // ── Save custom colour ────────────────────────────────────────
+            if (colorInput) {
+                if (colorInput.dataset.autoReset === 'true') {
+                    // User clicked "Auto" — remove custom colour
+                    delete WO.groups[WO.currentGroupIndex].color;
+                } else {
+                    WO.groups[WO.currentGroupIndex].color = colorInput.value;
+                }
+            }
         }
         WO.toggleModal(groupModal, false);
         groupNameInput.value = '';
+        if (colorInput) delete colorInput.dataset.autoReset;
         await WO.syncAndSaveGroups();
         WO.renderGroups();
     };
@@ -191,7 +285,7 @@
 
         const newKeyword    = renameKeywordInput.value.trim();
         const newDescription = renameKeywordDescInput.value.trim();
-        if (!newKeyword) return;
+        if (!newKeyword) { alert('Keyword name cannot be empty.'); return; }
         if (WO.renameTargetGroupIndex == null || !WO.groups[WO.renameTargetGroupIndex] ||
             WO.renameTargetKeywordIndex == null || !WO.groups[WO.renameTargetGroupIndex].keywords[WO.renameTargetKeywordIndex]) {
             window.showToast('⚠️ Data changed while editing. Try again.', 3000);
@@ -199,7 +293,29 @@
             return;
         }
         const oldKeyword  = WO.groups[WO.renameTargetGroupIndex].keywords[WO.renameTargetKeywordIndex];
+
+        if (newKeyword !== oldKeyword && !WO.adminLoggedIn) {
+            alert('Admin access required to rename keywords.');
+            return;
+        }
+
         if (WO.containsBlockedContent(newKeyword)) { window.showToast('⛔ Inappropriate content', 3000); return; }
+
+        if (newKeyword !== oldKeyword) {
+            const normalize = s => {
+                if (typeof s !== 'string') return '';
+                let r = s.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '');
+                if (r.endsWith('/')) r = r.slice(0, -1);
+                return r;
+            };
+            const nkw = normalize(newKeyword);
+            const duplicate = WO.groups.some((g, gi) =>
+                g.keywords && g.keywords.some((k, ki) =>
+                    normalize(k) === nkw && !(gi === WO.renameTargetGroupIndex && ki === WO.renameTargetKeywordIndex)
+                )
+            );
+            if (duplicate) { alert('A keyword with this name/link already exists.'); return; }
+        }
 
         const oldEncoded = encodeURIComponent(oldKeyword).replace(/\./g, '%2E');
         const newEncoded = encodeURIComponent(newKeyword).replace(/\./g, '%2E');

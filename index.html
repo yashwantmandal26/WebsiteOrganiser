@@ -30,7 +30,7 @@
   <meta name="msapplication-tap-highlight" content="no">
 
   <link rel="stylesheet" href="fonts/inter.css">
-  <link rel="stylesheet" href="bundle.min.css?v=1011">
+  <link rel="stylesheet" href="bundle.min.css?v=1022">
 
   <link rel="manifest" href="manifest.json">
 
@@ -40,7 +40,7 @@
   <meta name="color-scheme" content="light dark">
   <link rel="icon" type="image/png" href="icon-192.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-  <link rel="icon" type="image/png" sizes="512x512" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 
   <!-- Apple Touch Icons -->
   <link rel="apple-touch-icon" href="icon-192.png">
@@ -81,7 +81,7 @@
       <div class="search-bar-container">
         <div class="search-bar-wrapper">
           <input type="text" id="google-search-input" class="google-search-input"
-            placeholder="Find anything..."
+            placeholder="Search anything..."
             autocomplete="new-password" spellcheck="false">
 
           <button type="button" id="search-submit-btn" class="search-submit-btn" aria-label="Search"
@@ -138,10 +138,22 @@
     <div class="modal-content">
       <h2 id="group-modal-title"><img src="media/rename.png" style="width:24px;height:24px;margin-right:10px;vertical-align:middle;">Create New Group</h2>
       <input type="text" id="group-name-input" placeholder="Enter group name...">
+
+      <!-- Colour picker — shown only when editing (admin) -->
+      <div id="group-color-picker-row" class="group-color-picker-row" style="display:none;">
+        <label class="group-color-label" for="group-color-input">🎨 Card Colour</label>
+        <div class="group-color-controls">
+          <input type="color" id="group-color-input" class="group-color-native" title="Pick a colour">
+          <button type="button" id="group-color-reset-btn" class="group-color-reset-btn" title="Reset to automatic colour">↺ Auto</button>
+        </div>
+        <div class="group-color-swatches" id="group-color-swatches">
+          <!-- Swatches injected by JS from GROUP_COLORS palette -->
+        </div>
+      </div>
+
       <div class="modal-actions">
-        <button id="save-group-btn" class="btn" onclick="if(window.saveGroup)window.saveGroup()">Save</button>
-        <button id="cancel-group-btn" class="btn btn-secondary"
-          onclick="if(window.closeGroupModal)window.closeGroupModal()">Cancel</button>
+        <button id="save-group-btn" class="btn">Save</button>
+        <button id="cancel-group-btn" class="btn btn-secondary">Cancel</button>
       </div>
     </div>
   </div>
@@ -260,7 +272,7 @@
     })();
   </script>
   <!-- Application Bundle -->
-  <script defer src="bundle.min.js?v=1011"></script>
+  <script defer src="bundle.min.js?v=1022"></script>
 
   <div id="toast-container"></div>
   <!-- Global keyword tooltip portal — lives at body level to avoid contain:paint clipping -->

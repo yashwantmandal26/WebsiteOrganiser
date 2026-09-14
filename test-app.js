@@ -59,7 +59,7 @@ const puppeteer = require('puppeteer');
     }
 
     console.log('\n── DOM Structure ────────────────────────────────────────');
-    const domIds = ['groups-container', 'google-search-input', 'admin-btn', 'toast-container', 'loading-overlay'];
+    const domIds = ['groups-container', 'google-search-input', 'toast-container', 'theme-toggle-btn', 'live-clock', 'add-fab'];
     for (const id of domIds) {
         await check(`#${id} in DOM`, await page.evaluate(id => !!document.getElementById(id), id));
     }

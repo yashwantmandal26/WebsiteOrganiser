@@ -1253,6 +1253,23 @@ header h1 {
   }
 }
 
+.group-card-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  /* Modern CSS containment: off-screen cards skip layout and paint calculations until nearing viewport */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 340px;
+}
+
+/* Ensure expanded cards or animating cards calculate layout immediately */
+.group-card-wrapper:has(.expanded),
+.group-card-wrapper:has(.is-animating),
+.group-card-wrapper:focus-within,
+body.search-active .group-card-wrapper {
+  content-visibility: visible;
+}
+
 .group-card {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
@@ -1613,19 +1630,19 @@ li[draggable="true"][data-keyword-index]:active {
   background-position: 0 100%;
 }
 
-/* White Colored Theme — vivid colored group title underline using card's group color */
+/* White Colored Theme — group title underline using a darker shade of the respective group color */
 [data-theme="light"] .group-card-header {
   border-bottom: none !important;
   padding-bottom: 10px;
   background-image: linear-gradient(
     90deg,
-    var(--group-color, rgba(123, 44, 191, 1)) 0%,
-    var(--group-color, rgba(123, 44, 191, 1)) 40%,
-    color-mix(in srgb, var(--group-color, rgba(123,44,191,1)) 30%, transparent) 70%,
-    transparent 90%
+    color-mix(in srgb, var(--group-color, #7b2cbf) 70%, #000000) 0%,
+    color-mix(in srgb, var(--group-color, #7b2cbf) 70%, #000000) 70%,
+    color-mix(in srgb, var(--group-color, #7b2cbf) 35%, transparent) 90%,
+    transparent 100%
   ) !important;
   background-repeat: no-repeat !important;
-  background-size: 100% 3px !important;
+  background-size: 100% 2.5px !important;
   background-position: 0 100% !important;
 }
 
@@ -3044,52 +3061,100 @@ body.is-zooming .search-suggestions {
 }
 
 /* Expand indicator styling */
+/* ── Expand indicator wrapper ──────────────────────────────────────────── */
 .group-expand-indicator {
   display: flex;
   justify-content: center;
   align-items: center;
   margin-top: 12px;
   margin-bottom: -4px;
-  color: var(--text-color);
-  opacity: 0.6;
-  transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.45s ease;
   cursor: pointer;
 }
 
-.group-card.expanded .group-expand-indicator {
+/* ── The pill chip itself ──────────────────────────────────────────────── */
+.group-expand-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 13px 5px 11px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(255, 255, 255, 0.75);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.10), 0 1px 3px rgba(0,0,0,0.06);
+  color: #333;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  user-select: none;
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease, border-color 0.2s ease;
+}
+
+.group-expand-chip:hover {
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 4px 18px rgba(0,0,0,0.15), 0 1px 4px rgba(0,0,0,0.08);
+  transform: translateY(-1px);
+  border-color: rgba(255,255,255,0.95);
+}
+
+/* Chevron inside the chip */
+.group-expand-chip svg {
+  flex-shrink: 0;
+  transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0.7;
+}
+
+/* Count badge text */
+.group-expand-count {
+  color: var(--accent-color, #7b2cbf);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+/* ── Expanded state ─────────────────────────────────────────────────────── */
+.group-expand-chip--expanded {
+  background: rgba(255, 255, 255, 0.35);
+  border-color: rgba(255, 255, 255, 0.55);
+}
+
+.group-expand-chip--expanded svg {
   transform: rotate(180deg);
-  opacity: 1;
-  transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.7s ease; /* Smooth on open */
 }
 
-.group-expand-indicator svg {
-  background: rgba(255, 255, 255, 0.4);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: 50%;
-  padding: 4px;
-  width: 28px;
-  height: 28px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+.group-expand-chip--expanded .group-expand-count {
+  color: #555;
 }
 
-[data-theme="dark"] .group-expand-indicator svg, [data-theme="solid-dark"] .group-expand-indicator svg {
-  background: rgba(0, 0, 0, 0.3);
+/* ── Dark theme ─────────────────────────────────────────────────────────── */
+[data-theme="dark"] .group-expand-chip,
+[data-theme="solid-dark"] .group-expand-chip {
+  background: rgba(0, 0, 0, 0.35);
   border-color: rgba(255, 255, 255, 0.15);
+  color: #eee;
 }
 
-/* Bigger touch target on mobile */
+[data-theme="dark"] .group-expand-chip:hover,
+[data-theme="solid-dark"] .group-expand-chip:hover {
+  background: rgba(0, 0, 0, 0.55);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+[data-theme="dark"] .group-expand-count,
+[data-theme="solid-dark"] .group-expand-count {
+  color: #b39ddb;
+}
+
+/* ── Mobile: bigger touch target ────────────────────────────────────────── */
 body.is-touch .group-expand-indicator {
   padding: 8px 0;
   margin-top: 8px;
-  opacity: 0.8;
 }
 
-body.is-touch .group-expand-indicator svg {
-  width: 36px;
-  height: 36px;
-  padding: 6px;
+body.is-touch .group-expand-chip {
+  padding: 7px 16px 7px 13px;
+  font-size: 0.84rem;
+  gap: 6px;
 }
 
 /* Ensure overlapping expanded cards have higher z-index (handled in JS) */
@@ -5554,11 +5619,6 @@ textarea {
   .keyword-grid-preview.is-scrollable {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: contain;
-    scroll-snap-type: y proximity;
-  }
-
-  .group-card {
-    scroll-snap-align: start;
   }
 }
 
@@ -6103,8 +6163,9 @@ header {
     -webkit-backdrop-filter: blur(16px) saturate(150%) !important;
   }
   body::before, body::after {
-    /* Slow animation on mobile — fewer repaints per second */
-    animation-duration: 30s !important;
+    /* Stop heavy GPU background animation on mobile/touch screens for 60-120fps fluid scrolling */
+    animation: none !important;
+    filter: none !important;
   }
 }
 
@@ -6120,3 +6181,121 @@ html {
   text-decoration-color: #ff4d4f;
   text-decoration-thickness: 2px;
 }
+
+/* ================================================================
+   Group Card Colour Picker (Admin Edit Modal)
+   ================================================================ */
+
+.group-color-picker-row {
+  margin: 14px 0 6px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  animation: fadeSlideIn 0.25s ease;
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.group-color-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary, #aaa);
+  margin-bottom: 10px;
+}
+
+/* ── Controls row: native picker + Reset button ── */
+.group-color-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+/* Style the native <input type="color"> as a round pill */
+.group-color-native {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-radius: 50%;
+  padding: 0;
+  cursor: pointer;
+  background: transparent;
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.25), 0 4px 12px rgba(0,0,0,0.3);
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+  flex-shrink: 0;
+}
+.group-color-native::-webkit-color-swatch-wrapper { padding: 0; }
+.group-color-native::-webkit-color-swatch         { border: none; border-radius: 50%; }
+.group-color-native::-moz-color-swatch            { border: none; border-radius: 50%; }
+.group-color-native:hover  { transform: scale(1.08); box-shadow: 0 0 0 4px rgba(255,255,255,0.4), 0 6px 18px rgba(0,0,0,0.4); }
+.group-color-native:focus  { outline: none; box-shadow: 0 0 0 4px rgba(99,179,237,0.6), 0 4px 12px rgba(0,0,0,0.3); }
+
+/* Reset / Auto button */
+.group-color-reset-btn {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1.5px solid rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.08);
+  color: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s, transform 0.12s;
+  letter-spacing: 0.03em;
+}
+.group-color-reset-btn:hover {
+  background: rgba(255,255,255,0.16);
+  border-color: rgba(255,255,255,0.4);
+  transform: scale(1.04);
+}
+
+/* ── Palette swatch grid ── */
+.group-color-swatches {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 6px;
+}
+
+.group-color-swatch {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 2.5px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
+.group-color-swatch:hover {
+  transform: scale(1.22);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+}
+.group-color-swatch--active {
+  border-color: #fff;
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.5), 0 4px 14px rgba(0,0,0,0.4);
+  transform: scale(1.18);
+}
+
+/* Dark-theme adjustments */
+[data-theme="dark"] .group-color-picker-row,
+[data-theme="solid-dark"] .group-color-picker-row {
+  background: rgba(0,0,0,0.25);
+  border-color: rgba(255,255,255,0.1);
+}
+
+/* Mobile: 5-column swatch grid on narrow screens */
+@media (max-width: 480px) {
+  .group-color-swatches {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+

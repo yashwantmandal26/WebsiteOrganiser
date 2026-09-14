@@ -3,11 +3,20 @@ service cloud.firestore {
   match /databases/{database}/documents {
     // Shared data collection for WebsiteOrganiser
 
-    // groups: anyone can read/write (the app itself controls who can add/rename/delete via UI logic)
+    function isAdmin() {
+      return request.auth != null && request.auth.token.email in ['dashbot2001@gmail.com'];
+    }
+
+    // groups: Anyone can read.
+    // Full write/modify access (including delete, rename, or shrinking groups) is reserved for authenticated admins.
+    // Public non-admin contributions can add data but cannot delete, shrink, or wipe existing groups.
     match /sharedData/groups {
       allow read: if true;
-      allow write: if request.resource.data.keys().hasAll(['data', 'updatedAt'])
-                   && request.resource.data.data is list;
+      allow write: if isAdmin() || (
+        request.resource.data.keys().hasAll(['data', 'updatedAt'])
+        && request.resource.data.data is list
+        && (resource == null || request.resource.data.data.size() >= resource.data.data.size())
+      );
     }
 
     // clickCounts: anyone can read/write (click tracking is open)

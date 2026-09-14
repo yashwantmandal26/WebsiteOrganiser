@@ -216,7 +216,13 @@
             if (!hasTrailingSpace && WO.currentKeywordSuggestions && WO.currentKeywordSuggestions.length) {
                 const idx = WO.selectedKeywordSuggestionIndex >= 0 ? WO.selectedKeywordSuggestionIndex : 0;
                 const r = WO.currentKeywordSuggestions[idx];
-                if (r) { WO.openURLWithBrowser(r.targetUrl, inNewTab); searchInput.value = ''; searchInput.blur(); hideSuggestions(); if (clearSearchBtn) clearSearchBtn.style.display = 'none'; return; }
+                if (r) {
+                    if (r.keyword && r.groupIndex != null) WO.incrementKeywordClick(r.groupIndex, r.keyword);
+                    WO.openURLWithBrowser(r.targetUrl, inNewTab);
+                    searchInput.value = ''; searchInput.blur(); hideSuggestions();
+                    if (clearSearchBtn) clearSearchBtn.style.display = 'none';
+                    return;
+                }
             }
 
             // Fallback → Google search
@@ -228,7 +234,13 @@
             const mode = item.dataset.suggestionMode || 'google';
             if (mode === 'keywords') {
                 const r = WO.currentKeywordSuggestions[Number(item.dataset.index)];
-                if (r) { e.preventDefault(); e.stopPropagation(); WO.openURLWithBrowser(r.targetUrl, e.ctrlKey || e.metaKey); searchInput.value = ''; searchInput.blur(); hideSuggestions(); if (clearSearchBtn) clearSearchBtn.style.display = 'none'; }
+                if (r) {
+                    e.preventDefault(); e.stopPropagation();
+                    if (r.keyword && r.groupIndex != null) WO.incrementKeywordClick(r.groupIndex, r.keyword);
+                    WO.openURLWithBrowser(r.targetUrl, e.ctrlKey || e.metaKey);
+                    searchInput.value = ''; searchInput.blur(); hideSuggestions();
+                    if (clearSearchBtn) clearSearchBtn.style.display = 'none';
+                }
                 return;
             }
             if (item.dataset.action === 'clear-history') { clearHistory(); hideSuggestions(); searchInput.value = ''; searchInput.focus(); return; }
@@ -239,7 +251,11 @@
             const mode = item.dataset.suggestionMode || 'google';
             if (mode === 'keywords') {
                 const r = WO.currentKeywordSuggestions[Number(item.dataset.index)];
-                if (r) { e.preventDefault(); e.stopPropagation(); WO.openURLWithBrowser(r.targetUrl, true); }
+                if (r) {
+                    e.preventDefault(); e.stopPropagation();
+                    if (r.keyword && r.groupIndex != null) WO.incrementKeywordClick(r.groupIndex, r.keyword);
+                    WO.openURLWithBrowser(r.targetUrl, true);
+                }
                 return;
             }
             const q = item.dataset.query; if (q) { e.preventDefault(); e.stopPropagation(); performGoogleSearch(q, true); }
@@ -304,6 +320,11 @@
 
         // ── Delegated suggestion events ───────────────────────────────────────
         const _searchBarWrapper = searchInput.closest('.search-bar-wrapper') || searchInput.parentElement;
+
+        searchSuggestions.addEventListener('mousedown', function(e) {
+            // Prevent input blur so click event can fire before suggestions are hidden
+            e.preventDefault();
+        });
 
         searchSuggestions.addEventListener('click', function(e) {
             const delBtn = e.target.closest('.suggestion-delete-btn');

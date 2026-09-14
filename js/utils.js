@@ -5,12 +5,26 @@
 (function (WO) {
 
     // ─── Content Filter ───────────────────────────────────────────────────────
-    // Pre-clean blocked words once — avoids repeated regex replace on every call
-    const _cleanedBlockedWords = WO.BLOCKED_WORDS.map(w => w.replace(/[^a-z0-9]/g, ''));
+    const _blockedPatterns = (WO.BLOCKED_PATTERNS || []).map(w => w.toLowerCase().replace(/[^a-z0-9]/g, ''));
+    const _blockedWordsSet = new Set((WO.BLOCKED_WORDS || []).map(w => w.toLowerCase().replace(/[^a-z0-9]/g, '')));
+
     WO.containsBlockedContent = function (text) {
         if (!text) return false;
-        const clean = text.toLowerCase().replace(/[^a-z0-9]/g, '');
-        return _cleanedBlockedWords.some(w => clean.includes(w));
+        const lower = String(text).toLowerCase();
+        const cleanDense = lower.replace(/[^a-z0-9]/g, '');
+
+        // 1. Check direct compound/domain patterns (e.g. "pornhub", "xvideos") in dense string
+        if (_blockedPatterns.some(p => p && cleanDense.includes(p))) {
+            return true;
+        }
+
+        // 2. Check whole words / tokens (prevents "analytics" matching "anal", "canteen" matching "teen")
+        const tokens = lower.split(/[^a-z0-9]+/).filter(Boolean);
+        for (const token of tokens) {
+            if (_blockedWordsSet.has(token)) return true;
+        }
+
+        return false;
     };
 
     // ─── String Escaping ──────────────────────────────────────────────────────
@@ -77,10 +91,31 @@
     // ─── Color Helpers ────────────────────────────────────────────────────────
     WO.hashGroupName = function (name) { return WO.hashString(name); };
 
-    WO.getGroupColor = function (name, usedColors) {
-        let idx = WO.hashGroupName(name) % WO.GROUP_COLORS.length;
+    WO.getGroupColor = function (nameOrGroup, usedColors, preferredIndex) {
+        // Accept either a group object {name, color?, _originalIndex?, ...} or a plain name string
+        const group = (nameOrGroup && typeof nameOrGroup === 'object') ? nameOrGroup : null;
+        const name  = group ? group.name : nameOrGroup;
+
+        // If the admin set a custom colour, use it directly (no palette slot consumed)
+        if (group && group.color) return group.color;
+
+        let startIdx;
+        if (typeof preferredIndex === 'number' && !isNaN(preferredIndex) && preferredIndex >= 0) {
+            startIdx = preferredIndex % WO.GROUP_COLORS.length;
+        } else if (group && typeof group._originalIndex === 'number' && group._originalIndex >= 0) {
+            startIdx = group._originalIndex % WO.GROUP_COLORS.length;
+        } else {
+            startIdx = WO.hashGroupName(name || '') % WO.GROUP_COLORS.length;
+        }
+
+        if (!usedColors) return WO.GROUP_COLORS[startIdx];
+
+        let idx = startIdx;
         let tries = 0;
-        while (usedColors.has(idx) && tries < WO.GROUP_COLORS.length) { idx = (idx + 1) % WO.GROUP_COLORS.length; tries++; }
+        while (usedColors.has(idx) && tries < WO.GROUP_COLORS.length) {
+            idx = (idx + 1) % WO.GROUP_COLORS.length;
+            tries++;
+        }
         usedColors.add(idx);
         return WO.GROUP_COLORS[idx];
     };
@@ -108,6 +143,55 @@
         return WO.KEYWORD_GRADIENTS[idx];
     };
 
+    // Favicon verified/failed host tracking with sessionStorage persistence
+    const _loadedFaviconHosts = new Set();
+    const _failedFaviconHosts = new Set();
+    try {
+        const savedOk = sessionStorage.getItem('wo-favicons-ok');
+        if (savedOk) JSON.parse(savedOk).forEach(h => _loadedFaviconHosts.add(h));
+        const savedBad = sessionStorage.getItem('wo-favicons-bad');
+        if (savedBad) JSON.parse(savedBad).forEach(h => _failedFaviconHosts.add(h));
+    } catch {}
+
+    function _persistFaviconHosts() {
+        try {
+            sessionStorage.setItem('wo-favicons-ok', JSON.stringify(Array.from(_loadedFaviconHosts).slice(-200)));
+            sessionStorage.setItem('wo-favicons-bad', JSON.stringify(Array.from(_failedFaviconHosts).slice(-200)));
+        } catch {}
+    }
+
+    WO.onFaviconLoad = function (img, host) {
+        if (!img) return;
+        if (img.naturalWidth <= 1) {
+            _failedFaviconHosts.add(host);
+            img.style.display = 'none';
+            const fallback = img.previousElementSibling;
+            if (fallback && fallback.classList.contains('keyword-fallback-container')) {
+                fallback.style.display = 'flex';
+            }
+            _persistFaviconHosts();
+            return;
+        }
+        _loadedFaviconHosts.add(host);
+        img.style.display = 'block';
+        const fallback = img.previousElementSibling;
+        if (fallback && fallback.classList.contains('keyword-fallback-container')) {
+            fallback.style.display = 'none';
+        }
+        _persistFaviconHosts();
+    };
+
+    WO.onFaviconError = function (img, host) {
+        if (!img) return;
+        _failedFaviconHosts.add(host);
+        img.style.display = 'none';
+        const fallback = img.previousElementSibling;
+        if (fallback && fallback.classList.contains('keyword-fallback-container')) {
+            fallback.style.display = 'flex';
+        }
+        _persistFaviconHosts();
+    };
+
     // Memoize favicon/emoji HTML — same keyword always produces same HTML string
     const _faviconCache = new Map();
     WO.getFaviconOrEmoji = function (keyword) {
@@ -127,10 +211,25 @@
             const fl = host.charAt(0).toUpperCase();
             const g  = WO.getKeywordGradient(host);
             const letterFallback = `<span class='keyword-letter' style='background: linear-gradient(135deg, ${g[0]}, ${g[1]}); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;'>${fl}</span>`;
-            const defAvatar = encodeURIComponent('https://upload.wikimedia.org/wikipedia/commons/4/47/Transparent.png');
-            const faviconUrl = `https://favicon.im/${host}?larger=true&default-avatar=${defAvatar}`;
-            result = `<img src='${faviconUrl}' class='keyword-favicon' loading='lazy' decoding='async' onload="if(this.naturalWidth===1){this.style.display='none';this.nextElementSibling.style.display='flex';}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">`
-                   + `<div class='keyword-fallback-container' style='display:none;width:100%;height:100%;align-items:center;justify-content:center;'>${letterFallback}</div>`;
+            
+            if (_failedFaviconHosts.has(host)) {
+                // Known failed host: zero network waste, instant colorful letter badge
+                result = `<div class='keyword-fallback-container' style='display:flex;width:100%;height:100%;align-items:center;justify-content:center;'>${letterFallback}</div>`;
+            } else {
+                const defAvatar = encodeURIComponent('https://upload.wikimedia.org/wikipedia/commons/4/47/Transparent.png');
+                const faviconUrl = `https://favicon.im/${host}?larger=true&default-avatar=${defAvatar}`;
+                const isCached = _loadedFaviconHosts.has(host);
+
+                if (isCached) {
+                    // Already loaded & verified: render image directly without lazy observer
+                    result = `<div class='keyword-fallback-container' style='display:none;width:100%;height:100%;align-items:center;justify-content:center;'>${letterFallback}</div>`
+                           + `<img src='${faviconUrl}' class='keyword-favicon' decoding='async' onload="WO.onFaviconLoad(this, '${host}')" onerror="WO.onFaviconError(this, '${host}')">`;
+                } else {
+                    // Progressive lazy hydration: show letter avatar immediately, load favicon when nearing viewport
+                    result = `<div class='keyword-fallback-container' style='display:flex;width:100%;height:100%;align-items:center;justify-content:center;'>${letterFallback}</div>`
+                           + `<img data-src='${faviconUrl}' class='keyword-favicon lazy-favicon' decoding='async' style='display:none;' onload="WO.onFaviconLoad(this, '${host}')" onerror="WO.onFaviconError(this, '${host}')">`;
+                }
+            }
         } else {
             const fl = keyword.charAt(0).toUpperCase();
             const g  = WO.getKeywordGradient(keyword);
@@ -140,6 +239,45 @@
         _faviconCache.set(keyword, result);
         return result;
     };
+
+    // Shared singleton IntersectionObserver for lazy favicons
+    let _faviconObserver = null;
+    WO.observeLazyFavicons = function (container) {
+        const root = container || document;
+        const lazyImgs = root.querySelectorAll('img.lazy-favicon[data-src]');
+        if (!lazyImgs.length) return;
+
+        if (!('IntersectionObserver' in window)) {
+            lazyImgs.forEach(img => {
+                if (img.dataset.src) {
+                    img.src = img.dataset.src;
+                    img.removeAttribute('data-src');
+                }
+            });
+            return;
+        }
+
+        if (!_faviconObserver) {
+            _faviconObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        observer.unobserve(img);
+                        if (img.dataset.src) {
+                            img.src = img.dataset.src;
+                            img.removeAttribute('data-src');
+                        }
+                    }
+                });
+            }, {
+                rootMargin: '250px 0px', // start downloading slightly before tile enters screen
+                threshold: 0.01
+            });
+        }
+
+        lazyImgs.forEach(img => _faviconObserver.observe(img));
+    };
+
     // Allow external code to invalidate the cache when keywords change
     WO.clearFaviconCache = function () { _faviconCache.clear(); };
 

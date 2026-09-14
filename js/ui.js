@@ -65,10 +65,6 @@
         if (persist) { try { localStorage.setItem(WO.THEME_STORAGE_KEY, theme); } catch {} }
         // Use lightweight in-place color patcher — avoids full DOM rebuild and favicon blink
         if (typeof WO.updateThemeColors === 'function' && WO.groups && WO.groups.length > 0) WO.updateThemeColors();
-        // Show friendly theme name as a toast (only on manual switch, not on persist=false)
-        if (persist && typeof window.showToast === 'function') {
-            window.showToast(THEME_NAMES[theme] || theme, 1800);
-        }
         // Update toggle button tooltip
         const btn = document.getElementById('theme-toggle-btn');
         const nextTheme = theme === 'light' ? 'dark' : theme === 'dark' ? 'solid-dark' : 'light';
@@ -246,14 +242,15 @@
         let _prevAuthState = null;
         if (typeof window.firebaseModular !== 'undefined' && window.firebaseAuth) {
             window.firebaseModular.onAuthStateChanged(window.firebaseAuth, (user) => {
-                const newState = !!user;
-                WO.adminLoggedIn = newState;
+                const adminEmails = (WO.ADMIN_EMAILS || []).map(em => em.toLowerCase());
+                const isAuthorized = !!(user && user.email && adminEmails.includes(user.email.toLowerCase()));
+                WO.adminLoggedIn = isAuthorized;
                 WO.updateAdminButton();
                 // Only re-render if auth state actually changed AND data is loaded
-                if (newState !== _prevAuthState && WO.groups && WO.groups.length > 0) {
+                if (isAuthorized !== _prevAuthState && WO.groups && WO.groups.length > 0) {
                     WO.renderGroups();
                 }
-                _prevAuthState = newState;
+                _prevAuthState = isAuthorized;
             });
         }
 
@@ -297,10 +294,11 @@
             });
         }
         
-        // Remove pointer cursor from clock since it's no longer clickable
+        // Live clock pointer cursor & tooltip
         const liveClock = document.getElementById('live-clock');
         if (liveClock) {
-            liveClock.style.cursor = 'default';
+            liveClock.style.cursor = 'pointer';
+            liveClock.title = 'Click to toggle milliseconds';
         }
         
         // Keep adminBtn handler as fallback if element exists
@@ -321,51 +319,35 @@
                     return;
                 }
 
+                const adminEmails = (WO.ADMIN_EMAILS || []).map(em => em.toLowerCase());
+                if (!adminEmails.includes(email.toLowerCase())) {
+                    adminErrorMsg.textContent = 'Access denied: Unauthorized admin email.';
+                    adminErrorMsg.style.display = 'block';
+                    return;
+                }
+
                 // Show loading state
                 adminLoginBtn.disabled = true;
                 adminLoginBtn.textContent = 'Logging in...';
 
                 try {
                     if (typeof window.firebaseModular !== 'undefined' && window.firebaseAuth) {
-                        try {
-                            await window.firebaseModular.signInWithEmailAndPassword(window.firebaseAuth, email, password);
-                        } catch (signInErr) {
-                            const code = signInErr.code || '';
-                            const _a = atob('ZGFzaGJvdDIwMDFAZ21haWwuY29t'); // dashbot2001@gmail.com
-                            const _p = atob('ZGFzaEBib3Q='); // dash@bot
-                            
-                            // Only try creating the account on the fly if credentials are correct but user doesn't exist
-                            if (email === _a && password === _p && 
-                                (code === 'auth/user-not-found' || code === 'auth/invalid-credential' || code === 'auth/invalid-login-credentials')) {
-                                await window.firebaseModular.createUserWithEmailAndPassword(window.firebaseAuth, email, password);
-                                console.log('Admin account created on first login.');
-                            } else {
-                                if (code === 'auth/invalid-credential' || code === 'auth/invalid-login-credentials' || code === 'auth/wrong-password' || code === 'auth/user-not-found') {
-                                    throw new Error('Invalid email or password.');
-                                }
-                                throw signInErr;
-                            }
+                        const userCred = await window.firebaseModular.signInWithEmailAndPassword(window.firebaseAuth, email, password);
+                        const user = userCred.user;
+                        if (!user || !adminEmails.includes((user.email || '').toLowerCase())) {
+                            await window.firebaseModular.signOut(window.firebaseAuth);
+                            throw new Error('Access denied: Unauthorized admin account.');
                         }
                         WO.toggleModal(adminModal, false);
                     } else {
-                        // Fallback local auth if running offline
-                        const _a = atob('ZGFzaGJvdDIwMDFAZ21haWwuY29t');
-                        const _p = atob('ZGFzaEBib3Q=');
-                        if (email === _a && password === _p) {
-                            WO.adminLoggedIn = true;
-                            WO.updateAdminButton();
-                            WO.renderGroups();
-                            WO.toggleModal(adminModal, false);
-                        } else {
-                            throw new Error('Invalid local credentials');
-                        }
+                        throw new Error('Authentication is unavailable offline.');
                     }
                 } catch (error) {
                     console.error('Login error:', error);
                     let displayMsg = error.message || 'Login failed.';
                     const code = error.code || '';
-                    if (code === 'auth/email-already-in-use' && email === atob('ZGFzaGJvdDIwMDFAZ21haWwuY29t')) {
-                        displayMsg = 'This admin email is registered via Google. Please log in using the Google button once to link your password.';
+                    if (code === 'auth/invalid-credential' || code === 'auth/invalid-login-credentials' || code === 'auth/wrong-password' || code === 'auth/user-not-found') {
+                        displayMsg = 'Invalid email or password.';
                     }
                     adminErrorMsg.textContent = displayMsg;
                     adminErrorMsg.style.display = 'block';
@@ -387,27 +369,10 @@
                         const provider = new window.firebaseModular.GoogleAuthProvider();
                         const result = await window.firebaseModular.signInWithPopup(window.firebaseAuth, provider);
                         const user = result.user;
-                        if (user && user.email !== 'dashbot2001@gmail.com') {
-                            try {
-                                await window.firebaseModular.deleteUser(user);
-                            } catch (deleteError) {
-                                console.error('Failed to delete unauthorized user account:', deleteError);
-                            }
+                        const adminEmails = (WO.ADMIN_EMAILS || []).map(em => em.toLowerCase());
+                        if (!user || !adminEmails.includes((user.email || '').toLowerCase())) {
                             await window.firebaseModular.signOut(window.firebaseAuth);
                             throw new Error('Access denied: Unauthorized Google account.');
-                        }
-                        // Auto-link email/password credential to Google account on first login
-                        if (user && user.email === 'dashbot2001@gmail.com') {
-                            const hasPassword = user.providerData && user.providerData.some(p => p.providerId === 'password');
-                            if (!hasPassword) {
-                                try {
-                                    const credential = window.firebaseModular.EmailAuthProvider.credential(user.email, 'dash@bot');
-                                    await window.firebaseModular.linkWithCredential(user, credential);
-                                    console.log('Successfully linked password provider to admin Google account.');
-                                } catch (linkErr) {
-                                    console.error('Error linking password provider:', linkErr);
-                                }
-                            }
                         }
                         WO.toggleModal(adminModal, false);
                     } else {
@@ -453,6 +418,8 @@
         if (addKeywordModal) addKeywordModal.addEventListener('pointerdown', e => { if (e.target === addKeywordModal) window.closeAddKeywordModal(); });
 
         // Group Modal
+        const saveGroupBtn = document.getElementById('save-group-btn');
+        if (saveGroupBtn) saveGroupBtn.addEventListener('click', () => WO.saveGroup());
         if (addFab) addFab.addEventListener('click', () => WO.openGroupModal('add'));
         if (cancelGroupBtn) cancelGroupBtn.addEventListener('click', () => WO.toggleModal(groupModal, false));
         if (groupNameInput) groupNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') WO.saveGroup(); });
@@ -522,7 +489,7 @@
             editEl.style.display = 'block';
             editEl.onclick = () => { hideContextMenu(); WO.renameKeyword(groupIndex, keywordIndex, keyword, true); };
             
-            renameEl.style.display = 'block';
+            renameEl.style.display = WO.adminLoggedIn ? 'block' : 'none';
             renameEl.onclick = () => { hideContextMenu(); WO.renameKeyword(groupIndex, keywordIndex, keyword, false); };
 
             if (isSoftDeleted) {
@@ -546,7 +513,7 @@
 
         function hideContextMenu() { if (contextMenu) contextMenu.style.display = 'none'; }
         document.addEventListener('click', hideContextMenu);
-        document.addEventListener('scroll', hideContextMenu);
+        document.addEventListener('scroll', hideContextMenu, { passive: true });
 
         // Touch Detection
         if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
@@ -591,20 +558,31 @@
             showContextMenu(e.clientX, e.clientY, parseInt(item.dataset.groupIndex), parseInt(item.dataset.keywordIndex), item.dataset.keywordValue);
         });
 
-        // Long-Press Context Menu (Touch)
-        let _lpTimer = null, _lpItem = null;
+        // Long-Press Context Menu (Touch) with jitter tolerance for mobile smartphones
+        let _lpTimer = null, _lpItem = null, _lpStartX = 0, _lpStartY = 0;
         groupsContainer.addEventListener('touchstart', e => {
             const item = e.target.closest('.keyword-grid-preview-item');
             if (!item) return;
             _lpItem = item;
             const t = e.touches[0];
-            const tx = t ? t.clientX : 0, ty = t ? t.clientY : 0;
+            _lpStartX = t ? t.clientX : 0;
+            _lpStartY = t ? t.clientY : 0;
             _lpTimer = setTimeout(() => {
-                if (_lpItem === item) showContextMenu(tx, ty, parseInt(item.dataset.groupIndex), parseInt(item.dataset.keywordIndex), item.dataset.keywordValue);
+                if (_lpItem === item) showContextMenu(_lpStartX, _lpStartY, parseInt(item.dataset.groupIndex), parseInt(item.dataset.keywordIndex), item.dataset.keywordValue);
             }, 500);
         }, { passive: true });
         groupsContainer.addEventListener('touchend',  () => { clearTimeout(_lpTimer); _lpItem = null; }, { passive: true });
-        groupsContainer.addEventListener('touchmove', () => { clearTimeout(_lpTimer); _lpItem = null; }, { passive: true });
+        groupsContainer.addEventListener('touchmove', e => {
+            if (!_lpTimer) return;
+            const t = e.touches[0];
+            if (t) {
+                const dist = Math.hypot(t.clientX - _lpStartX, t.clientY - _lpStartY);
+                if (dist > 10) {
+                    clearTimeout(_lpTimer);
+                    _lpItem = null;
+                }
+            }
+        }, { passive: true });
 
         // Middle-Click to Open (Natively in background via <a> tag)
         groupsContainer.addEventListener('auxclick', e => {

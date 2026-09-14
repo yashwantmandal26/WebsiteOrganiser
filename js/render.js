@@ -81,7 +81,7 @@
         } else {
             filteredGroups.forEach(group => {
                 const originalIndex = group._originalIndex;
-                const groupColor    = WO.getGroupColor(group.name, usedColors);
+                const groupColor    = WO.getGroupColor(group, usedColors, originalIndex);
                 const groupCard     = document.createElement('div');
                 groupCard.className  = 'group-card';
                 groupCard.dataset.groupIndex = originalIndex;
@@ -207,11 +207,34 @@
 
                 // Animated hover/tap to expand for >12 items
                 if (keywords.length > 12) {
-                    // Add a visual indicator
+                    const hiddenCount = keywords.length - 12;
+
+                    // Build the indicator as a pill: [+N more  ∨]
                     const indicator = document.createElement('div');
                     indicator.className = 'group-expand-indicator';
-                    indicator.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>';
+
+                    const chip = document.createElement('div');
+                    chip.className = 'group-expand-chip';
+
+                    const countBadge = document.createElement('span');
+                    countBadge.className = 'group-expand-count';
+                    countBadge.textContent = `+${hiddenCount} more`;
+
+                    const chevronSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                    chevronSvg.setAttribute('viewBox', '0 0 24 24');
+                    chevronSvg.setAttribute('width', '16');
+                    chevronSvg.setAttribute('height', '16');
+                    chevronSvg.setAttribute('aria-hidden', 'true');
+                    const chevronPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    chevronPath.setAttribute('fill', 'currentColor');
+                    chevronPath.setAttribute('d', 'M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z');
+                    chevronSvg.appendChild(chevronPath);
+
+                    chip.appendChild(countBadge);
+                    chip.appendChild(chevronSvg);
+                    indicator.appendChild(chip);
                     groupCard.appendChild(indicator);
+
 
                     let expandTimeout;
                     let collapsedHeight = 0;
@@ -269,6 +292,10 @@
                         clearTimeout(expandTimeout);
                         if (!groupCard.classList.contains('expanded')) return;
 
+                        // Reset chip label immediately on collapse (covers outside-click too)
+                        countBadge.textContent = `+${hiddenCount} more`;
+                        chip.classList.remove('group-expand-chip--expanded');
+
                         groupCard.classList.add('is-animating');
                         groupCard.style.overflow = 'hidden';
 
@@ -300,6 +327,7 @@
                         }, 460);
                     }
 
+
                     // Hover expand removed — expand/collapse is button-click only
 
                     // --- Click/Tap indicator to toggle ---
@@ -307,10 +335,15 @@
                         e.stopPropagation();
                         if (groupCard.classList.contains('expanded')) {
                             doCollapse();
+                            countBadge.textContent = `+${hiddenCount} more`;
+                            chip.classList.remove('group-expand-chip--expanded');
                         } else {
                             doExpand();
+                            countBadge.textContent = 'Show less';
+                            chip.classList.add('group-expand-chip--expanded');
                         }
                     });
+
 
                     // Close expanded card when clicking outside — uses single delegated handler (no leak)
                     if (!_outsideClickHandlerRegistered) {
@@ -326,6 +359,11 @@
 
         groupsContainer.innerHTML = '';
         groupsContainer.appendChild(fragment);
+
+        // Lazily hydrate visible & near-viewport favicons via IntersectionObserver
+        if (typeof WO.observeLazyFavicons === 'function') {
+            WO.observeLazyFavicons(groupsContainer);
+        }
 
         // Schedule highlight AFTER DOM is updated — rAF ensures it runs in the next paint
         if (WO.lastAddedKeyword !== null) {
@@ -413,6 +451,11 @@
             const wrapper = card.closest('.group-card-wrapper') || card;
             wrapper.style.display = (!isActive || hasVisible) ? '' : 'none';
         });
+
+        // Hydrate favicons for matching items revealed by search
+        if (isActive && typeof WO.observeLazyFavicons === 'function') {
+            WO.observeLazyFavicons(container);
+        }
     };
 
     // ── Lightweight in-place theme color updater ───────────────────────────────
@@ -430,7 +473,7 @@
             const gi = card.dataset.groupIndex;
             const group = WO.groups[gi];
             if (!group) return;
-            const groupColor = WO.getGroupColor(group.name, usedColors);
+            const groupColor = WO.getGroupColor(group, usedColors, parseInt(gi, 10));
             if (theme === 'dark') {
                 card.style.background = WO.darkenColor(groupColor, 0.6);
             } else if (theme === 'solid-dark') {
