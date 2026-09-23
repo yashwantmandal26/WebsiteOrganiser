@@ -6348,3 +6348,159 @@ html {
     grid-template-columns: repeat(5, 1fr);
   }
 }
+
+/* Phone UX layer. Kept last so older responsive rules cannot override it. */
+.mobile-item-menu { display: none; }
+
+@media (max-width: 600px) {
+  header {
+    padding: max(6px, env(safe-area-inset-top, 0px)) max(10px, env(safe-area-inset-right, 0px)) 8px max(10px, env(safe-area-inset-left, 0px)) !important;
+  }
+
+  .header-row {
+    padding: 0 !important;
+    gap: 6px 8px !important;
+  }
+
+  .site-logo { height: 32px !important; }
+  .site-title { font-size: clamp(.98rem, 4.4vw, 1.12rem) !important; }
+  .live-clock {
+    height: 36px !important;
+    min-height: 36px !important;
+    padding: 0 9px !important;
+    font-size: .9rem !important;
+  }
+  .clock-seconds, .clock-ms { display: none !important; }
+  .header-right #theme-toggle-btn {
+    width: 36px !important;
+    min-width: 36px !important;
+    height: 36px !important;
+    min-height: 36px !important;
+  }
+  body.admin-mode .header-left { flex: 1 1 auto; }
+  body.admin-mode .header-controls {
+    width: 100% !important;
+    justify-content: space-between !important;
+    order: 2 !important;
+  }
+  body.admin-mode .header-right { gap: 5px !important; }
+  body.admin-mode .header-right .admin-only {
+    width: 36px !important;
+    min-width: 36px !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    padding: 0 !important;
+    font-size: 0 !important;
+    border-radius: 10px !important;
+  }
+  body.admin-mode #bulk-mode-btn::after { content: '\2611'; font-size: 18px; }
+  body.admin-mode #trash-btn::after { content: '\2672'; font-size: 18px; }
+  body.admin-mode #export-btn::after { content: '\2191'; font-size: 20px; }
+  body.admin-mode #import-btn::after { content: '\2193'; font-size: 20px; }
+  .theme-icon { width: 20px; height: 20px; }
+  .search-bar-container {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .search-bar-wrapper { min-height: 42px !important; border-radius: 14px !important; }
+  .google-search-input { min-height: 42px !important; padding: 9px 6px !important; }
+
+  main.container { padding: 8px !important; }
+  .groups-grid { gap: 12px !important; padding: 0 !important; }
+  .group-card { padding: 12px 10px !important; }
+  .group-card .keyword-grid-preview {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+  .group-card .keyword-grid-preview-item {
+    min-height: 88px !important;
+    max-height: none !important;
+    padding: 8px 4px 7px !important;
+  }
+  .group-card .keyword-grid-preview-item .keyword-grid-icon {
+    width: 42px !important;
+    height: 42px !important;
+  }
+  .group-card .keyword-grid-preview-item .keyword-grid-icon img.keyword-favicon {
+    width: 38px !important;
+    height: 38px !important;
+  }
+  .group-card .keyword-grid-text {
+    font-size: .75rem !important;
+    font-weight: 650 !important;
+  }
+
+  body.is-touch .keyword-grid-preview-item { padding-right: 18px !important; }
+  body.is-touch .mobile-item-menu {
+    display: grid;
+    place-items: center;
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 28px;
+    height: 32px;
+    border-radius: 10px;
+    color: var(--text-color);
+    background: rgba(128,128,128,.14);
+    font-size: 1.3rem;
+    font-weight: 800;
+    line-height: 1;
+    z-index: 7;
+  }
+
+  .bulk-toolbar {
+    left: max(8px, env(safe-area-inset-left, 0px));
+    right: max(8px, env(safe-area-inset-right, 0px));
+    bottom: max(8px, env(safe-area-inset-bottom, 0px));
+    width: auto;
+    max-width: none;
+    transform: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    justify-content: stretch;
+    padding: 12px;
+    border-radius: 18px;
+    max-height: min(70vh, 430px);
+    overflow-y: auto;
+  }
+  .bulk-toolbar strong,
+  .bulk-toolbar select,
+  .bulk-toolbar input { grid-column: 1 / -1; width: 100%; }
+  .bulk-toolbar .btn { width: 100%; min-width: 0; padding: 9px 8px; }
+  body:has(.bulk-toolbar:not([hidden])) .fab { display: none !important; }
+  body:has(.bulk-toolbar:not([hidden])) #toast-container {
+    bottom: calc(min(70vh, 430px) + env(safe-area-inset-bottom, 0px) + 18px);
+  }
+
+  .fab {
+    width: 58px !important;
+    height: 58px !important;
+    right: max(14px, env(safe-area-inset-right, 0px)) !important;
+    bottom: max(14px, env(safe-area-inset-bottom, 0px)) !important;
+  }
+  #toast-container {
+    width: calc(100vw - 24px);
+    bottom: calc(82px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  .toast-message { max-width: 100% !important; }
+}
+
+@media (max-width: 340px) {
+  .site-title { font-size: .92rem !important; }
+  .live-clock { padding: 0 7px !important; font-size: .82rem !important; }
+  .group-card .keyword-grid-preview { gap: 6px !important; }
+}
+
+@media (max-width: 900px) and (max-height: 500px) and (orientation: landscape) {
+  .clock-seconds, .clock-ms { display: none !important; }
+  body:not(.admin-mode) .header-row {
+    display: grid !important;
+    grid-template-columns: minmax(150px, auto) minmax(240px, 1fr) auto !important;
+    align-items: center !important;
+  }
+  body:not(.admin-mode) .header-left { grid-column: 1 !important; grid-row: 1 !important; }
+  body:not(.admin-mode) .search-bar-container { grid-column: 2 !important; grid-row: 1 !important; }
+  body:not(.admin-mode) .header-controls { grid-column: 3 !important; grid-row: 1 !important; }
+  .groups-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}

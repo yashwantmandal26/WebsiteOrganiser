@@ -30,7 +30,7 @@
   <meta name="msapplication-tap-highlight" content="no">
 
   <link rel="stylesheet" href="fonts/inter.css">
-  <link rel="stylesheet" href="bundle.min.css?v=1030">
+  <link rel="stylesheet" href="bundle.min.css?v=1033">
 
   <link rel="manifest" href="manifest.json">
 
@@ -70,10 +70,10 @@
           <span class="clock-hours" id="clock-hh">12</span><span class="clock-sep">:</span><span class="clock-minutes" id="clock-mm">00</span><span class="clock-sep">:</span><span class="clock-seconds" id="clock-ss">00</span><span class="clock-ms" id="clock-ms" style="display: none; font-size: 0.7em; opacity: 0.8; padding-left: 2px;">.000</span><span class="clock-ampm" id="clock-ampm">&nbsp;AM</span>
         </div>
         <div class="header-right">
-          <button type="button" id="bulk-mode-btn" class="btn holo-btn admin-only" style="display: none;">Select</button>
-          <button type="button" id="trash-btn" class="btn holo-btn admin-only" style="display: none;">Trash</button>
-          <button id="export-btn" class="btn holo-btn admin-only" style="display: none;">📤 Export</button>
-          <button id="import-btn" class="btn holo-btn admin-only" style="display: none;">📥 Import</button>
+          <button type="button" id="bulk-mode-btn" class="btn holo-btn admin-only" style="display: none;" aria-label="Select bookmarks" title="Select bookmarks">Select</button>
+          <button type="button" id="trash-btn" class="btn holo-btn admin-only" style="display: none;" aria-label="Open Trash" title="Open Trash">Trash</button>
+          <button id="export-btn" class="btn holo-btn admin-only" style="display: none;" aria-label="Export backup" title="Export backup">📤 Export</button>
+          <button id="import-btn" class="btn holo-btn admin-only" style="display: none;" aria-label="Import backup" title="Import backup">📥 Import</button>
           <input type="file" id="import-file-input" accept=".json" style="display: none;">
           <button id="theme-toggle-btn" class="btn icon-btn holo-btn"><img src="media/theme.png" alt="Theme"
               class="theme-icon"></button>
@@ -304,7 +304,7 @@
     })();
   </script>
   <!-- Application Bundle -->
-  <script defer src="bundle.min.js?v=1030"></script>
+  <script defer src="bundle.min.js?v=1033"></script>
 
   <div id="toast-container"></div>
   <!-- Global keyword tooltip portal — lives at body level to avoid contain:paint clipping -->

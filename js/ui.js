@@ -130,6 +130,7 @@
             btn.textContent = WO.adminLoggedIn ? 'Admin Logout' : 'Admin Login';
         }
         document.querySelectorAll('.admin-only').forEach(el => { el.style.display = WO.adminLoggedIn ? 'inline-flex' : 'none'; });
+        document.body.classList.toggle('admin-mode', Boolean(WO.adminLoggedIn));
         const fab = document.getElementById('add-fab');
         if (fab) fab.style.display = 'flex';
         if (!WO.adminLoggedIn && WO.bulkMode) WO.setBulkMode(false);
@@ -141,20 +142,11 @@
     };
 
     // ── URL Opening ───────────────────────────────────────────────────────
-    function resetIOSZoom() {
-        const vp = document.querySelector('meta[name="viewport"]');
-        if (!vp) return;
-        const orig = vp.content;
-        vp.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';
-        setTimeout(() => { vp.content = orig; }, 300);
-    }
-
     WO.resolveDynamicURL = function (url) {
         return url || '';
     };
 
     WO.openURLWithBrowser = function (url, inNewTab = false) {
-        resetIOSZoom();
         const finalUrl = WO.resolveDynamicURL(url);
         const isPC = !('ontouchstart' in window) && !navigator.maxTouchPoints && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
         if (inNewTab || isPC) { const w = window.open(finalUrl, '_blank', 'noopener'); if (w) { try { w.opener = null; } catch {} } }
@@ -441,7 +433,7 @@
         // Header Resize — ResizeObserver covers all resize cases; window resize listener removed
         const headerEl = document.querySelector('header');
         if (headerEl) {
-            const updatePadding = () => { document.body.style.paddingTop = headerEl.offsetHeight + 'px'; };
+            const updatePadding = () => { document.body.style.setProperty('padding-top', headerEl.offsetHeight + 'px', 'important'); };
             if (typeof ResizeObserver !== 'undefined') new ResizeObserver(updatePadding).observe(headerEl);
             window.addEventListener('load', updatePadding);
             updatePadding();
@@ -530,6 +522,20 @@
 
         // Groups Container — Click Delegation
         groupsContainer.addEventListener('click', e => {
+            const itemMenuBtn = e.target.closest('.mobile-item-menu');
+            if (itemMenuBtn) {
+                e.preventDefault(); e.stopPropagation();
+                const item = itemMenuBtn.closest('.keyword-grid-preview-item');
+                const rect = itemMenuBtn.getBoundingClientRect();
+                showContextMenu(
+                    Math.min(rect.right, window.innerWidth - 12),
+                    Math.min(rect.bottom + 6, window.innerHeight - 12),
+                    parseInt(item.dataset.groupIndex),
+                    parseInt(item.dataset.keywordIndex),
+                    item.dataset.keywordValue
+                );
+                return;
+            }
             const previewItem = e.target.closest('.keyword-grid-preview-item');
             if (previewItem) {
                 if (WO.bulkMode) {
@@ -555,6 +561,14 @@
             if (action === 'add-keyword')  WO.addKeywordToGroup(groupIndex);
             else if (action === 'edit-group')   WO.openGroupModal('edit', groupIndex);
             else if (action === 'delete-group') WO.deleteGroup(groupIndex);
+        });
+
+        groupsContainer.addEventListener('keydown', e => {
+            const itemMenuBtn = e.target.closest('.mobile-item-menu');
+            if (itemMenuBtn && (e.key === 'Enter' || e.key === ' ')) {
+                e.preventDefault();
+                itemMenuBtn.click();
+            }
         });
 
         // Hover Sound (Desktop)
