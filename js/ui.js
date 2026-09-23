@@ -522,20 +522,6 @@
 
         // Groups Container — Click Delegation
         groupsContainer.addEventListener('click', e => {
-            const itemMenuBtn = e.target.closest('.mobile-item-menu');
-            if (itemMenuBtn) {
-                e.preventDefault(); e.stopPropagation();
-                const item = itemMenuBtn.closest('.keyword-grid-preview-item');
-                const rect = itemMenuBtn.getBoundingClientRect();
-                showContextMenu(
-                    Math.min(rect.right, window.innerWidth - 12),
-                    Math.min(rect.bottom + 6, window.innerHeight - 12),
-                    parseInt(item.dataset.groupIndex),
-                    parseInt(item.dataset.keywordIndex),
-                    item.dataset.keywordValue
-                );
-                return;
-            }
             const previewItem = e.target.closest('.keyword-grid-preview-item');
             if (previewItem) {
                 if (WO.bulkMode) {
@@ -561,14 +547,6 @@
             if (action === 'add-keyword')  WO.addKeywordToGroup(groupIndex);
             else if (action === 'edit-group')   WO.openGroupModal('edit', groupIndex);
             else if (action === 'delete-group') WO.deleteGroup(groupIndex);
-        });
-
-        groupsContainer.addEventListener('keydown', e => {
-            const itemMenuBtn = e.target.closest('.mobile-item-menu');
-            if (itemMenuBtn && (e.key === 'Enter' || e.key === ' ')) {
-                e.preventDefault();
-                itemMenuBtn.click();
-            }
         });
 
         // Hover Sound (Desktop)

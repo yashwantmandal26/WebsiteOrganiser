@@ -196,7 +196,6 @@
                             <div class="keyword-grid-text">${keywordLabelHtml}</div>
                             ${tags.length ? `<div class="keyword-tags">${tags.map(t => `<span>${WO.escapeHtml(t)}</span>`).join('')}</div>` : ''}
                             <div class="keyword-click-counter">${clickCount}</div>
-                            <span class="mobile-item-menu" role="button" tabindex="0" aria-label="Options for ${WO.escapeHtml(displayText)}" title="Options">&#8942;</span>
                         `;
                         item.setAttribute('aria-label', displayText);
                         previewGrid.appendChild(item);
