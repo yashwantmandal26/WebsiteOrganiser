@@ -30,7 +30,7 @@
   <meta name="msapplication-tap-highlight" content="no">
 
   <link rel="stylesheet" href="fonts/inter.css">
-  <link rel="stylesheet" href="bundle.min.css?v=1023">
+  <link rel="stylesheet" href="bundle.min.css?v=1030">
 
   <link rel="manifest" href="manifest.json">
 
@@ -70,6 +70,8 @@
           <span class="clock-hours" id="clock-hh">12</span><span class="clock-sep">:</span><span class="clock-minutes" id="clock-mm">00</span><span class="clock-sep">:</span><span class="clock-seconds" id="clock-ss">00</span><span class="clock-ms" id="clock-ms" style="display: none; font-size: 0.7em; opacity: 0.8; padding-left: 2px;">.000</span><span class="clock-ampm" id="clock-ampm">&nbsp;AM</span>
         </div>
         <div class="header-right">
+          <button type="button" id="bulk-mode-btn" class="btn holo-btn admin-only" style="display: none;">Select</button>
+          <button type="button" id="trash-btn" class="btn holo-btn admin-only" style="display: none;">Trash</button>
           <button id="export-btn" class="btn holo-btn admin-only" style="display: none;">📤 Export</button>
           <button id="import-btn" class="btn holo-btn admin-only" style="display: none;">📥 Import</button>
           <input type="file" id="import-file-input" accept=".json" style="display: none;">
@@ -119,6 +121,16 @@
   </main>
 
   <button id="add-fab" class="fab">+</button>
+
+  <div id="bulk-toolbar" class="bulk-toolbar" hidden>
+    <strong><span id="bulk-selection-count">0</span> selected</strong>
+    <select id="bulk-target-group" aria-label="Move selected bookmarks to group"></select>
+    <button type="button" id="bulk-move-btn" class="btn">Move</button>
+    <input type="text" id="bulk-tag-input" placeholder="Tag (for example: work)">
+    <button type="button" id="bulk-tag-btn" class="btn">Add tag</button>
+    <button type="button" id="bulk-trash-btn" class="btn">Move to Trash</button>
+    <button type="button" id="bulk-cancel-btn" class="btn btn-secondary">Done</button>
+  </div>
 
   <!-- Modal for adding a keyword to a group -->
   <div id="add-keyword-modal" class="modal-container">
@@ -206,6 +218,26 @@
     </div>
   </div>
 
+  <div id="import-preview-modal" class="modal-container">
+    <div class="modal-content">
+      <h2>Import preview</h2>
+      <p id="import-preview-summary"></p>
+      <div class="modal-actions">
+        <button type="button" id="import-merge-btn" class="btn">Merge</button>
+        <button type="button" id="import-replace-btn" class="btn">Replace</button>
+        <button type="button" id="import-cancel-btn" class="btn btn-secondary">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="trash-modal" class="modal-container">
+    <div class="modal-content trash-modal-content">
+      <h2>Trash</h2>
+      <div id="trash-list" class="trash-list"></div>
+      <div class="modal-actions"><button type="button" id="trash-close-btn" class="btn btn-secondary">Close</button></div>
+    </div>
+  </div>
+
   <!-- Modular Firebase Config -->
   <script type="module" src="firebase-config.js"></script>
   <script>
@@ -272,7 +304,7 @@
     })();
   </script>
   <!-- Application Bundle -->
-  <script defer src="bundle.min.js?v=1023"></script>
+  <script defer src="bundle.min.js?v=1030"></script>
 
   <div id="toast-container"></div>
   <!-- Global keyword tooltip portal — lives at body level to avoid contain:paint clipping -->

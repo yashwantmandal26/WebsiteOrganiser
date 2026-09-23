@@ -86,14 +86,7 @@
         // ── Step 1: Show cached data instantly (zero-delay first paint) ──────
         const backup = WO.loadLocalDataBackup();
         const hadCachedData = backup ? WO.applyLocalDataBackup(backup) : false;
-        if (hadCachedData && WO.groups.length < WO.DEFAULT_GROUPS.length) {
-            WO.groups = JSON.parse(JSON.stringify(WO.DEFAULT_GROUPS));
-            if (WO.DEFAULT_CLICK_COUNTS) WO.globalClickCounts = Object.assign({}, WO.DEFAULT_CLICK_COUNTS, WO.globalClickCounts);
-            if (WO.DEFAULT_KEYWORD_DESCRIPTIONS) WO.keywordDescriptions = Object.assign({}, WO.DEFAULT_KEYWORD_DESCRIPTIONS, WO.keywordDescriptions);
-            if (WO.DEFAULT_KEYWORD_ADDED_AT) WO.keywordAddedAt = Object.assign({}, WO.DEFAULT_KEYWORD_ADDED_AT, WO.keywordAddedAt);
-            WO.saveLocalDataBackup();
-        }
-        if (WO.groups.length === 0) {
+        if (!hadCachedData && WO.groups.length === 0) {
             WO.groups = JSON.parse(JSON.stringify(WO.DEFAULT_GROUPS));
             if (WO.DEFAULT_CLICK_COUNTS) WO.globalClickCounts = JSON.parse(JSON.stringify(WO.DEFAULT_CLICK_COUNTS));
             if (WO.DEFAULT_KEYWORD_DESCRIPTIONS) WO.keywordDescriptions = JSON.parse(JSON.stringify(WO.DEFAULT_KEYWORD_DESCRIPTIONS));
@@ -102,21 +95,9 @@
         WO.renderGroups();
         setTimeout(WO.hideLoading, 600);
 
-        // Remember how many groups we had before Firestore call
-        const groupCountBefore = WO.groups.length;
-
         // ── Step 2: Fetch fresh data from Firestore in background ────────────
         try {
             const changed = await WO.loadGroups();
-            // Safety: If Firestore returned empty but we had real data, keep our data
-            if (WO.groups.length === 0 && groupCountBefore > 0) {
-                // Restore the cached data — Firestore likely had a quota/network blip
-                if (backup) WO.applyLocalDataBackup(backup);
-                if (WO.groups.length === 0) {
-                    WO.groups = JSON.parse(JSON.stringify(WO.DEFAULT_GROUPS));
-                }
-                console.warn('Firestore returned empty but we had cached data — preserved local copy.');
-            }
             if (changed || !hadCachedData) {
                 WO.renderGroups();
             }

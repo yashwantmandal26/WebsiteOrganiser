@@ -1283,6 +1283,7 @@ header h1 {
 /* Ensure expanded cards or animating cards calculate layout immediately */
 .group-card-wrapper:has(.expanded),
 .group-card-wrapper:has(.is-animating),
+.group-card-wrapper:hover,
 .group-card-wrapper:focus-within,
 body.search-active .group-card-wrapper {
   content-visibility: visible;
@@ -2559,6 +2560,36 @@ body.is-zooming .search-suggestions {
   align-items: center;
 }
 
+/* Bulk bookmark tools */
+.bulk-toolbar {
+  position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 250;
+  display: flex; align-items: center; gap: 9px; flex-wrap: wrap; justify-content: center;
+  max-width: calc(100vw - 28px); padding: 12px; border-radius: 16px;
+  background: var(--modal-bg, #20202b); color: var(--text-color); border: 1px solid rgba(255,255,255,.18);
+  box-shadow: 0 12px 36px rgba(0,0,0,.38);
+}
+.bulk-toolbar[hidden] { display: none; }
+.bulk-toolbar select, .bulk-toolbar input { min-height: 38px; padding: 7px 10px; border-radius: 9px; }
+.keyword-grid-preview-item.bulk-selectable { cursor: pointer; }
+.keyword-grid-preview-item.bulk-selected { outline: 3px solid #7b2cbf; outline-offset: 2px; }
+.bulk-check {
+  position: absolute; top: 6px; left: 6px; z-index: 4; width: 20px; height: 20px;
+  display: grid; place-items: center; border-radius: 6px; background: rgba(255,255,255,.9);
+  border: 2px solid #7b2cbf; color: #7b2cbf; font-weight: 900;
+}
+.keyword-tags { display: flex; gap: 3px; max-width: 100%; overflow: hidden; font-size: .58rem; }
+.keyword-tags span { padding: 1px 4px; border-radius: 999px; background: rgba(123,44,191,.16); white-space: nowrap; }
+
+.trash-modal-content { max-height: min(680px, 86vh); }
+.trash-list { display: grid; gap: 8px; overflow: auto; text-align: left; }
+.trash-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px; border-radius: 10px; background: rgba(128,128,128,.12); }
+.trash-row span { overflow-wrap: anywhere; }
+
+@media (max-width: 720px) {
+  .bulk-toolbar { width: calc(100vw - 28px); }
+  .bulk-toolbar input, .bulk-toolbar select { flex: 1 1 140px; min-width: 0; }
+}
+
 .toast-message {
   background-color: var(--toast-bg);
   color: var(--text-color);
@@ -2575,6 +2606,7 @@ body.is-zooming .search-suggestions {
   opacity: 1;
   transform: translateY(0);
 }
+.toast-action { margin-left: 10px; border: 0; background: transparent; color: #b388ff; font: inherit; font-weight: 800; cursor: pointer; }
 
 /* Group Card Header - Group Name at Top */
 .group-card-header {
@@ -6316,4 +6348,3 @@ html {
     grid-template-columns: repeat(5, 1fr);
   }
 }
-

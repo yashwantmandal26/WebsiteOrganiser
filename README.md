@@ -1,4 +1,4 @@
-# 🌐 WebsiteOrganiser — v1.0.5
+# 🌐 WebsiteOrganiser — v1.0.13
 
 A professional, high-performance Progressive Web Application (PWA) designed to organize, manage, and synchronize your favorite websites, bookmarks, and search keywords. Built with a focus on modern UI/UX, real-time cloud sync, and offline reliability.
 

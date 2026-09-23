@@ -98,7 +98,7 @@
     };
 
     // ── Toast ────────────────────────────────────────────────────────────
-    window.showToast = function (message, duration = 3000) {
+    window.showToast = function (message, duration = 3000, actionLabel, onAction) {
         const container = document.getElementById('toast-container');
         if (!container) return;
         const toast = document.createElement('div');
@@ -112,6 +112,12 @@
             opacity:0;transform:translateY(20px);
             transition:opacity 0.3s cubic-bezier(0.34,1.56,0.64,1),transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
         `;
+        if (actionLabel && typeof onAction === 'function') {
+            const action = document.createElement('button');
+            action.type = 'button'; action.className = 'toast-action'; action.textContent = actionLabel;
+            action.onclick = async () => { action.disabled = true; await onAction(); toast.remove(); };
+            toast.append(' ', action);
+        }
         container.appendChild(toast);
         requestAnimationFrame(() => { toast.style.opacity = '1'; toast.style.transform = 'translateY(0)'; });
         setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateY(-20px)'; setTimeout(() => toast.remove(), 300); }, duration);
@@ -126,6 +132,7 @@
         document.querySelectorAll('.admin-only').forEach(el => { el.style.display = WO.adminLoggedIn ? 'inline-flex' : 'none'; });
         const fab = document.getElementById('add-fab');
         if (fab) fab.style.display = 'flex';
+        if (!WO.adminLoggedIn && WO.bulkMode) WO.setBulkMode(false);
         // Visual hint on logo area when admin is logged in
         const headerLeft = document.querySelector('.header-left');
         if (headerLeft) headerLeft.style.textShadow = WO.adminLoggedIn ? '0 0 12px rgba(76,175,80,0.8)' : '';
@@ -483,7 +490,7 @@
             const deleteEl = menu.querySelector('.delete-option');
             const deleteText = deleteEl.querySelector('.delete-text');
 
-            const ek = WO.getKeywordEncodedKey(keyword);
+            const ek = WO.getBookmarkMetadataKey(groupIndex, keywordIndex, keyword);
             const isSoftDeleted = WO.keywordDeletedStatus && WO.keywordDeletedStatus[ek] === true;
 
             editEl.style.display = 'block';
@@ -525,6 +532,11 @@
         groupsContainer.addEventListener('click', e => {
             const previewItem = e.target.closest('.keyword-grid-preview-item');
             if (previewItem) {
+                if (WO.bulkMode) {
+                    e.preventDefault(); e.stopPropagation();
+                    WO.toggleBulkSelection(previewItem.dataset.bookmarkId);
+                    return;
+                }
                 if (WO.adminLoggedIn && previewItem.classList.contains('dragging')) return;
                 e.preventDefault(); e.stopPropagation();
                 const url = previewItem.dataset.targetUrl;
@@ -644,7 +656,7 @@
                 e.dataTransfer.effectAllowed = WO.adminLoggedIn ? 'copyMove' : 'copyLink';
             }
             if (!WO.adminLoggedIn) return;
-            WO.draggedKeywordData = { groupIndex: parseInt(kwItem.dataset.groupIndex), keywordIndex: parseInt(kwItem.dataset.keywordIndex), keyword: kwItem.dataset.keywordValue };
+            WO.draggedKeywordData = { groupIndex: parseInt(kwItem.dataset.groupIndex), keywordIndex: parseInt(kwItem.dataset.keywordIndex), keyword: kwItem.dataset.keywordValue, bookmarkId: kwItem.dataset.bookmarkId };
             if (e.dataTransfer) e.dataTransfer.effectAllowed = 'copyMove';
             kwItem.classList.add('dragging');
             e.stopPropagation();
@@ -676,21 +688,28 @@
                 e.preventDefault(); e.stopPropagation();
                 document.querySelectorAll('.keyword-drag-over').forEach(el => el.classList.remove('keyword-drag-over'));
                 document.querySelectorAll('.keyword-drag-over-group').forEach(el => el.classList.remove('keyword-drag-over-group'));
-                const { groupIndex: si, keywordIndex: ski, keyword } = WO.draggedKeywordData;
+                const { groupIndex: si, keywordIndex: ski } = WO.draggedKeywordData;
                 let tgi, tki;
                 if (kwItem) { tgi = parseInt(kwItem.dataset.groupIndex); tki = parseInt(kwItem.dataset.keywordIndex); }
                 else { tgi = parseInt(card.dataset.groupIndex); tki = WO.groups[tgi].keywords.length; }
                 if (si === tgi) {
                     if (ski !== tki) {
                         const kws = WO.groups[si].keywords;
+                        const ids = WO.groups[si].keywordIds;
                         const [moved] = kws.splice(ski, 1);
+                        const [movedId] = ids.splice(ski, 1);
                         kws.splice(ski < tki ? tki - 1 : tki, 0, moved);
-                        (async () => { await WO.syncAndSaveGroups(); WO.renderGroups(); })();
+                        ids.splice(ski < tki ? tki - 1 : tki, 0, movedId);
+                        (async () => { await WO.syncAndSaveGroups().catch(() => {}); WO.renderGroups(); })();
                     }
                 } else {
                     const [moved] = WO.groups[si].keywords.splice(ski, 1);
+                    const [movedId] = WO.groups[si].keywordIds.splice(ski, 1);
                     WO.groups[tgi].keywords.splice(tki, 0, moved);
-                    (async () => { await WO.syncAndSaveGroups(); WO.renderGroups(); })();
+                    WO.groups[tgi].keywordIds.splice(tki, 0, movedId);
+                    const tags = WO.groups[si].keywordTags[movedId];
+                    if (tags) { WO.groups[tgi].keywordTags[movedId] = tags; delete WO.groups[si].keywordTags[movedId]; }
+                    (async () => { await WO.syncAndSaveGroups().catch(() => {}); WO.renderGroups(); })();
                 }
             }
             WO.draggedKeywordData = null;

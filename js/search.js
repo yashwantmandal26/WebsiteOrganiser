@@ -63,9 +63,10 @@
             WO.groups.forEach((group, gi) => {
                 group.keywords.forEach((keyword, ki) => {
                     const { displayText, targetUrl } = WO.parseKeyword(keyword);
-                    const ek   = encodeURIComponent(keyword).replace(/\./g, '%2E');
-                    const desc = WO.keywordDescriptions[ek] || '';
-                    const st   = [keyword, displayText, targetUrl, desc, group.name].join(' ').toLowerCase();
+                    const ek   = WO.getBookmarkMetadataKey(gi, ki, keyword);
+                    const desc = WO.getBookmarkMetadata(WO.keywordDescriptions, gi, ki, keyword, '');
+                    const tags = group.keywordTags && group.keywordTags[ek] || [];
+                    const st   = [keyword, displayText, targetUrl, desc, tags.join(' '), group.name].join(' ').toLowerCase();
                     if (!WO.matchesKeywordSearch(st, tokens)) return;
                     let score = 2;
                     const ld = displayText.toLowerCase(), lk = keyword.toLowerCase(), ldc = desc.toLowerCase(), lnq = nq.toLowerCase();

@@ -13,6 +13,9 @@
     WO.keywordAddedAt     = {};   // { encodedKeyword: unixTimestampMs }
     WO.keywordDeletedStatus= {};  // { encodedKeyword: true } (soft deleted by users)
     WO.localGroupOrder    = [];   // Per-browser group display order
+    WO.localClickCounts   = {};   // { bookmarkId: count } — private to this browser/user
+    WO.selectedBookmarkIds = new Set();
+    WO.bulkMode            = false;
 
 
     // ─── UI / Interaction State ───────────────────────────────────────────────
@@ -32,6 +35,8 @@
     WO.isSavingGroups  = false;  // Prevent snapshot overwriting during save
     WO.isSavingKeyword = false;  // Prevent double-save on add keyword
     WO.realtimeSyncActive = false;
+    WO.syncStatus = 'saved';       // 'saved' | 'pending' | 'error'
+    WO.lastSyncError = null;
 
     // ─── Search State ─────────────────────────────────────────────────────────
     WO.searchMode = (function () {

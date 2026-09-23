@@ -29,6 +29,7 @@
         }
 
         resetKeywordStates(false, true); // Global fn defined in app.js
+        WO.ensureStableBookmarkIds();
 
         const fragment = document.createDocumentFragment();
         const normalizedSearchQuery = WO.searchMode === WO.SEARCH_MODE_KEYWORDS
@@ -41,16 +42,18 @@
         const filteredGroups = orderedGroups.map(({ group, originalIndex }) => {
             const previewKeywords = group.keywords.map((keyword, keywordIndex) => {
                 const { displayText, targetUrl } = WO.parseKeyword(keyword);
-                const ek          = WO.getKeywordEncodedKey(keyword);
-                const description = WO.keywordDescriptions[ek] || '';
-                const isSoftDeleted = WO.keywordDeletedStatus && WO.keywordDeletedStatus[ek] === true;
-                const isNew       = WO.isKeywordNew(keyword);
-                const addedAt     = WO.keywordAddedAt[ek] || 0;
-                const searchText  = [keyword, displayText, targetUrl, description, group.name].join(' ').toLowerCase();
-                return { keyword, keywordIndex, displayText, targetUrl, description, ek, isNew, addedAt, searchText, isSoftDeleted };
+                const bookmarkId  = WO.getBookmarkId(group, keywordIndex);
+                const ek          = bookmarkId || WO.getKeywordEncodedKey(keyword);
+                const description = WO.getBookmarkMetadata(WO.keywordDescriptions, originalIndex, keywordIndex, keyword, '');
+                const isSoftDeleted = WO.getBookmarkMetadata(WO.keywordDeletedStatus, originalIndex, keywordIndex, keyword, false) === true;
+                const isNew       = WO.isKeywordNew(keyword, ek);
+                const addedAt     = WO.getBookmarkMetadata(WO.keywordAddedAt, originalIndex, keywordIndex, keyword, 0);
+                const tags        = Array.isArray(group.keywordTags[bookmarkId]) ? group.keywordTags[bookmarkId] : [];
+                const searchText  = [keyword, displayText, targetUrl, description, tags.join(' '), group.name].join(' ').toLowerCase();
+                return { keyword, keywordIndex, bookmarkId, displayText, targetUrl, description, tags, ek, isNew, addedAt, searchText, isSoftDeleted };
             }).sort((a, b) => {
-                const ca = WO.globalClickCounts[a.ek] || 0;
-                const cb = WO.globalClickCounts[b.ek] || 0;
+                const ca = Number(WO.localClickCounts[a.ek]) || 0;
+                const cb = Number(WO.localClickCounts[b.ek]) || 0;
                 // Keywords with clicks come before keywords with 0 clicks
                 if (ca === 0 && cb === 0) {
                     // Both unclicked: sort oldest first so newest appears last
@@ -162,7 +165,7 @@
                     else                            previewGrid.classList.add('size-large');
 
                     keywords.forEach(entry => {
-                        const { keyword, keywordIndex, displayText, targetUrl, description, ek, isNew, isSoftDeleted } = entry;
+                        const { keyword, keywordIndex, bookmarkId, displayText, targetUrl, description, tags, ek, isNew, isSoftDeleted } = entry;
                         const item = document.createElement('a');
                         item.className = 'keyword-grid-preview-item';
                         if (isSoftDeleted) item.classList.add('keyword-soft-deleted');
@@ -173,9 +176,12 @@
                         item.dataset.targetUrl     = targetUrl;
                         item.dataset.groupIndex    = originalIndex;
                         item.dataset.keywordIndex  = keywordIndex;
+                        item.dataset.bookmarkId    = bookmarkId;
                         item.draggable = true;
+                        if (WO.bulkMode) item.classList.add('bulk-selectable');
+                        if (WO.selectedBookmarkIds.has(bookmarkId)) item.classList.add('bulk-selected');
 
-                        const clickCount     = WO.globalClickCounts[ek] || 0;
+                        const clickCount     = Number(WO.localClickCounts[ek]) || 0;
                         const keywordLabelHtml = isKeywordSearchActive
                             ? WO.highlightSearchHtml(displayText, normalizedSearchQuery)
                             : WO.escapeHtml(displayText);
@@ -184,9 +190,11 @@
                         if (description) item.dataset.description = description;
 
                         item.innerHTML = `
+                            ${WO.bulkMode ? `<span class="bulk-check" aria-hidden="true">${WO.selectedBookmarkIds.has(bookmarkId) ? '✓' : ''}</span>` : ''}
                             ${isNew ? '<div class="keyword-new-badge">NEW</div>' : ''}
                             <div class="keyword-grid-icon">${WO.getFaviconOrEmoji(keyword)}</div>
                             <div class="keyword-grid-text">${keywordLabelHtml}</div>
+                            ${tags.length ? `<div class="keyword-tags">${tags.map(t => `<span>${WO.escapeHtml(t)}</span>`).join('')}</div>` : ''}
                             <div class="keyword-click-counter">${clickCount}</div>
                         `;
                         item.setAttribute('aria-label', displayText);
@@ -422,9 +430,11 @@
             const keyword   = item.dataset.keywordValue || '';
             const targetUrl = item.dataset.targetUrl   || '';
             const { displayText } = WO.parseKeyword(keyword);
-            const ek          = WO.getKeywordEncodedKey(keyword);
-            const description = WO.keywordDescriptions[ek] || '';
-            const searchText  = [keyword, displayText, targetUrl, description].join(' ').toLowerCase();
+            const gi = Number(item.dataset.groupIndex), group = WO.groups[gi];
+            const ek          = item.dataset.bookmarkId || WO.getKeywordEncodedKey(keyword);
+            const description = WO.getBookmarkMetadata(WO.keywordDescriptions, gi, Number(item.dataset.keywordIndex), keyword, '');
+            const tags = group && group.keywordTags && group.keywordTags[ek] || [];
+            const searchText  = [keyword, displayText, targetUrl, description, tags.join(' ')].join(' ').toLowerCase();
 
             // Show/hide based on search match
             const matches = !isActive || WO.matchesKeywordSearch(searchText, searchTokens);

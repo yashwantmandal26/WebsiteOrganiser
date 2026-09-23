@@ -451,6 +451,7 @@ WO.DOMAIN_DISPLAY_MAP = {
 // ─── LocalStorage Keys ────────────────────────────────────────────────────────
 WO.LOCAL_BACKUP_KEY      = 'websiteorganiser_data_backup_v1';
 WO.LOCAL_GROUP_ORDER_KEY = 'websiteorganiser_group_order';
+WO.LOCAL_USAGE_KEY       = 'websiteorganiser_personal_usage_v1';
 WO.THEME_STORAGE_KEY     = 'wo-theme';
 WO.SEARCH_MODE_KEY       = 'websiteOrganiserSearchMode';
 WO.SEARCH_HISTORY_KEY    = 'googleSearchHistory';

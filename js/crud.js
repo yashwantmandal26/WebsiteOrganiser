@@ -114,7 +114,7 @@
         );
         if (duplicate) { alert('A group with this name already exists.'); return; }
         if (WO.groupModalMode === 'add') {
-            WO.groups.push({ name: newName, keywords: [] });
+            WO.groups.push({ name: newName, keywords: [], keywordIds: [], keywordTags: {}, trash: [] });
         } else {
             const oldName = WO.groups[WO.currentGroupIndex].name;
             WO.groups[WO.currentGroupIndex].name = newName;
@@ -133,7 +133,7 @@
         WO.toggleModal(groupModal, false);
         groupNameInput.value = '';
         if (colorInput) delete colorInput.dataset.autoReset;
-        await WO.syncAndSaveGroups();
+        await WO.syncAndSaveGroups().catch(() => {});
         WO.renderGroups();
     };
     window.saveGroup      = WO.saveGroup;
@@ -145,7 +145,7 @@
             const name = WO.groups[index].name;
             WO.groups.splice(index, 1);
             WO.removeLocalGroupOrder(name);
-            await WO.syncAndSaveGroups();
+            await WO.syncAndSaveGroups().catch(() => {});
             WO.renderGroups();
         }
     };
@@ -206,10 +206,12 @@
             if (WO.containsBlockedContent(kw)) { alert('Content blocked.'); return; }
 
             const addedAt = Date.now();
-            const ek = WO.getKeywordEncodedKey(kw);
+            const bookmarkId = WO.createBookmarkId();
+            const ek = bookmarkId;
             WO.lastAddedKeyword    = kw;
             WO.lastAddedGroupIndex = WO.addKeywordTargetGroupIndex;
             group.keywords.push(kw);
+            group.keywordIds.push(bookmarkId);
             if (!WO.keywordAddedAt || typeof WO.keywordAddedAt !== 'object') WO.keywordAddedAt = {};
             WO.keywordAddedAt[ek] = addedAt;
 
@@ -221,16 +223,13 @@
                 await WO.syncAndSaveGroups();
             } catch (e) {
                 console.error('Failed to save keyword:', e);
-                alert('Failed to save to cloud: ' + e.message);
-                group.keywords.pop();
-                WO.renderGroups();
-                return;
+                // Keep the local change. The persistent sync indicator exposes retry.
             }
 
-            const tasks = [WO.saveKeywordAddedAt(kw, addedAt)];
+            const tasks = [WO.saveKeywordAddedAt(kw, addedAt, bookmarkId)];
             if (desc) {
                 if (!WO.keywordDescriptions || typeof WO.keywordDescriptions !== 'object') WO.keywordDescriptions = {};
-                tasks.push(WO.saveKeywordDescription(kw, desc));
+                tasks.push(WO.saveKeywordDescription(kw, desc, bookmarkId));
             }
             Promise.all(tasks).catch(e => console.error('Failed to save keyword metadata:', e));
         } catch (e) {
@@ -255,6 +254,7 @@
         WO.isCommentOnlyMode         = commentOnly;
         WO.renameTargetGroupIndex    = groupIndex;
         WO.renameTargetKeywordIndex  = keywordIndex;
+        WO.renameTargetBookmarkId    = WO.getBookmarkId(groupIndex, keywordIndex);
         renameKeywordInput.value     = oldKeyword;
 
         if (modalTitle) {
@@ -271,7 +271,7 @@
             renameKeywordInput.style.opacity = '1';
             renameKeywordInput.style.cursor  = 'text';
         }
-        const ek = encodeURIComponent(oldKeyword).replace(/\./g, '%2E');
+        const ek = WO.renameTargetBookmarkId || encodeURIComponent(oldKeyword).replace(/\./g, '%2E');
         renameKeywordDescInput.value = WO.keywordDescriptions[ek] || '';
         WO.toggleModal(renameModal, true);
         if (commentOnly) renameKeywordDescInput.focus();
@@ -286,6 +286,8 @@
         const newKeyword    = renameKeywordInput.value.trim();
         const newDescription = renameKeywordDescInput.value.trim();
         if (!newKeyword) { alert('Keyword name cannot be empty.'); return; }
+        const located = WO.groups.map((g, gi) => ({ gi, ki: (g.keywordIds || []).indexOf(WO.renameTargetBookmarkId) })).find(x => x.ki >= 0);
+        if (located) { WO.renameTargetGroupIndex = located.gi; WO.renameTargetKeywordIndex = located.ki; }
         if (WO.renameTargetGroupIndex == null || !WO.groups[WO.renameTargetGroupIndex] ||
             WO.renameTargetKeywordIndex == null || !WO.groups[WO.renameTargetGroupIndex].keywords[WO.renameTargetKeywordIndex]) {
             window.showToast('⚠️ Data changed while editing. Try again.', 3000);
@@ -317,36 +319,18 @@
             if (duplicate) { alert('A keyword with this name/link already exists.'); return; }
         }
 
-        const oldEncoded = encodeURIComponent(oldKeyword).replace(/\./g, '%2E');
-        const newEncoded = encodeURIComponent(newKeyword).replace(/\./g, '%2E');
+        const metadataKey = WO.renameTargetBookmarkId || encodeURIComponent(oldKeyword).replace(/\./g, '%2E');
 
         if (newKeyword === oldKeyword) {
-            await WO.saveKeywordDescription(newKeyword, newDescription);
+            await WO.saveKeywordDescription(newKeyword, newDescription, metadataKey);
             WO.toggleModal(renameModal, false);
             WO.renderGroups();
             return;
         }
 
         WO.groups[WO.renameTargetGroupIndex].keywords[WO.renameTargetKeywordIndex] = newKeyword;
-        if (WO.keywordAddedAt[oldEncoded] !== undefined) { WO.keywordAddedAt[newEncoded] = WO.keywordAddedAt[oldEncoded]; delete WO.keywordAddedAt[oldEncoded]; }
-
-        const ops = [];
-        if (WO.globalClickCounts[oldEncoded] !== undefined) {
-            const oc = WO.globalClickCounts[oldEncoded];
-            WO.globalClickCounts[newEncoded] = oc;
-            delete WO.globalClickCounts[oldEncoded];
-            ops.push(WO.clickCountsRef.update({ [newEncoded]: WO.firestoreFieldValue.increment(oc), [oldEncoded]: WO.firestoreFieldValue.delete() }));
-        }
-        WO.keywordDescriptions[newEncoded] = newDescription;
-        if (newEncoded !== oldEncoded) delete WO.keywordDescriptions[oldEncoded];
-        ops.push(WO.descriptionsRef.update({ [newEncoded]: newDescription || WO.firestoreFieldValue.delete(), [oldEncoded]: WO.firestoreFieldValue.delete() })
-            .catch(() => WO.descriptionsRef.set({ [newEncoded]: newDescription }, { merge: true })));
-        if (WO.keywordAddedAt[newEncoded] !== undefined) {
-            ops.push(WO.keywordAddedAtRef.update({ [newEncoded]: WO.keywordAddedAt[newEncoded], [oldEncoded]: WO.firestoreFieldValue.delete() })
-                .catch(() => WO.keywordAddedAtRef.set({ [newEncoded]: WO.keywordAddedAt[newEncoded] }, { merge: true })));
-        }
-        try { await Promise.all(ops); } catch (e) { console.error('Failed to transfer keyword data:', e); }
-        await WO.syncAndSaveGroups();
+        await WO.saveKeywordDescription(newKeyword, newDescription, metadataKey);
+        await WO.syncAndSaveGroups().catch(() => {});
         WO.renderGroups();
         WO.toggleModal(renameModal, false);
     };
@@ -370,47 +354,152 @@
     WO.deleteKeyword = async function (groupIndex, keywordIndex) {
         if (!WO.groups[groupIndex] || !WO.groups[groupIndex].keywords[keywordIndex]) { window.showToast('⚠️ Data changed. Try again.', 3000); return; }
         const kw = WO.groups[groupIndex].keywords[keywordIndex];
-        const ek = WO.getKeywordEncodedKey(kw);
+        const bookmarkId = WO.getBookmarkId(groupIndex, keywordIndex);
+        const ek = bookmarkId || WO.getKeywordEncodedKey(kw);
         const isSoftDeleted = WO.keywordDeletedStatus && WO.keywordDeletedStatus[ek] === true;
 
         if (!WO.adminLoggedIn) {
             if (!confirm('Delete this keyword?')) return;
             await WO.animateKeywordOut(groupIndex, kw);
-            await WO.saveKeywordDeletedStatus(kw, true);
+            await WO.saveKeywordDeletedStatus(kw, true, ek);
             WO.renderGroups();
             return;
         }
 
-        if (!confirm(isSoftDeleted ? 'Permanently delete this keyword?' : 'Delete this keyword?')) return;
+        if (!confirm(isSoftDeleted ? 'Move this keyword to Trash?' : 'Move this keyword to Trash?')) return;
         
         await WO.animateKeywordOut(groupIndex, kw);
 
-        WO.groups[groupIndex].keywords.splice(keywordIndex, 1);
-        const existsElsewhere = WO.groups.some(g => g.keywords.includes(kw));
-        if (!existsElsewhere) {
-            try {
-                await Promise.all([
-                    WO.clickCountsRef.update({ [ek]: WO.firestoreFieldValue.delete() }),
-                    WO.descriptionsRef.update({ [ek]: WO.firestoreFieldValue.delete() }),
-                    WO.keywordAddedAtRef.update({ [ek]: WO.firestoreFieldValue.delete() }),
-                    WO.deletedStatusRef.update({ [ek]: WO.firestoreFieldValue.delete() })
-                ]);
-                delete WO.keywordAddedAt[ek];
-                delete WO.keywordDescriptions[ek];
-                delete WO.globalClickCounts[ek];
-                if (WO.keywordDeletedStatus) delete WO.keywordDeletedStatus[ek];
-            } catch (e) { console.error('Failed to delete keyword data:', e); }
-        }
-        await WO.syncAndSaveGroups();
+        const group = WO.groups[groupIndex];
+        const tags = (group.keywordTags && group.keywordTags[bookmarkId]) || [];
+        const trashItem = { id: bookmarkId, keyword: kw, tags, deletedAt: Date.now(), originalIndex: keywordIndex };
+        group.trash.push(trashItem);
+        group.keywords.splice(keywordIndex, 1);
+        group.keywordIds.splice(keywordIndex, 1);
+        if (group.keywordTags) delete group.keywordTags[bookmarkId];
+        await WO.syncAndSaveGroups().catch(() => {});
         WO.renderGroups();
+        window.showToast('Moved to Trash.', 6000, 'Undo', async () => WO.restoreTrashItem(groupIndex, trashItem.id));
     };
 
     WO.restoreKeyword = async function (groupIndex, keywordIndex) {
         if (!WO.adminLoggedIn) return;
         const kw = WO.groups[groupIndex].keywords[keywordIndex];
         if (!kw) return;
-        await WO.saveKeywordDeletedStatus(kw, false);
+        await WO.saveKeywordDeletedStatus(kw, false, WO.getBookmarkMetadataKey(groupIndex, keywordIndex, kw));
         WO.renderGroups();
+    };
+
+    // ─── Bulk actions and Trash ──────────────────────────────────────────────
+    WO.updateBulkToolbar = function () {
+        const toolbar = document.getElementById('bulk-toolbar');
+        const count = document.getElementById('bulk-selection-count');
+        if (toolbar) toolbar.hidden = !WO.bulkMode;
+        if (count) count.textContent = String(WO.selectedBookmarkIds.size);
+        const select = document.getElementById('bulk-target-group');
+        if (select) {
+            const current = select.value;
+            select.textContent = '';
+            WO.groups.forEach((g, i) => { const o = document.createElement('option'); o.value = String(i); o.textContent = g.name; select.appendChild(o); });
+            if (current) select.value = current;
+        }
+    };
+
+    WO.setBulkMode = function (enabled) {
+        WO.bulkMode = !!enabled;
+        if (!enabled) WO.selectedBookmarkIds.clear();
+        WO.updateBulkToolbar();
+        WO.renderGroups();
+    };
+
+    WO.toggleBulkSelection = function (bookmarkId) {
+        if (!bookmarkId) return;
+        if (WO.selectedBookmarkIds.has(bookmarkId)) WO.selectedBookmarkIds.delete(bookmarkId);
+        else WO.selectedBookmarkIds.add(bookmarkId);
+        WO.updateBulkToolbar();
+        WO.renderGroups();
+    };
+
+    function selectedEntries() {
+        const result = [];
+        WO.groups.forEach((group, gi) => group.keywordIds.forEach((id, ki) => {
+            if (WO.selectedBookmarkIds.has(id)) result.push({ group, gi, ki, id, keyword: group.keywords[ki] });
+        }));
+        return result;
+    }
+
+    WO.bulkMoveSelected = async function (targetGroupIndex) {
+        const target = WO.groups[targetGroupIndex];
+        const entries = selectedEntries();
+        if (!target || !entries.length) return;
+        const payload = entries.map(e => ({ id: e.id, keyword: e.keyword, tags: e.group.keywordTags[e.id] || [] }));
+        entries.slice().sort((a, b) => b.ki - a.ki).forEach(e => {
+            e.group.keywords.splice(e.ki, 1); e.group.keywordIds.splice(e.ki, 1); delete e.group.keywordTags[e.id];
+        });
+        payload.forEach(p => { target.keywords.push(p.keyword); target.keywordIds.push(p.id); if (p.tags.length) target.keywordTags[p.id] = p.tags; });
+        await WO.syncAndSaveGroups().catch(() => {});
+        WO.setBulkMode(false);
+        window.showToast(`Moved ${payload.length} bookmark${payload.length === 1 ? '' : 's'}.`, 3000);
+    };
+
+    WO.bulkTagSelected = async function (tag) {
+        tag = String(tag || '').trim().slice(0, 30);
+        const entries = selectedEntries();
+        if (!tag || !entries.length) return;
+        entries.forEach(e => {
+            const tags = Array.isArray(e.group.keywordTags[e.id]) ? e.group.keywordTags[e.id] : [];
+            if (!tags.some(t => t.toLowerCase() === tag.toLowerCase())) e.group.keywordTags[e.id] = [...tags, tag].slice(0, 10);
+        });
+        await WO.syncAndSaveGroups().catch(() => {}); WO.renderGroups();
+        window.showToast(`Tagged ${entries.length} bookmark${entries.length === 1 ? '' : 's'}.`, 3000);
+    };
+
+    WO.bulkTrashSelected = async function () {
+        const entries = selectedEntries();
+        if (!entries.length) return;
+        const undoItems = [];
+        entries.slice().sort((a, b) => b.ki - a.ki).forEach(e => {
+            const item = { id: e.id, keyword: e.keyword, tags: e.group.keywordTags[e.id] || [], deletedAt: Date.now(), originalIndex: e.ki };
+            e.group.trash.push(item); undoItems.push({ group: e.group, item });
+            e.group.keywords.splice(e.ki, 1); e.group.keywordIds.splice(e.ki, 1); delete e.group.keywordTags[e.id];
+        });
+        await WO.syncAndSaveGroups().catch(() => {}); WO.setBulkMode(false);
+        window.showToast(`Moved ${entries.length} bookmark${entries.length === 1 ? '' : 's'} to Trash.`, 6000, 'Undo', async () => {
+            undoItems.forEach(({ group, item }) => WO.restoreTrashItemInMemory(group, item.id));
+            await WO.syncAndSaveGroups().catch(() => {}); WO.renderGroups();
+        });
+    };
+
+    WO.restoreTrashItemInMemory = function (group, itemId) {
+        const index = group && group.trash ? group.trash.findIndex(t => t.id === itemId) : -1;
+        if (index < 0) return false;
+        const item = group.trash[index];
+        const originalIndex = Number(item.originalIndex);
+        const at = Math.min(Number.isFinite(originalIndex) ? Math.max(0, originalIndex) : group.keywords.length, group.keywords.length);
+        group.keywords.splice(at, 0, item.keyword); group.keywordIds.splice(at, 0, item.id);
+        if (item.tags && item.tags.length) group.keywordTags[item.id] = item.tags;
+        group.trash.splice(index, 1); return true;
+    };
+
+    WO.restoreTrashItem = async function (groupIndex, itemId) {
+        const group = WO.groups[groupIndex];
+        if (!WO.restoreTrashItemInMemory(group, itemId)) return;
+        await WO.syncAndSaveGroups().catch(() => {}); WO.renderTrash(); WO.renderGroups();
+    };
+
+    WO.renderTrash = function () {
+        const list = document.getElementById('trash-list'); if (!list) return;
+        list.textContent = '';
+        let count = 0;
+        WO.groups.forEach((group, gi) => group.trash.forEach(item => {
+            count++;
+            const row = document.createElement('div'); row.className = 'trash-row';
+            const label = document.createElement('span'); label.textContent = `${item.keyword} — ${group.name}`;
+            const restore = document.createElement('button'); restore.type = 'button'; restore.className = 'btn'; restore.textContent = 'Restore';
+            restore.onclick = () => WO.restoreTrashItem(gi, item.id);
+            row.append(label, restore); list.appendChild(row);
+        }));
+        if (!count) { const empty = document.createElement('p'); empty.textContent = 'Trash is empty.'; list.appendChild(empty); }
     };
 
     // ─── Import / Export ──────────────────────────────────────────────────────
@@ -422,9 +511,16 @@
         if (exportBtn) {
             exportBtn.addEventListener('click', () => {
                 const data = JSON.stringify({
-                    exportDate: new Date().toISOString(), version: '4.9',
+                    exportDate: new Date().toISOString(), version: '5.0',
                     groups: WO.groups, keywordAddedAt: WO.keywordAddedAt,
-                    globalClickCounts: WO.globalClickCounts, keywordDescriptions: WO.keywordDescriptions
+                    globalClickCounts: WO.globalClickCounts, keywordDescriptions: WO.keywordDescriptions,
+                    keywordDeletedStatus: WO.keywordDeletedStatus,
+                    preferences: {
+                        theme: document.documentElement.dataset.theme || 'light',
+                        groupOrder: WO.localGroupOrder,
+                        searchMode: WO.searchMode,
+                        personalUsage: WO.localClickCounts
+                    }
                 }, null, 2);
                 const a    = document.createElement('a');
                 a.href     = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
@@ -440,47 +536,162 @@
             importFileInput.addEventListener('change', async e => {
                 const file = e.target.files[0]; if (!file) return;
                 try {
-                    const imported = JSON.parse(await file.text());
-                    if (!imported.groups || !Array.isArray(imported.groups)) throw new Error('Invalid backup: missing groups array');
-                    imported.groups = imported.groups
-                        .filter(g => g && typeof g === 'object' && typeof g.name === 'string' && g.name.trim() && Array.isArray(g.keywords))
-                        .map(g => ({ ...g, keywords: g.keywords.filter(k => typeof k === 'string' && k.trim()) }));
-                    if (!imported.groups.length) throw new Error('No valid groups in backup');
+                    const raw = JSON.parse(await file.text());
+                    const imported = WO.validateImportedBackup(raw);
+                    const stats = WO.previewImport(imported);
+                    const choice = await WO.askImportChoice(stats);
+                    if (choice === 'cancel') { importFileInput.value = ''; return; }
 
-                    const replace = confirm('OK = Replace all existing data\nCancel = Merge with existing data');
-                    if (replace) {
+                    if (choice === 'replace') {
+                        localStorage.setItem('websiteorganiser_recovery_before_import_v1', JSON.stringify({
+                            version: 2, savedAt: Date.now(), initialized: true, groups: WO.groups,
+                            keywordAddedAt: WO.keywordAddedAt, globalClickCounts: WO.globalClickCounts,
+                            keywordDescriptions: WO.keywordDescriptions, keywordDeletedStatus: WO.keywordDeletedStatus
+                        }));
                         WO.groups              = imported.groups;
                         WO.keywordAddedAt      = imported.keywordAddedAt      || {};
                         WO.globalClickCounts   = imported.globalClickCounts   || {};
                         WO.keywordDescriptions = imported.keywordDescriptions || {};
+                        WO.keywordDeletedStatus= imported.keywordDeletedStatus || {};
                     } else {
                         imported.groups.forEach(ig => {
                             const eg = WO.groups.find(g => g.name.toLowerCase() === ig.name.toLowerCase());
                             if (eg) {
-                                ig.keywords.forEach(kw => {
+                                ig.keywords.forEach((kw, importedIndex) => {
                                     if (!eg.keywords.some(k => k.toLowerCase() === kw.toLowerCase())) {
                                         eg.keywords.push(kw);
-                                        WO.keywordAddedAt[WO.getKeywordEncodedKey(kw)] = Date.now();
+                                        const id = ig.keywordIds[importedIndex] || WO.createBookmarkId();
+                                        eg.keywordIds.push(id);
+                                        if (ig.keywordTags[id]) eg.keywordTags[id] = ig.keywordTags[id];
+                                        WO.keywordAddedAt[id] = imported.keywordAddedAt[id] || Date.now();
                                     }
                                 });
                             } else {
                                 WO.groups.push(ig);
-                                ig.keywords.forEach(kw => { WO.keywordAddedAt[WO.getKeywordEncodedKey(kw)] = Date.now(); });
+                                ig.keywords.forEach((kw, i) => { const id = ig.keywordIds[i]; if (WO.keywordAddedAt[id] === undefined) WO.keywordAddedAt[id] = imported.keywordAddedAt[id] || Date.now(); });
                             }
                         });
                         if (imported.globalClickCounts)   Object.assign(WO.globalClickCounts, imported.globalClickCounts);
                         if (imported.keywordDescriptions) Object.assign(WO.keywordDescriptions, imported.keywordDescriptions);
                         if (imported.keywordAddedAt)      Object.assign(WO.keywordAddedAt, imported.keywordAddedAt);
+                        if (imported.keywordDeletedStatus) Object.assign(WO.keywordDeletedStatus, imported.keywordDeletedStatus);
+                    }
+                    WO.ensureStableBookmarkIds();
+                    if (imported.preferences) {
+                        if (Array.isArray(imported.preferences.groupOrder)) { WO.localGroupOrder = imported.preferences.groupOrder; WO.saveLocalGroupOrder(); }
+                        if (imported.preferences.personalUsage) { WO.localClickCounts = imported.preferences.personalUsage; WO.saveLocalUsage(); }
+                        if (['light','dark','solid-dark'].includes(imported.preferences.theme)) WO.setTheme(imported.preferences.theme);
                     }
                     await WO.syncAndSaveGroups();
-                    try { await Promise.all([WO.clickCountsRef.set(WO.globalClickCounts), WO.descriptionsRef.set(WO.keywordDescriptions), WO.keywordAddedAtRef.set(WO.keywordAddedAt)]); }
+                    try { await Promise.all([WO.clickCountsRef.set(WO.globalClickCounts), WO.descriptionsRef.set(WO.keywordDescriptions), WO.keywordAddedAtRef.set(WO.keywordAddedAt), WO.deletedStatusRef.set(WO.keywordDeletedStatus)]); }
                     catch (e) { console.error('Failed to sync metadata:', e); }
                     WO.saveLocalDataBackup();
                     WO.renderGroups();
+                    if (choice === 'replace') {
+                        window.showToast('Backup replaced successfully.', 10000, 'Undo replacement', WO.restoreImportRecovery);
+                    } else {
+                        window.showToast('Backup merged successfully.', 4000);
+                    }
                 } catch (err) { alert('Failed to import backup: ' + err.message); }
                 importFileInput.value = '';
             });
         }
+
+        const bulkModeBtn = document.getElementById('bulk-mode-btn');
+        if (bulkModeBtn) bulkModeBtn.onclick = () => WO.setBulkMode(!WO.bulkMode);
+        const bulkCancel = document.getElementById('bulk-cancel-btn');
+        if (bulkCancel) bulkCancel.onclick = () => WO.setBulkMode(false);
+        const bulkMove = document.getElementById('bulk-move-btn');
+        if (bulkMove) bulkMove.onclick = () => WO.bulkMoveSelected(Number(document.getElementById('bulk-target-group').value));
+        const bulkTag = document.getElementById('bulk-tag-btn');
+        if (bulkTag) bulkTag.onclick = () => WO.bulkTagSelected(document.getElementById('bulk-tag-input').value);
+        const bulkTrash = document.getElementById('bulk-trash-btn');
+        if (bulkTrash) bulkTrash.onclick = () => WO.bulkTrashSelected();
+        const trashBtn = document.getElementById('trash-btn');
+        if (trashBtn) trashBtn.onclick = () => { WO.renderTrash(); WO.toggleModal(document.getElementById('trash-modal'), true); };
+        const trashClose = document.getElementById('trash-close-btn');
+        if (trashClose) trashClose.onclick = () => WO.toggleModal(document.getElementById('trash-modal'), false);
+        WO.updateBulkToolbar();
+    };
+
+    function cleanMetadataMap(value, validator) {
+        if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+        const out = {};
+        Object.entries(value).slice(0, 10000).forEach(([key, item]) => {
+            if (typeof key === 'string' && key.length <= 300 && validator(item)) out[key] = item;
+        });
+        return out;
+    }
+
+    WO.validateImportedBackup = function (raw) {
+        if (!raw || !Array.isArray(raw.groups)) throw new Error('Invalid backup: missing groups array.');
+        if (raw.groups.length > 500) throw new Error('Invalid backup: too many groups.');
+        const groups = raw.groups.map(group => {
+            if (!group || typeof group.name !== 'string' || !group.name.trim() || group.name.length > 100 || !Array.isArray(group.keywords)) return null;
+            if (group.keywords.length > 5000) return null;
+            const clean = {
+                name: group.name.trim(),
+                keywords: group.keywords.filter(k => typeof k === 'string' && k.trim() && k.length <= 2048).map(k => k.trim()),
+                keywordIds: Array.isArray(group.keywordIds) ? group.keywords.map((_, i) => {
+                    const id = group.keywordIds[i]; return typeof id === 'string' && id.length <= 100 ? id : '';
+                }) : [],
+                keywordTags: cleanMetadataMap(group.keywordTags, v => Array.isArray(v) && v.every(t => typeof t === 'string' && t.length <= 30)),
+                trash: Array.isArray(group.trash) ? group.trash.filter(t => t && typeof t.id === 'string' && typeof t.keyword === 'string' && t.keyword.length <= 2048).slice(0, 5000) : []
+            };
+            if (typeof group.color === 'string' && /^#[0-9a-f]{6}$/i.test(group.color)) clean.color = group.color;
+            return clean;
+        }).filter(Boolean);
+        if (!groups.length && raw.groups.length) throw new Error('No valid groups were found in this backup.');
+        const backup = {
+            groups,
+            globalClickCounts: cleanMetadataMap(raw.globalClickCounts, v => Number.isFinite(Number(v)) && Number(v) >= 0),
+            keywordDescriptions: cleanMetadataMap(raw.keywordDescriptions, v => typeof v === 'string' && v.length <= 2000),
+            keywordAddedAt: cleanMetadataMap(raw.keywordAddedAt, v => Number.isFinite(Number(v))),
+            keywordDeletedStatus: cleanMetadataMap(raw.keywordDeletedStatus, v => v === true),
+            preferences: raw.preferences && typeof raw.preferences === 'object' ? raw.preferences : null
+        };
+        WO.ensureStableBookmarkIds(backup.groups);
+        return backup;
+    };
+
+    WO.previewImport = function (imported) {
+        let added = 0, changed = 0, skipped = 0;
+        const existingGroups = new Map(WO.groups.map(g => [g.name.trim().toLowerCase(), g]));
+        imported.groups.forEach(group => {
+            const existing = existingGroups.get(group.name.toLowerCase());
+            if (!existing) { added += group.keywords.length; return; }
+            const existingSet = new Set(existing.keywords.map(k => k.trim().toLowerCase()));
+            group.keywords.forEach(k => existingSet.has(k.toLowerCase()) ? skipped++ : added++);
+            if (group.color !== existing.color) changed++;
+        });
+        return { groups: imported.groups.length, bookmarks: imported.groups.reduce((n, g) => n + g.keywords.length, 0), added, changed, skipped };
+    };
+
+    WO.askImportChoice = function (stats) {
+        return new Promise(resolve => {
+            const modal = document.getElementById('import-preview-modal');
+            const summary = document.getElementById('import-preview-summary');
+            summary.textContent = `${stats.groups} groups and ${stats.bookmarks} bookmarks. Merge would add ${stats.added}, update ${stats.changed} group settings, and skip ${stats.skipped} duplicates.`;
+            const finish = choice => { WO.toggleModal(modal, false); resolve(choice); };
+            document.getElementById('import-merge-btn').onclick = () => finish('merge');
+            document.getElementById('import-replace-btn').onclick = () => finish('replace');
+            document.getElementById('import-cancel-btn').onclick = () => finish('cancel');
+            WO.toggleModal(modal, true);
+        });
+    };
+
+    WO.restoreImportRecovery = async function () {
+        const raw = localStorage.getItem('websiteorganiser_recovery_before_import_v1');
+        if (!raw) { window.showToast('No import recovery snapshot is available.', 3000); return; }
+        const recovery = JSON.parse(raw);
+        if (!WO.applyLocalDataBackup(recovery)) throw new Error('The import recovery snapshot is invalid.');
+        await WO.syncAndSaveGroups().catch(() => {});
+        await Promise.all([
+            WO.clickCountsRef.set(WO.globalClickCounts), WO.descriptionsRef.set(WO.keywordDescriptions),
+            WO.keywordAddedAtRef.set(WO.keywordAddedAt), WO.deletedStatusRef.set(WO.keywordDeletedStatus)
+        ]).catch(e => console.error('Failed to restore recovery metadata:', e));
+        WO.saveLocalDataBackupNow(); WO.renderGroups();
+        window.showToast('Previous library restored.', 4000);
     };
 
 })(window.WO);
