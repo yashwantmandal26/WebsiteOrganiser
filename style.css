@@ -6380,8 +6380,8 @@ html {
     justify-content: space-between !important;
     order: 2 !important;
   }
-  body.admin-mode .header-right { gap: 5px !important; }
-  body.admin-mode .header-right .admin-only {
+  body.admin-mode .header-right { gap: 6px !important; }
+  body.admin-mode .header-right .admin-only:not(.admin-hub-wrapper) {
     width: 36px !important;
     min-width: 36px !important;
     height: 36px !important;
@@ -6390,10 +6390,23 @@ html {
     font-size: 0 !important;
     border-radius: 10px !important;
   }
-  body.admin-mode #bulk-mode-btn::after { content: '\2611'; font-size: 18px; }
-  body.admin-mode #trash-btn::after { content: '\2672'; font-size: 18px; }
-  body.admin-mode #export-btn::after { content: '\2191'; font-size: 20px; }
-  body.admin-mode #import-btn::after { content: '\2193'; font-size: 20px; }
+  .admin-hub-wrapper {
+    width: auto !important;
+    height: auto !important;
+  }
+  .admin-hub-wrapper .admin-hub-trigger {
+    height: 36px !important;
+    padding: 0 10px !important;
+    font-size: 0.78rem !important;
+  }
+  .admin-hub-wrapper .admin-menu-item {
+    font-size: 0.84rem !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: auto !important;
+    padding: 8px 12px !important;
+  }
+  .admin-hub-wrapper .admin-menu-item::after { content: none !important; display: none !important; }
   .theme-icon { width: 20px; height: 20px; }
   .search-bar-container {
     margin: 0 !important;

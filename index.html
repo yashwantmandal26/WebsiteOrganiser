@@ -41,7 +41,7 @@
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js">
-  <link rel="stylesheet" href="bundle.min.css?v=1044">
+  <link rel="stylesheet" href="bundle.min.css?v=1045">
 
   <link rel="manifest" href="manifest.json">
 
@@ -71,7 +71,7 @@
           <span class="site-logo-refresh-dot" aria-hidden="true" hidden></span>
         </a>
         <div class="header-brand">
-          <span class="site-title">WebsiteOrganiser</span>
+          <span class="site-title"><span class="title-website">Website</span><span class="title-organiser">Organiser</span></span>
         </div>
       </div>
 
@@ -81,11 +81,69 @@
           <span class="clock-hours" id="clock-hh">12</span><span class="clock-sep">:</span><span class="clock-minutes" id="clock-mm">00</span><span class="clock-sep">:</span><span class="clock-seconds" id="clock-ss">00</span><span class="clock-ms" id="clock-ms" style="display: none; font-size: 0.7em; opacity: 0.8; padding-left: 2px;">.000</span><span class="clock-ampm" id="clock-ampm">&nbsp;AM</span>
         </div>
         <div class="header-right">
-          <button type="button" id="bulk-mode-btn" class="btn holo-btn admin-only" style="display: none;" aria-label="Select bookmarks" title="Select bookmarks">Select</button>
-          <button type="button" id="activity-log-btn" class="btn holo-btn admin-only" style="display: none;" aria-label="Activity & Security Logs" title="Activity & Security Logs">🛡️ Activity</button>
-          <button type="button" id="trash-btn" class="btn holo-btn admin-only" style="display: none;" aria-label="Open Trash" title="Open Trash">Trash</button>
-          <button id="export-btn" class="btn holo-btn admin-only" style="display: none;" aria-label="Export backup" title="Export backup">📤 Export</button>
-          <button id="import-btn" class="btn holo-btn admin-only" style="display: none;" aria-label="Import backup" title="Import backup">📥 Import</button>
+          <!-- Admin Tools Hub Dropdown (Visible only to Admin) -->
+          <div class="admin-hub-wrapper admin-only" id="admin-hub-wrapper" style="display: none;">
+            <button type="button" id="admin-hub-btn" class="btn holo-btn admin-hub-trigger" aria-haspopup="true" aria-expanded="false" title="Admin Tools & Settings">
+              <span class="admin-badge-dot"></span>
+              <span class="admin-hub-text">🛡️ Admin Tools</span>
+              <span class="admin-hub-arrow">▾</span>
+            </button>
+            <div id="admin-hub-dropdown" class="admin-hub-menu" role="menu">
+              <div class="admin-hub-header">
+                <span class="admin-hub-status">🛡️ Admin Session Active</span>
+              </div>
+              <div class="admin-hub-group">
+                <button type="button" id="activity-log-btn" class="admin-menu-item" role="menuitem">
+                  <span class="menu-item-icon">🛡️</span>
+                  <div class="menu-item-text">
+                    <span class="menu-item-title">Security & Activity Audit</span>
+                    <span class="menu-item-desc">GPS trace, audit logs & undo</span>
+                  </div>
+                </button>
+                <button type="button" id="trash-btn" class="admin-menu-item" role="menuitem">
+                  <span class="menu-item-icon">🗑️</span>
+                  <div class="menu-item-text">
+                    <span class="menu-item-title">Recycle Bin / Trash</span>
+                    <span class="menu-item-desc">View & restore deleted links</span>
+                  </div>
+                </button>
+                <button type="button" id="bulk-mode-btn" class="admin-menu-item" role="menuitem">
+                  <span class="menu-item-icon">☑️</span>
+                  <div class="menu-item-text">
+                    <span class="menu-item-title">Bulk Select Mode</span>
+                    <span class="menu-item-desc">Select & manage multiple links</span>
+                  </div>
+                </button>
+              </div>
+              <div class="admin-hub-divider"></div>
+              <div class="admin-hub-group">
+                <button type="button" id="export-btn" class="admin-menu-item" role="menuitem">
+                  <span class="menu-item-icon">📥</span>
+                  <div class="menu-item-text">
+                    <span class="menu-item-title">Export Backup (JSON)</span>
+                    <span class="menu-item-desc">Download complete cloud backup</span>
+                  </div>
+                </button>
+                <button type="button" id="import-btn" class="admin-menu-item" role="menuitem">
+                  <span class="menu-item-icon">📤</span>
+                  <div class="menu-item-text">
+                    <span class="menu-item-title">Import Backup (JSON)</span>
+                    <span class="menu-item-desc">Restore from JSON backup file</span>
+                  </div>
+                </button>
+              </div>
+              <div class="admin-hub-divider"></div>
+              <div class="admin-hub-group">
+                <button type="button" id="admin-hub-logout-btn" class="admin-menu-item item-logout" role="menuitem">
+                  <span class="menu-item-icon">🔒</span>
+                  <div class="menu-item-text">
+                    <span class="menu-item-title">Logout Admin</span>
+                    <span class="menu-item-desc">End session & lock privileges</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
           <input type="file" id="import-file-input" accept=".json" style="display: none;">
           <button id="theme-toggle-btn" class="btn icon-btn holo-btn" aria-label="Toggle theme" title="Toggle theme"><img src="media/theme.png" alt="Theme" class="theme-icon" width="24" height="24" decoding="async"></button>
         </div>
@@ -388,7 +446,7 @@
     })();
   </script>
   <!-- Application Bundle -->
-  <script defer src="bundle.min.js?v=1044"></script>
+  <script defer src="bundle.min.js?v=1045"></script>
 
   <div id="toast-container"></div>
   <!-- Global keyword tooltip portal — lives at body level to avoid contain:paint clipping -->

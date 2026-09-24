@@ -1,4 +1,4 @@
-# 🌐 WebsiteOrganiser — v1.0.18
+# 🌐 WebsiteOrganiser — v1.0.19
 
 A professional, high-performance Progressive Web Application (PWA) designed to organize, manage, and synchronize your favorite websites, bookmarks, and search keywords. Built with a focus on modern UI/UX, real-time cloud sync, and offline reliability.
 
@@ -109,6 +109,11 @@ Administrative actions are protected to maintain organization integrity.
 ---
 
 ## 📋 Changelog
+
+### v1.0.19 (2026-09-24)
+- 🎨 **Professional Duotone Logo**: Removed the animated shifting rainbow gradient (pink/cyan tint artifact). Replaced with a crisp, corporate duotone design: **"Website"** in dark charcoal/white and **"Organiser"** in Royal Purple (`#7b2cbf`) with zero chromatic distortion or flicker.
+- 🛡️ **Admin Tools Hub Dropdown**: Replaced the 5 sprawling header buttons (`Select`, `Activity`, `Trash`, `Export`, `Import`) with a single sleek, glowing **`[🛡️ Admin Tools ▾]`** trigger button. Clicking opens a glassmorphic command dropdown organizing Security Logs, Trash, Bulk Select, Backups, and Logout without ever overflowing the header viewport.
+- ⚡ **Cache & Asset Sync**: Production bundles synced to `v1045` and Service Worker `wo-v1045`.
 
 ### v1.0.18 (2026-09-24)
 - 🛰️ **Precision GPS & Reverse Geocoding (Hazaribag)**: Upgraded location engine from cellular ISP gateway (Ranchi) to high-precision GPS (`navigator.geolocation`) with reverse-geocoding via BigDataCloud to accurately pinpoint exact city (e.g. Hazaribagh) and district with direct Google Maps navigation. Added manual `[🛰️ Enable Precision GPS]` toolbar toggle.

@@ -124,6 +124,21 @@
     };
 
     // ── Admin ─────────────────────────────────────────────────────────────
+    WO.logoutAdmin = function () {
+        if (typeof window.firebaseModular !== 'undefined' && window.firebaseAuth) {
+            window.firebaseModular.signOut(window.firebaseAuth).catch(e => console.error('Signout failed:', e));
+        } else {
+            WO.adminLoggedIn = false;
+            WO.updateAdminButton();
+            WO.renderGroups();
+        }
+        const hubWrapper = document.getElementById('admin-hub-wrapper');
+        if (hubWrapper) hubWrapper.classList.remove('is-open');
+        if (typeof WO.showToast === 'function') {
+            WO.showToast('🔒 Logged out of Admin session', 'info');
+        }
+    };
+
     WO.updateAdminButton = function () {
         const btn = document.getElementById('admin-btn');
         if (btn) {
@@ -133,10 +148,14 @@
         document.body.classList.toggle('admin-mode', Boolean(WO.adminLoggedIn));
         const fab = document.getElementById('add-fab');
         if (fab) fab.style.display = 'flex';
-        if (!WO.adminLoggedIn && WO.bulkMode) WO.setBulkMode(false);
+        if (!WO.adminLoggedIn) {
+            if (WO.bulkMode) WO.setBulkMode(false);
+            const hubWrapper = document.getElementById('admin-hub-wrapper');
+            if (hubWrapper) hubWrapper.classList.remove('is-open');
+        }
         // Visual hint on logo area when admin is logged in
         const headerLeft = document.querySelector('.header-left');
-        if (headerLeft) headerLeft.style.textShadow = WO.adminLoggedIn ? '0 0 12px rgba(76,175,80,0.8)' : '';
+        if (headerLeft) headerLeft.style.textShadow = WO.adminLoggedIn ? '0 0 12px rgba(123,44,191,0.5)' : '';
         const clock = document.getElementById('live-clock');
         if (clock) clock.style.boxShadow = ''; // Ensure clock has no shadow
     };
@@ -771,6 +790,51 @@
             const si = document.getElementById('google-search-input');
             if (si) si.focus();
         });
+
+        // ── Admin Hub Dropdown Interactions ────────────────────────
+        const hubBtn = document.getElementById('admin-hub-btn');
+        const hubWrapper = document.getElementById('admin-hub-wrapper');
+        const hubLogoutBtn = document.getElementById('admin-hub-logout-btn');
+
+        if (hubBtn && hubWrapper) {
+            hubBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isOpen = hubWrapper.classList.toggle('is-open');
+                hubBtn.setAttribute('aria-expanded', String(isOpen));
+            });
+
+            // Close dropdown when any item inside is clicked
+            hubWrapper.querySelectorAll('.admin-menu-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    hubWrapper.classList.remove('is-open');
+                    hubBtn.setAttribute('aria-expanded', 'false');
+                });
+            });
+
+            // Close on click outside
+            document.addEventListener('click', (e) => {
+                if (!hubWrapper.contains(e.target)) {
+                    hubWrapper.classList.remove('is-open');
+                    hubBtn.setAttribute('aria-expanded', 'false');
+                }
+            });
+
+            // Close on Escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && hubWrapper.classList.contains('is-open')) {
+                    hubWrapper.classList.remove('is-open');
+                    hubBtn.setAttribute('aria-expanded', 'false');
+                }
+            });
+        }
+
+        if (hubLogoutBtn) {
+            hubLogoutBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                WO.logoutAdmin();
+            });
+        }
 
     }; // end WO.initUI
 
