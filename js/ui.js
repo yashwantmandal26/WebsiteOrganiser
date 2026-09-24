@@ -427,8 +427,14 @@
         // Logo
         const logoLink = document.querySelector('.site-logo-link');
         const logoRefreshDot = document.querySelector('.site-logo-refresh-dot');
-        if (logoRefreshDot) logoRefreshDot.hidden = true;
-        if (logoLink) logoLink.addEventListener('click', e => { e.preventDefault(); window.location.reload(); });
+        if (logoLink) {
+            logoLink.addEventListener('click', e => {
+                if (logoRefreshDot && !logoRefreshDot.hidden && logoRefreshDot.style.display !== 'none') {
+                    e.preventDefault();
+                    window.location.reload();
+                }
+            });
+        }
 
         // Header Resize — ResizeObserver covers all resize cases; window resize listener removed
         const headerEl = document.querySelector('header');

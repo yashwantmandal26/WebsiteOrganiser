@@ -190,7 +190,7 @@
                     else                            previewGrid.classList.add('size-large');
 
                     keywords.forEach(entry => {
-                        const { keyword, keywordIndex, bookmarkId, displayText, targetUrl, description, tags, ek, isNew, isSoftDeleted } = entry;
+                        const { keyword, keywordIndex, bookmarkId, displayText, targetUrl, description, tags, ek, isNew, isSoftDeleted, searchText } = entry;
                         const item = document.createElement('a');
                         item.className = 'keyword-grid-preview-item';
                         if (isSoftDeleted) item.classList.add('keyword-soft-deleted');
