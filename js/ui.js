@@ -148,10 +148,14 @@
         document.body.classList.toggle('admin-mode', Boolean(WO.adminLoggedIn));
         const fab = document.getElementById('add-fab');
         if (fab) fab.style.display = 'flex';
-        if (!WO.adminLoggedIn) {
-            if (WO.bulkMode) WO.setBulkMode(false);
-            const hubWrapper = document.getElementById('admin-hub-wrapper');
-            if (hubWrapper) hubWrapper.classList.remove('is-open');
+        if (!WO.adminLoggedIn && WO.bulkMode) {
+            WO.setBulkMode(false);
+        }
+        const hubWrapper = document.getElementById('admin-hub-wrapper');
+        if (hubWrapper) {
+            hubWrapper.classList.remove('is-open');
+            const hubBtn = document.getElementById('admin-hub-btn');
+            if (hubBtn) hubBtn.setAttribute('aria-expanded', 'false');
         }
         // Visual hint on logo area when admin is logged in
         const headerLeft = document.querySelector('.header-left');

@@ -3729,7 +3729,7 @@ body.is-touch .group-expand-chip {
   min-width: fit-content;
 }
 
-.header-right>* {
+.header-right>*:not(.admin-hub-wrapper):not(input) {
   min-width: 110px;
   max-width: 190px;
   margin: 4px 2px;
@@ -3738,7 +3738,6 @@ body.is-touch .group-expand-chip {
   flex-shrink: 0;
 }
 
-.header-right .btn,
 .header-right #theme-toggle-btn {
   background: rgba(255, 255, 255, 0.85);
   border: 1.5px solid rgba(123, 44, 191, 0.2);
@@ -3753,9 +3752,6 @@ body.is-touch .group-expand-chip {
 }
 
 @media (hover: hover) {
-
-  .header-right>*:hover,
-  .header-right .btn:hover,
   .header-right #theme-toggle-btn:hover {
     background: rgba(255, 255, 255, 0.95);
     border: 1.5px solid #7b2cbf;
@@ -3764,15 +3760,12 @@ body.is-touch .group-expand-chip {
   }
 }
 
-.header-right>*:active,
-.header-right .btn:active,
 .header-right #theme-toggle-btn:active {
   transform: scale(0.96);
 }
 
-[data-theme="dark"] .header-right>*, [data-theme="solid-dark"] .header-right>*,
-[data-theme="dark"] .header-right .btn, [data-theme="solid-dark"] .header-right .btn,
-[data-theme="dark"] .header-right #theme-toggle-btn , [data-theme="solid-dark"] .header-right #theme-toggle-btn {
+[data-theme="dark"] .header-right #theme-toggle-btn,
+[data-theme="solid-dark"] .header-right #theme-toggle-btn {
   background: linear-gradient(145deg, rgba(70, 70, 70, 0.98), rgba(50, 50, 50, 0.95));
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 25px !important;
@@ -3786,10 +3779,8 @@ body.is-touch .group-expand-chip {
 }
 
 @media (hover: hover) {
-
-  [data-theme="dark"] .header-right>*:hover, [data-theme="solid-dark"] .header-right>*:hover,
-  [data-theme="dark"] .header-right .btn:hover, [data-theme="solid-dark"] .header-right .btn:hover,
-  [data-theme="dark"] .header-right #theme-toggle-btn:hover , [data-theme="solid-dark"] .header-right #theme-toggle-btn:hover {
+  [data-theme="dark"] .header-right #theme-toggle-btn:hover,
+  [data-theme="solid-dark"] .header-right #theme-toggle-btn:hover {
     background: var(--button-hover-bg);
     border: 1.5px solid #b388ff;
     transform: scale(1.04) translateY(-3px);
@@ -3801,14 +3792,11 @@ body.is-touch .group-expand-chip {
   }
 }
 
-[data-theme="dark"] .header-right>*:active, [data-theme="solid-dark"] .header-right>*:active,
-[data-theme="dark"] .header-right .btn:active, [data-theme="solid-dark"] .header-right .btn:active,
-[data-theme="dark"] .header-right #theme-toggle-btn:active , [data-theme="solid-dark"] .header-right #theme-toggle-btn:active {
+[data-theme="dark"] .header-right #theme-toggle-btn:active,
+[data-theme="solid-dark"] .header-right #theme-toggle-btn:active {
   transform: scale(0.96);
 }
 
-[data-theme="light"] .header-right>*,
-[data-theme="light"] .header-right .btn,
 [data-theme="light"] .header-right #theme-toggle-btn {
   background: linear-gradient(145deg, #F8F9FA, #e6e6e6);
   border: 1px solid rgba(0, 0, 0, 0.1);
@@ -3822,9 +3810,6 @@ body.is-touch .group-expand-chip {
 }
 
 @media (hover: hover) {
-
-  [data-theme="light"] .header-right>*:hover,
-  [data-theme="light"] .header-right .btn:hover,
   [data-theme="light"] .header-right #theme-toggle-btn:hover {
     background: linear-gradient(145deg, #F8F9FA, #f0f0f0);
     border: 1.5px solid #7b2cbf;
@@ -3837,8 +3822,6 @@ body.is-touch .group-expand-chip {
   }
 }
 
-[data-theme="light"] .header-right>*:active,
-[data-theme="light"] .header-right .btn:active,
 [data-theme="light"] .header-right #theme-toggle-btn:active {
   transform: scale(0.96);
 }
@@ -3854,46 +3837,7 @@ body.is-touch .group-expand-chip {
   z-index: 1;
 }
 
-/* Extra round buttons for header - Higher specificity */
-.header-right .btn.holo-btn,
-.header-right .btn.icon-btn,
-.header-right .btn {
-  border-radius: 30px !important;
-  padding: 10px 20px;
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.1),
-    0 2px 6px rgba(0, 0, 0, 0.08),
-    inset 0 1px 2px rgba(255, 255, 255, 0.2);
-}
-
-/* Override any conflicting styles */
-.header-right button {
-  border-radius: 30px !important;
-}
-
-/* Force round corners with maximum specificity */
-.header-right .btn.holo-btn,
-.header-right .btn.icon-btn,
-.header-right .btn,
-.header-right #theme-toggle-btn,
-.header-right button[class*="btn"] {
-  border-radius: 30px !important;
-  -webkit-border-radius: 30px !important;
-  -moz-border-radius: 30px !important;
-}
-
-/* Specific button overrides */
-#theme-toggle-btn {
-  border-radius: 30px !important;
-  -webkit-border-radius: 30px !important;
-  -moz-border-radius: 30px !important;
-}
-
-/* Theme toggle button specific styling - Perfect Circle */
+/* Specific theme toggle styling - Perfect Circle */
 #theme-toggle-btn {
   border-radius: 50% !important;
   -webkit-border-radius: 50% !important;
@@ -3918,21 +3862,6 @@ body.is-touch .group-expand-chip {
   width: 24px;
   height: 24px;
 }
-
-/* Nuclear option - override everything */
-.header-right * {
-  border-radius: 30px !important;
-  -webkit-border-radius: 30px !important;
-  -moz-border-radius: 30px !important;
-}
-
-/* Extra specific theme toggle styling - Perfect Circle */
-.header-right #theme-toggle-btn,
-#theme-toggle-btn.btn,
-#theme-toggle-btn.btn.icon-btn,
-#theme-toggle-btn.btn.holo-btn {
-  border-radius: 50% !important;
-  -webkit-border-radius: 50% !important;
   -moz-border-radius: 50% !important;
   overflow: hidden !important;
   width: 44px !important;
@@ -3950,16 +3879,8 @@ body.is-touch .group-expand-chip {
 /* Responsive border-radius for mobile and desktop consistency */
 @media (max-width: 768px) {
 
-  .header-right .btn.holo-btn,
-  .header-right .btn.icon-btn,
-  .header-right .btn,
-  .header-right #theme-toggle-btn {
-    border-radius: 25px !important;
-    padding: 10px 20px;
-  }
-
-  .header-right button {
-    border-radius: 25px !important;
+  .header-right>#theme-toggle-btn {
+    border-radius: 50% !important;
   }
 
   #theme-toggle-btn {
@@ -4308,17 +4229,11 @@ body.is-touch .group-expand-chip {
 
 @media (min-width: 601px) {
 
-  .header-right>*,
-  .header-right .btn,
-  .header-right #theme-toggle-btn {
-    min-width: 110px !important;
-    max-width: 160px !important;
-    font-size: 1rem !important;
-    padding: 10px 18px !important;
-    border-radius: 8px !important;
-    width: auto !important;
-    height: 48px !important;
-    line-height: 48px !important;
+  .header-right>#theme-toggle-btn {
+    border-radius: 50% !important;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
     display: flex;
     align-items: center;
     justify-content: center;
