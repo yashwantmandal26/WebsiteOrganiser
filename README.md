@@ -1,4 +1,4 @@
-# 🌐 WebsiteOrganiser — v1.0.19
+# 🌐 WebsiteOrganiser — v1.0.20
 
 A professional, high-performance Progressive Web Application (PWA) designed to organize, manage, and synchronize your favorite websites, bookmarks, and search keywords. Built with a focus on modern UI/UX, real-time cloud sync, and offline reliability.
 
@@ -109,6 +109,14 @@ Administrative actions are protected to maintain organization integrity.
 ---
 
 ## 📋 Changelog
+
+### v1.0.20 (2026-09-24)
+- ⏰ **PC Cardless Clock**: Removed the white background pill card, border, and shadow from the PC desktop clock for a clean, borderless floating digital readout.
+- 📱 **Mobile Header Redesign**:
+  - Removed time clock on mobile view (`.live-clock` hidden).
+  - Enlarged mobile logo icon (46px) and title font (clamp 1.45rem - 1.75rem) for bold readability.
+  - Repositioned Theme Toggle to the LEFT of the Search Bar on row 2, forming a sleek, space-efficient 2-row mobile header.
+- ⚡ **Cache & Asset Sync**: Production bundles synced to `v1046` with Service Worker `wo-v1046`.
 
 ### v1.0.19 (2026-09-24)
 - 🎨 **Professional Duotone Logo**: Removed the animated shifting rainbow gradient (pink/cyan tint artifact). Replaced with a crisp, corporate duotone design: **"Website"** in dark charcoal/white and **"Organiser"** in Royal Purple (`#7b2cbf`) with zero chromatic distortion or flicker.

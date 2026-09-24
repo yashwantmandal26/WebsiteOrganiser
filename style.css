@@ -3535,14 +3535,14 @@ body.is-touch .group-expand-chip {
   gap: 0;
   /* Always size to content — guarantees AM/PM stays inside the pill */
   width: max-content;
-  /* Light-theme pill */
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  border-radius: 30px;
-  padding: 6px 16px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  /* Clean borderless / cardless clock for PC */
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  box-shadow: none !important;
   /* Monospace + tabular numbers = zero layout shift */
   font-family: 'Courier New', 'Consolas', monospace;
   font-variant-numeric: tabular-nums;
@@ -3614,9 +3614,9 @@ body.is-touch .group-expand-chip {
 /* ── Dark theme overrides ─────────────────────────────── */
 [data-theme="dark"] .live-clock,
 [data-theme="solid-dark"] .live-clock {
-  background: rgba(32, 32, 37, 0.85);
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 [data-theme="dark"] .clock-minutes,
