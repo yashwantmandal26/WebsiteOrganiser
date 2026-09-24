@@ -1,0 +1,367 @@
+/* =============================================================================
+   activity-log.css — Security Audit Trail, Device & Location Tracking & Undo Modal
+   ============================================================================= */
+
+.activity-modal-content {
+  max-width: 860px !important;
+  width: 95% !important;
+  max-height: 90vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 24px !important;
+  background: var(--modal-bg, rgba(255, 255, 255, 0.95)) !important;
+  backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25) !important;
+  color: var(--text-color, #1f1f1f);
+}
+
+[data-theme="dark"] .activity-modal-content,
+[data-theme="solid-dark"] .activity-modal-content {
+  background: rgba(22, 24, 29, 0.96) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #e5e5e5 !important;
+}
+
+.activity-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.2);
+}
+
+.activity-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-color, #1f1f1f);
+}
+
+[data-theme="dark"] .activity-modal-title,
+[data-theme="solid-dark"] .activity-modal-title {
+  color: #fff;
+}
+
+.activity-controls-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.activity-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.log-filter-btn {
+  background: rgba(128, 128, 128, 0.12);
+  border: 1px solid rgba(128, 128, 128, 0.2);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: inherit;
+}
+
+.log-filter-btn:hover {
+  background: rgba(128, 128, 128, 0.22);
+}
+
+.log-filter-btn.active {
+  background: #7b2cbf;
+  color: #fff;
+  border-color: #7b2cbf;
+  box-shadow: 0 2px 8px rgba(123, 44, 191, 0.4);
+}
+
+.activity-search-box {
+  flex: 1;
+  min-width: 220px;
+}
+
+.activity-search-input {
+  width: 100%;
+  padding: 8px 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(128, 128, 128, 0.25);
+  background: rgba(255, 255, 255, 0.8);
+  font-size: 0.88rem;
+  outline: none;
+  box-sizing: border-box;
+  color: inherit;
+}
+
+[data-theme="dark"] .activity-search-input,
+[data-theme="solid-dark"] .activity-search-input {
+  background: rgba(0, 0, 0, 0.35);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.activity-search-input:focus {
+  border-color: #7b2cbf;
+  box-shadow: 0 0 0 3px rgba(123, 44, 191, 0.2);
+}
+
+/* Security Lock Notice Banner */
+.activity-lock-notice {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: rgba(255, 77, 79, 0.12);
+  border: 1px solid rgba(255, 77, 79, 0.4);
+  border-radius: 12px;
+  margin-bottom: 14px;
+  font-size: 0.9rem;
+  color: #ff4d4f;
+  animation: pulseLock 2s infinite;
+}
+
+@keyframes pulseLock {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 77, 79, 0.3); }
+  50% { box-shadow: 0 0 10px 2px rgba(255, 77, 79, 0.3); }
+}
+
+.activity-lock-notice button {
+  background: #ff4d4f;
+  color: #fff;
+  border: none;
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Scrollable Log Container */
+.activity-log-scroll {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 55vh;
+  padding-right: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Custom Scrollbar */
+.activity-log-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.activity-log-scroll::-webkit-scrollbar-thumb {
+  background: rgba(128, 128, 128, 0.3);
+  border-radius: 4px;
+}
+
+/* Audit Log Card */
+.audit-log-card {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(128, 128, 128, 0.18);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+[data-theme="dark"] .audit-log-card,
+[data-theme="solid-dark"] .audit-log-card {
+  background: rgba(30, 34, 42, 0.8);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.audit-log-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
+.audit-log-card.is-suspicious {
+  border-left: 5px solid #ff4d4f;
+  background: rgba(255, 77, 79, 0.06);
+}
+
+.audit-suspicious-banner {
+  background: rgba(255, 77, 79, 0.15);
+  color: #ff4d4f;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.audit-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.audit-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.badge-success { background: rgba(82, 196, 26, 0.15); color: #52c41a; border: 1px solid rgba(82, 196, 26, 0.3); }
+.badge-danger  { background: rgba(255, 77, 79, 0.15); color: #ff4d4f; border: 1px solid rgba(255, 77, 79, 0.3); }
+.badge-warning { background: rgba(250, 173, 20, 0.15); color: #faad14; border: 1px solid rgba(250, 173, 20, 0.3); }
+.badge-purple  { background: rgba(114, 46, 209, 0.15); color: #9254de; border: 1px solid rgba(114, 46, 209, 0.3); }
+.badge-alert   { background: rgba(255, 17, 0, 0.2);   color: #ff382b; border: 1px solid #ff382b; }
+.badge-info    { background: rgba(24, 144, 255, 0.15); color: #1890ff; border: 1px solid rgba(24, 144, 255, 0.3); }
+
+.audit-target-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+  word-break: break-all;
+}
+
+.audit-group-tag {
+  font-size: 0.82rem;
+  opacity: 0.8;
+}
+
+.audit-time {
+  margin-left: auto;
+  font-size: 0.78rem;
+  opacity: 0.65;
+  white-space: nowrap;
+}
+
+.audit-diff {
+  background: rgba(128, 128, 128, 0.08);
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+.diff-old { color: #ff4d4f; }
+.diff-new { color: #52c41a; }
+
+.audit-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 14px;
+  font-size: 0.82rem;
+  padding-top: 4px;
+}
+
+@media (max-width: 600px) {
+  .audit-meta-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.audit-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.audit-meta-item.full-width {
+  grid-column: 1 / -1;
+}
+
+.meta-label {
+  opacity: 0.65;
+}
+
+.meta-val {
+  font-weight: 500;
+  word-break: break-word;
+}
+
+.audit-map-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #1890ff !important;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.8rem;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(24, 144, 255, 0.1);
+  transition: all 0.2s ease;
+}
+
+.audit-map-btn:hover {
+  background: rgba(24, 144, 255, 0.25);
+  text-decoration: underline;
+}
+
+.audit-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 6px;
+  border-top: 1px dashed rgba(128, 128, 128, 0.15);
+  margin-top: 2px;
+}
+
+.audit-id {
+  font-size: 0.72rem;
+  opacity: 0.45;
+  font-family: monospace;
+}
+
+.audit-restore-btn {
+  background: #52c41a !important;
+  color: #fff !important;
+  border: none !important;
+  padding: 5px 14px !important;
+  border-radius: 8px !important;
+  font-size: 0.82rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.audit-restore-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(82, 196, 26, 0.4) !important;
+}
+
+.audit-restored-tag {
+  color: #52c41a;
+  font-weight: 600;
+  font-size: 0.82rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.activity-modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 14px;
+  margin-top: 12px;
+  border-top: 1px solid rgba(128, 128, 128, 0.2);
+}
+
+.activity-summary-text {
+  font-size: 0.85rem;
+  opacity: 0.75;
+}

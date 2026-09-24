@@ -41,7 +41,7 @@
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js">
-  <link rel="stylesheet" href="bundle.min.css?v=1041">
+  <link rel="stylesheet" href="bundle.min.css?v=1042">
 
   <link rel="manifest" href="manifest.json">
 
@@ -82,6 +82,7 @@
         </div>
         <div class="header-right">
           <button type="button" id="bulk-mode-btn" class="btn holo-btn admin-only" style="display: none;" aria-label="Select bookmarks" title="Select bookmarks">Select</button>
+          <button type="button" id="activity-log-btn" class="btn holo-btn admin-only" style="display: none;" aria-label="Activity & Security Logs" title="Activity & Security Logs">🛡️ Activity</button>
           <button type="button" id="trash-btn" class="btn holo-btn admin-only" style="display: none;" aria-label="Open Trash" title="Open Trash">Trash</button>
           <button id="export-btn" class="btn holo-btn admin-only" style="display: none;" aria-label="Export backup" title="Export backup">📤 Export</button>
           <button id="import-btn" class="btn holo-btn admin-only" style="display: none;" aria-label="Import backup" title="Import backup">📥 Import</button>
@@ -248,6 +249,50 @@
     </div>
   </div>
 
+  <!-- Security & Activity Logs Modal -->
+  <div id="activity-log-modal" class="modal-container">
+    <div class="modal-content activity-modal-content">
+      <div class="activity-modal-header">
+        <h2 class="activity-modal-title">🛡️ Security & Activity Audit Trail</h2>
+        <button type="button" id="activity-log-close-btn" class="btn btn-secondary" style="padding:4px 12px;font-size:0.85rem;">✕ Close</button>
+      </div>
+
+      <!-- Security Deletion Lock Alert Banner -->
+      <div id="activity-lock-notice" class="activity-lock-notice">
+        <span>🚨 <b>Deletion Locked:</b> Rate limit reached (5+ deletions). Further deletions are temporarily blocked.</span>
+        <button type="button" id="unlock-deletions-btn">🔓 Reset Lock</button>
+      </div>
+
+      <!-- Controls & Filters -->
+      <div class="activity-controls-bar">
+        <div class="activity-filter-chips">
+          <button type="button" class="log-filter-btn active" data-filter="all">All</button>
+          <button type="button" class="log-filter-btn" data-filter="alerts">🚨 Alerts</button>
+          <button type="button" class="log-filter-btn" data-filter="added">🟢 Added</button>
+          <button type="button" class="log-filter-btn" data-filter="deleted">🔴 Deleted</button>
+          <button type="button" class="log-filter-btn" data-filter="edited">✏️ Edited</button>
+          <button type="button" class="log-filter-btn" data-filter="restored">↺ Restored</button>
+        </div>
+        <div class="activity-search-box">
+          <input type="text" id="activity-search-input" class="activity-search-input" placeholder="Search link, user, city, or device...">
+        </div>
+      </div>
+
+      <!-- Scrollable Logs List -->
+      <div id="activity-log-list" class="activity-log-scroll">
+        <!-- Rendered by JS -->
+      </div>
+
+      <!-- Footer -->
+      <div class="activity-modal-footer">
+        <span id="activity-log-summary" class="activity-summary-text">0 total actions recorded</span>
+        <div style="display:flex;gap:8px;">
+          <button type="button" id="export-logs-csv-btn" class="btn holo-btn" style="padding:6px 14px;font-size:0.85rem;">📥 Export CSV</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Modular Firebase Config -->
   <script type="module" src="firebase-config.js"></script>
   <script>
@@ -332,7 +377,7 @@
     })();
   </script>
   <!-- Application Bundle -->
-  <script defer src="bundle.min.js?v=1041"></script>
+  <script defer src="bundle.min.js?v=1042"></script>
 
   <div id="toast-container"></div>
   <!-- Global keyword tooltip portal — lives at body level to avoid contain:paint clipping -->

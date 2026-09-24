@@ -43,6 +43,17 @@ service cloud.firestore {
       allow write: if true;
     }
 
+    // activityLogs: anyone can read/write logs (audit logging is open)
+    match /sharedData/activityLogs {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    match /activityLogs/{logId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
     // Default read access for other docs in sharedData
     match /sharedData/{document=**} {
       allow read: if true;

@@ -115,6 +115,9 @@
         if (duplicate) { alert('A group with this name already exists.'); return; }
         if (WO.groupModalMode === 'add') {
             WO.groups.push({ name: newName, keywords: [], keywordIds: [], keywordTags: {}, trash: [] });
+            if (typeof WO.logActivity === 'function') {
+                WO.logActivity('ADD_GROUP', { targetName: newName });
+            }
         } else {
             const oldName = WO.groups[WO.currentGroupIndex].name;
             WO.groups[WO.currentGroupIndex].name = newName;
@@ -129,6 +132,13 @@
                     WO.groups[WO.currentGroupIndex].color = colorInput.value;
                 }
             }
+
+            if (typeof WO.logActivity === 'function') {
+                WO.logActivity('EDIT_GROUP', {
+                    targetName: newName,
+                    diff: { oldName: oldName, newName: newName }
+                });
+            }
         }
         WO.toggleModal(groupModal, false);
         groupNameInput.value = '';
@@ -141,12 +151,38 @@
 
     WO.deleteGroup = async function (index) {
         if (!WO.adminLoggedIn) { alert('Admin access required to delete groups.'); return; }
-        if (confirm(`Delete group "${WO.groups[index].name}"?`)) {
-            const name = WO.groups[index].name;
+        const group = WO.groups[index];
+        if (!group) return;
+        const name = group.name;
+
+        // Rate limit check
+        if (typeof WO.checkDeletionRateLimit === 'function') {
+            const rateCheck = WO.checkDeletionRateLimit(name);
+            if (!rateCheck.allowed) {
+                alert(rateCheck.message);
+                return;
+            }
+        }
+
+        if (confirm(`Delete group "${name}"?`)) {
+            const deletedGroupPayload = {
+                groupName: name,
+                keywords: Array.isArray(group.keywords) ? [...group.keywords] : [],
+                keywordTags: group.keywordTags ? {...group.keywordTags} : {},
+                keywordIds: group.keywordIds ? [...group.keywordIds] : []
+            };
+
             WO.groups.splice(index, 1);
             WO.removeLocalGroupOrder(name);
             await WO.syncAndSaveGroups().catch(() => {});
             WO.renderGroups();
+
+            if (typeof WO.logActivity === 'function') {
+                WO.logActivity('DELETE_GROUP', {
+                    targetName: name,
+                    payload: deletedGroupPayload
+                });
+            }
         }
     };
 
@@ -217,6 +253,14 @@
             const legacyKey = WO.getKeywordEncodedKey(kw);
             if (legacyKey && legacyKey !== ek) {
                 WO.keywordAddedAt[legacyKey] = addedAt;
+            }
+
+            if (typeof WO.logActivity === 'function') {
+                WO.logActivity('ADD_KEYWORD', {
+                    targetName: kw,
+                    groupName: group.name,
+                    groupIndex: WO.lastAddedGroupIndex
+                });
             }
 
             WO.resetAddKeywordModalState();
@@ -337,6 +381,15 @@
         await WO.syncAndSaveGroups().catch(() => {});
         WO.renderGroups();
         WO.toggleModal(renameModal, false);
+
+        if (typeof WO.logActivity === 'function') {
+            WO.logActivity('EDIT_KEYWORD', {
+                targetName: newKeyword,
+                groupName: WO.groups[WO.renameTargetGroupIndex] ? WO.groups[WO.renameTargetGroupIndex].name : '',
+                groupIndex: WO.renameTargetGroupIndex,
+                diff: { oldName: oldKeyword, newName: newKeyword }
+            });
+        }
     };
 
     // ─── Keyword Delete ───────────────────────────────────────────────────────
@@ -358,15 +411,43 @@
     WO.deleteKeyword = async function (groupIndex, keywordIndex) {
         if (!WO.groups[groupIndex] || !WO.groups[groupIndex].keywords[keywordIndex]) { window.showToast('⚠️ Data changed. Try again.', 3000); return; }
         const kw = WO.groups[groupIndex].keywords[keywordIndex];
+        const group = WO.groups[groupIndex];
+
+        // ── Security Check: Rate Limit Deletions ─────────────────────────────
+        if (typeof WO.checkDeletionRateLimit === 'function') {
+            const rateCheck = WO.checkDeletionRateLimit(kw);
+            if (!rateCheck.allowed) {
+                alert(rateCheck.message);
+                return;
+            }
+        }
+
         const bookmarkId = WO.getBookmarkId(groupIndex, keywordIndex);
         const ek = bookmarkId || WO.getKeywordEncodedKey(kw);
         const isSoftDeleted = WO.keywordDeletedStatus && WO.keywordDeletedStatus[ek] === true;
+
+        const deletePayload = {
+            keyword: kw,
+            description: WO.getBookmarkMetadata(WO.keywordDescriptions, groupIndex, keywordIndex, kw, ''),
+            tags: (group.keywordTags && group.keywordTags[bookmarkId]) || [],
+            groupName: group.name,
+            groupIndex: groupIndex
+        };
 
         if (!WO.adminLoggedIn) {
             if (!confirm('Delete this keyword?')) return;
             await WO.animateKeywordOut(groupIndex, kw);
             await WO.saveKeywordDeletedStatus(kw, true, ek);
             WO.renderGroups();
+
+            if (typeof WO.logActivity === 'function') {
+                WO.logActivity('DELETE_KEYWORD', {
+                    targetName: kw,
+                    groupName: group.name,
+                    groupIndex: groupIndex,
+                    payload: deletePayload
+                });
+            }
             return;
         }
 
@@ -374,7 +455,6 @@
         
         await WO.animateKeywordOut(groupIndex, kw);
 
-        const group = WO.groups[groupIndex];
         const tags = (group.keywordTags && group.keywordTags[bookmarkId]) || [];
         const trashItem = { id: bookmarkId, keyword: kw, tags, deletedAt: Date.now(), originalIndex: keywordIndex };
         group.trash.push(trashItem);
@@ -383,6 +463,16 @@
         if (group.keywordTags) delete group.keywordTags[bookmarkId];
         await WO.syncAndSaveGroups().catch(() => {});
         WO.renderGroups();
+
+        if (typeof WO.logActivity === 'function') {
+            WO.logActivity('DELETE_KEYWORD', {
+                targetName: kw,
+                groupName: group.name,
+                groupIndex: groupIndex,
+                payload: deletePayload
+            });
+        }
+
         window.showToast('Moved to Trash.', 6000, 'Undo', async () => WO.restoreTrashItem(groupIndex, trashItem.id));
     };
 
@@ -461,11 +551,38 @@
     WO.bulkTrashSelected = async function () {
         const entries = selectedEntries();
         if (!entries.length) return;
+
+        // Rate limit check
+        if (typeof WO.checkDeletionRateLimit === 'function') {
+            const rateCheck = WO.checkDeletionRateLimit(`${entries.length} bulk items`);
+            if (!rateCheck.allowed) {
+                alert(rateCheck.message);
+                return;
+            }
+        }
+
         const undoItems = [];
         entries.slice().sort((a, b) => b.ki - a.ki).forEach(e => {
-            const item = { id: e.id, keyword: e.keyword, tags: e.group.keywordTags[e.id] || [], deletedAt: Date.now(), originalIndex: e.ki };
+            const item = { id: e.id, keyword: e.keyword, tags: (e.group.keywordTags && e.group.keywordTags[e.id]) || [], deletedAt: Date.now(), originalIndex: e.ki };
             e.group.trash.push(item); undoItems.push({ group: e.group, item });
-            e.group.keywords.splice(e.ki, 1); e.group.keywordIds.splice(e.ki, 1); delete e.group.keywordTags[e.id];
+            e.group.keywords.splice(e.ki, 1); e.group.keywordIds.splice(e.ki, 1);
+            if (e.group.keywordTags) delete e.group.keywordTags[e.id];
+
+            if (typeof WO.logActivity === 'function') {
+                WO.logActivity('DELETE_KEYWORD', {
+                    targetName: e.keyword,
+                    groupName: e.group.name,
+                    groupIndex: e.gi,
+                    payload: {
+                        keyword: e.keyword,
+                        description: '',
+                        tags: (e.group.keywordTags && e.group.keywordTags[e.id]) || [],
+                        groupName: e.group.name,
+                        groupIndex: e.gi
+                    },
+                    isSuspicious: entries.length >= 5
+                });
+            }
         });
         await WO.syncAndSaveGroups().catch(() => {}); WO.setBulkMode(false);
         window.showToast(`Moved ${entries.length} bookmark${entries.length === 1 ? '' : 's'} to Trash.`, 6000, 'Undo', async () => {
