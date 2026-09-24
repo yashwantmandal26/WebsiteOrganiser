@@ -1,4 +1,4 @@
-# 🌐 WebsiteOrganiser — v1.0.17
+# 🌐 WebsiteOrganiser — v1.0.18
 
 A professional, high-performance Progressive Web Application (PWA) designed to organize, manage, and synchronize your favorite websites, bookmarks, and search keywords. Built with a focus on modern UI/UX, real-time cloud sync, and offline reliability.
 
@@ -109,6 +109,12 @@ Administrative actions are protected to maintain organization integrity.
 ---
 
 ## 📋 Changelog
+
+### v1.0.18 (2026-09-24)
+- 🛰️ **Precision GPS & Reverse Geocoding (Hazaribag)**: Upgraded location engine from cellular ISP gateway (Ranchi) to high-precision GPS (`navigator.geolocation`) with reverse-geocoding via BigDataCloud to accurately pinpoint exact city (e.g. Hazaribagh) and district with direct Google Maps navigation. Added manual `[🛰️ Enable Precision GPS]` toolbar toggle.
+- 📱 **Smart Device Model Decoder**: Auto-translates raw hardware codes (e.g. `SM-S921E` → **Samsung Galaxy S24**) with brand icons, browser names, and screen resolution.
+- 📑 **Rankwise Nested Accordion Audit Trail**: Complete overhaul of the Activity Audit modal into a ranked, structured list (`#1`, `#2`, `#3`...). Each item displays action pill, prominent target and affected group (`📁 meow`), device model, and relative timestamp. Clicking an item smoothly expands a nested details card with full actor, device, GPS/IP trace, and one-click undo restore.
+- ⚡ **Build & Cache Bump**: Asset bundles synced to `v1044` with Service Worker `wo-v1044`.
 
 ### v1.0.17 (2026-09-24)
 - 🛡️ **Comprehensive Audit & Security Trail**: Added real-time action logging for all additions, deletions, edits, and restores in Firestore.

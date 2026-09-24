@@ -1,7 +1,7 @@
 {
   "name": "WebsiteOrganiser - Your Keywords, Organized",
   "short_name": "WebsiteOrganiser",
-  "version": "1.0.17",
+  "version": "1.0.18",
   "description": "Save and organize your favorite websites and keywords with smart categorization and cloud sync.",
   "start_url": "./",
   "scope": "./",
