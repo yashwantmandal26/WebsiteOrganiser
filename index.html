@@ -41,7 +41,7 @@
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js">
-  <link rel="stylesheet" href="bundle.min.css?v=1051">
+  <link rel="stylesheet" href="bundle.min.css?v=1052">
 
   <link rel="manifest" href="manifest.json">
 
@@ -82,7 +82,7 @@
         </div>
         <div class="header-right">
           <!-- Admin Tools Hub Dropdown (Visible only to Admin) -->
-          <div class="admin-hub-wrapper admin-only" id="admin-hub-wrapper" style="display: none;">
+          <div class="admin-hub-wrapper admin-only" id="admin-hub-wrapper" style="display: none !important;">
             <button type="button" id="admin-hub-btn" class="admin-hub-trigger" aria-haspopup="true" aria-expanded="false" title="Admin Tools & Settings">
               <span class="admin-badge-dot"></span>
               <span class="admin-hub-text">🛡️ Admin Tools</span>
@@ -446,7 +446,7 @@
     })();
   </script>
   <!-- Application Bundle -->
-  <script defer src="bundle.min.js?v=1051"></script>
+  <script defer src="bundle.min.js?v=1052"></script>
 
   <div id="toast-container"></div>
   <!-- Global keyword tooltip portal — lives at body level to avoid contain:paint clipping -->

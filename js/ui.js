@@ -133,7 +133,11 @@
             WO.renderGroups();
         }
         const hubWrapper = document.getElementById('admin-hub-wrapper');
-        if (hubWrapper) hubWrapper.classList.remove('is-open');
+        if (hubWrapper) {
+            hubWrapper.classList.remove('is-open');
+            hubWrapper.style.setProperty('display', 'none', 'important');
+        }
+        document.body.classList.remove('admin-mode');
         if (typeof WO.showToast === 'function') {
             WO.showToast('🔒 Logged out of Admin session', 'info');
         }
@@ -144,7 +148,9 @@
         if (btn) {
             btn.textContent = WO.adminLoggedIn ? 'Admin Logout' : 'Admin Login';
         }
-        document.querySelectorAll('.admin-only').forEach(el => { el.style.display = WO.adminLoggedIn ? 'inline-flex' : 'none'; });
+        document.querySelectorAll('.admin-only').forEach(el => {
+            el.style.setProperty('display', WO.adminLoggedIn ? 'inline-flex' : 'none', 'important');
+        });
         document.body.classList.toggle('admin-mode', Boolean(WO.adminLoggedIn));
         const fab = document.getElementById('add-fab');
         if (fab) fab.style.display = 'flex';
@@ -153,6 +159,7 @@
         }
         const hubWrapper = document.getElementById('admin-hub-wrapper');
         if (hubWrapper) {
+            hubWrapper.style.setProperty('display', WO.adminLoggedIn ? 'inline-flex' : 'none', 'important');
             hubWrapper.classList.remove('is-open');
             const hubBtn = document.getElementById('admin-hub-btn');
             if (hubBtn) hubBtn.setAttribute('aria-expanded', 'false');
@@ -291,7 +298,7 @@
                 if (clickCount === 1) {
                     clickTimer = setTimeout(() => {
                         clickCount = 0;
-                    }, 800); // 800ms window to complete 3 taps
+                    }, 1200); // 1200ms window to complete 3 taps comfortably
                 }
                 
                 if (clickCount >= 3) {
@@ -299,13 +306,7 @@
                     clickCount = 0;
 
                     if (WO.adminLoggedIn) {
-                        if (typeof window.firebaseModular !== 'undefined' && window.firebaseAuth) {
-                            window.firebaseModular.signOut(window.firebaseAuth).catch(e => console.error('Signout failed:', e));
-                        } else {
-                            WO.adminLoggedIn = false;
-                            WO.updateAdminButton();
-                            WO.renderGroups();
-                        }
+                        WO.logoutAdmin();
                         return;
                     }
                     adminIdInput.value = ''; adminPasswordInput.value = '';
@@ -315,6 +316,18 @@
                 }
             });
         }
+
+        // Global Keyboard Shortcut: Ctrl+Alt+A or Ctrl+Shift+A opens Admin Login
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && (e.shiftKey || e.altKey) && e.key.toLowerCase() === 'a') {
+                e.preventDefault();
+                if (!WO.adminLoggedIn && adminModal) {
+                    adminIdInput.value = ''; adminPasswordInput.value = '';
+                    adminErrorMsg.style.display = 'none';
+                    WO.toggleModal(adminModal, true); adminIdInput.focus();
+                }
+            }
+        });
         
         // Live clock pointer cursor & tooltip
         const liveClock = document.getElementById('live-clock');

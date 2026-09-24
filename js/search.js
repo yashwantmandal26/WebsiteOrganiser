@@ -206,6 +206,21 @@
             // Trailing space → user explicitly wants Google search, skip keyword suggestions
             const hasTrailingSpace = rawValue !== rawValue.trimEnd();
 
+            // Admin shortcut: typing /admin or !admin in search bar opens Admin Login
+            if (tq === '/admin' || tq === '!admin' || tq === '#admin' || tq === 'admin') {
+                searchInput.value = '';
+                searchInput.blur();
+                hideSuggestions();
+                if (clearSearchBtn) clearSearchBtn.style.display = 'none';
+                const adminModal = document.getElementById('admin-modal');
+                const adminIdInput = document.getElementById('admin-id-input');
+                if (adminModal) {
+                    WO.toggleModal(adminModal, true);
+                    if (adminIdInput) adminIdInput.focus();
+                }
+                return;
+            }
+
             // Direct URL shortcut (e.g. "youtube") — only when no trailing space
             if (!hasTrailingSpace) {
                 const direct = WO.getDirectWebsiteUrl(tq);

@@ -3729,6 +3729,14 @@ body.is-touch .group-expand-chip {
   min-width: fit-content;
 }
 
+.admin-hub-wrapper {
+  display: none !important;
+}
+
+body.admin-mode .admin-hub-wrapper {
+  display: inline-flex !important;
+}
+
 .header-right>*:not(.admin-hub-wrapper):not(input) {
   min-width: 110px;
   max-width: 190px;
