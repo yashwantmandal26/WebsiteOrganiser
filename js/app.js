@@ -93,7 +93,7 @@
             if (WO.DEFAULT_KEYWORD_ADDED_AT) WO.keywordAddedAt = JSON.parse(JSON.stringify(WO.DEFAULT_KEYWORD_ADDED_AT));
         }
         WO.renderGroups();
-        setTimeout(WO.hideLoading, 600);
+        WO.hideLoading();
 
         // ── Step 2: Fetch fresh data from Firestore in background ────────────
         try {
@@ -119,7 +119,7 @@
 
 
     // ─── App Initialization ───────────────────────────────────────────────────
-    document.addEventListener('DOMContentLoaded', () => {
+    function initApp() {
         WO.resetKeywordStates();
 
         // Apply saved theme immediately
@@ -210,6 +210,12 @@
                 }, 400);
             }
         } catch {}
-    });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initApp);
+    } else {
+        initApp();
+    }
 
 })(window.WO);

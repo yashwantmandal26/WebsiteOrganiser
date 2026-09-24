@@ -262,8 +262,9 @@
             const q = item.dataset.query; if (q) { e.preventDefault(); e.stopPropagation(); performGoogleSearch(q, true); }
         }
 
-        // ── Input event ───────────────────────────────────────────────────────
-        let _searchRenderTimer = null;
+        // ── Input event (Snappy instant filtering) ───────────────────────────
+        let _searchRenderRaf = null;
+        let _suggestionsTimer = null;
         searchInput.addEventListener('input', e => {
             const q  = e.target.value;
             const nq = WO.normalizeSearchQuery(q);
@@ -272,12 +273,17 @@
             // Update live card filtering immediately
             WO.activeKeywordSearchQuery = nq;
 
-            clearTimeout(_searchRenderTimer);
-            _searchRenderTimer = setTimeout(() => {
-                // Use lightweight in-place updater to avoid favicon blink from full DOM rebuild
+            // Instantly filter tiles in next animation frame (0-16ms)
+            if (_searchRenderRaf) cancelAnimationFrame(_searchRenderRaf);
+            _searchRenderRaf = requestAnimationFrame(() => {
                 WO.updateSearchHighlighting();
-                showSuggestions(q); // hybrid dropdown
-            }, 120);
+            });
+
+            // Smooth debounce for dropdown suggestions (35ms)
+            clearTimeout(_suggestionsTimer);
+            _suggestionsTimer = setTimeout(() => {
+                showSuggestions(q);
+            }, 35);
         });
 
 

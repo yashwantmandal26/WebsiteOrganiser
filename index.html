@@ -29,8 +29,15 @@
   <meta name="msapplication-TileColor" content="#7b2cbf">
   <meta name="msapplication-tap-highlight" content="no">
 
-  <link rel="stylesheet" href="fonts/inter.css">
-  <link rel="stylesheet" href="bundle.min.css?v=1038">
+  <!-- Performance: Resource Hints & Font Preloads -->
+  <link rel="preconnect" href="https://favicon.im" crossorigin>
+  <link rel="dns-prefetch" href="https://favicon.im">
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://firestore.googleapis.com">
+  <link rel="preload" href="fonts/inter-latin-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/inter-latin-500.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/inter-latin-700.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="bundle.min.css?v=1039">
 
   <link rel="manifest" href="manifest.json">
 
@@ -56,7 +63,7 @@
     <div class="header-row">
       <div class="header-left">
         <a href="./" class="site-logo-link" title="Tap the red dot on the WebsiteOrganiser icon to refresh cached changes">
-          <img src="icon-192.png" alt="WebsiteOrganiser Logo" class="site-logo">
+          <img src="icon-192.png" alt="WebsiteOrganiser Logo" class="site-logo" width="48" height="48" decoding="async">
           <span class="site-logo-refresh-dot" aria-hidden="true" hidden></span>
         </a>
         <div class="header-brand">
@@ -75,8 +82,7 @@
           <button id="export-btn" class="btn holo-btn admin-only" style="display: none;" aria-label="Export backup" title="Export backup">📤 Export</button>
           <button id="import-btn" class="btn holo-btn admin-only" style="display: none;" aria-label="Import backup" title="Import backup">📥 Import</button>
           <input type="file" id="import-file-input" accept=".json" style="display: none;">
-          <button id="theme-toggle-btn" class="btn icon-btn holo-btn"><img src="media/theme.png" alt="Theme"
-              class="theme-icon"></button>
+          <button id="theme-toggle-btn" class="btn icon-btn holo-btn" aria-label="Toggle theme" title="Toggle theme"><img src="media/theme.png" alt="Theme" class="theme-icon" width="24" height="24" decoding="async"></button>
         </div>
       </div>
       <!-- Row 3: Search Bar -->
@@ -88,7 +94,7 @@
 
           <button type="button" id="search-submit-btn" class="search-submit-btn" aria-label="Search"
             title="Search">
-            <img src="media/google.png" alt="" class="search-icon">
+            <img src="media/google.png" alt="" class="search-icon" width="24" height="24" decoding="async">
           </button>
           <button id="clear-search-btn" class="clear-search-btn" style="display: none;" title="Clear">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -271,11 +277,15 @@
         h = h % 12;
         if (h === 0) h = 12;
         
-        if (hh) hh.textContent = String(h).padStart(2, '0');
-        if (mm) mm.textContent = String(m).padStart(2, '0');
-        if (ss) ss.textContent = String(s).padStart(2, '0');
+        var newH = String(h).padStart(2, '0');
+        var newM = String(m).padStart(2, '0');
+        var newS = String(s).padStart(2, '0');
+        var newAp = '\u00a0' + ampm;
+        if (hh && hh.textContent !== newH) hh.textContent = newH;
+        if (mm && mm.textContent !== newM) mm.textContent = newM;
+        if (ss && ss.textContent !== newS) ss.textContent = newS;
+        if (ap && ap.textContent !== newAp) ap.textContent = newAp;
         if (msVisible && msSpan) msSpan.textContent = '.' + String(ms).padStart(3, '0');
-        if (ap) ap.textContent = '\u00a0' + ampm;
 
         if (msVisible) {
             rafId = requestAnimationFrame(updateClock);
@@ -299,12 +309,26 @@
         });
       }
 
+      // Conserve CPU when tab is hidden
+      document.addEventListener('visibilitychange', function () {
+        if (document.hidden) {
+          clearInterval(clockInterval);
+          if (rafId) cancelAnimationFrame(rafId);
+        } else {
+          updateClock();
+          if (!msVisible) {
+            clearInterval(clockInterval);
+            clockInterval = setInterval(updateClock, 1000);
+          }
+        }
+      }, { passive: true });
+
       updateClock();
       clockInterval = setInterval(updateClock, 1000);
     })();
   </script>
   <!-- Application Bundle -->
-  <script defer src="bundle.min.js?v=1038"></script>
+  <script defer src="bundle.min.js?v=1039"></script>
 
   <div id="toast-container"></div>
   <!-- Global keyword tooltip portal — lives at body level to avoid contain:paint clipping -->

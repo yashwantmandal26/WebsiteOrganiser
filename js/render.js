@@ -198,6 +198,10 @@
                         if (WO.bulkMode) item.classList.add('bulk-selectable');
                         if (WO.selectedBookmarkIds.has(bookmarkId)) item.classList.add('bulk-selected');
 
+                        // Performance: Cache search string & display text on element for zero-cost search filtering
+                        item._searchText  = searchText;
+                        item._displayText = displayText;
+
                         const clickCount     = Number(WO.localClickCounts[ek]) || 0;
                         const keywordLabelHtml = isKeywordSearchActive
                             ? WO.highlightSearchHtml(displayText, normalizedSearchQuery)
@@ -442,37 +446,44 @@
         const searchTokens = normalizedQuery ? normalizedQuery.split(/\s+/).filter(Boolean) : [];
         const isActive = WO.searchMode === WO.SEARCH_MODE_KEYWORDS && searchTokens.length > 0;
 
-        // Update every keyword item in-place — no DOM destroy/rebuild
-        container.querySelectorAll('.keyword-grid-preview-item').forEach(item => {
-            const keyword   = item.dataset.keywordValue || '';
-            const targetUrl = item.dataset.targetUrl   || '';
-            const { displayText } = WO.parseKeyword(keyword);
-            const gi = Number(item.dataset.groupIndex), group = WO.groups[gi];
-            const ek          = item.dataset.bookmarkId || WO.getKeywordEncodedKey(keyword);
-            const description = WO.getBookmarkMetadata(WO.keywordDescriptions, gi, Number(item.dataset.keywordIndex), keyword, '');
-            const tags = group && group.keywordTags && group.keywordTags[ek] || [];
-            const searchText  = [keyword, displayText, targetUrl, description, tags.join(' ')].join(' ').toLowerCase();
+        const activeGroupIndices = new Set();
+        const items = container.querySelectorAll('.keyword-grid-preview-item');
 
-            // Show/hide based on search match
+        // Fast-path: single loop over pre-cached strings
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            const searchText = item._searchText || (item._searchText = (item.dataset.keywordValue + ' ' + (item.dataset.description || '')).toLowerCase());
             const matches = !isActive || WO.matchesKeywordSearch(searchText, searchTokens);
-            item.style.display = matches ? '' : 'none';
 
-            // Update label text only — leave icon DOM untouched (no flicker)
-            const textEl = item.querySelector('.keyword-grid-text');
-            if (textEl) {
-                textEl.innerHTML = isActive
-                    ? WO.highlightSearchHtml(displayText, normalizedQuery)
-                    : WO.escapeHtml(displayText);
+            if (matches) {
+                if (item.style.display !== '') item.style.display = '';
+                activeGroupIndices.add(item.dataset.groupIndex);
+                if (isActive) {
+                    const textEl = item.querySelector('.keyword-grid-text');
+                    if (textEl) textEl.innerHTML = WO.highlightSearchHtml(item._displayText || item.dataset.keywordValue, normalizedQuery);
+                }
+            } else {
+                if (item.style.display !== 'none') item.style.display = 'none';
             }
-        });
 
-        // Show/hide entire group card wrappers based on whether any items remain visible
-        container.querySelectorAll('.group-card').forEach(card => {
-            const hasVisible = Array.from(card.querySelectorAll('.keyword-grid-preview-item'))
-                .some(it => it.style.display !== 'none');
+            if (!isActive) {
+                const textEl = item.querySelector('.keyword-grid-text');
+                if (textEl && item._displayText) textEl.textContent = item._displayText;
+            }
+        }
+
+        // Show/hide group cards without nested querySelectorAll
+        const cards = container.querySelectorAll('.group-card');
+        for (let i = 0; i < cards.length; i++) {
+            const card = cards[i];
+            const gi = card.dataset.groupIndex;
+            const hasVisible = !isActive || activeGroupIndices.has(gi);
             const wrapper = card.closest('.group-card-wrapper') || card;
-            wrapper.style.display = (!isActive || hasVisible) ? '' : 'none';
-        });
+            const targetDisplay = hasVisible ? '' : 'none';
+            if (wrapper.style.display !== targetDisplay) {
+                wrapper.style.display = targetDisplay;
+            }
+        }
     };
 
     // ── Lightweight in-place theme color updater ───────────────────────────────

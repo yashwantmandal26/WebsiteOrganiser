@@ -309,7 +309,6 @@ body::after {
       50% 50%,
       0% 100%;
     opacity: 0.3;
-    filter: blur(1px) hue-rotate(0deg);
   }
 
   16.66% {
@@ -368,7 +367,6 @@ body::after {
       0% 100%,
       50% 50%;
     opacity: 0.2;
-    filter: blur(2px) hue-rotate(0deg);
   }
 
   20% {

@@ -77,6 +77,14 @@ async function build() {
 
     const cssFiles = ['style.css', 'add-keyword-modal.css', 'search-bar-update.css'];
     let combinedCSS = '';
+
+    const fontCssPath = path.join(ROOT, 'fonts', 'inter.css');
+    if (fs.existsSync(fontCssPath)) {
+        const fontCss = fs.readFileSync(fontCssPath, 'utf8')
+            .replace(/url\('(inter-latin-[^']+)'\)/g, "url('fonts/$1')");
+        combinedCSS += '/* === fonts/inter.css === */\n' + fontCss + '\n';
+    }
+
     for (const file of cssFiles) {
         const filePath = path.join(ROOT, file);
         combinedCSS += `/* === ${file} === */\n` + fs.readFileSync(filePath, 'utf8') + '\n';

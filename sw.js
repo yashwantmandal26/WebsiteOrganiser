@@ -15,8 +15,9 @@
 //   The activate event will wipe all old caches automatically.
 // =====================================================
 
-const CACHE_VERSION = 'wo-v1038';
+const CACHE_VERSION = 'wo-v1039';
 const CACHE_NAME = `websiteorganiser-${CACHE_VERSION}`;
+const FAVICON_CACHE_NAME = 'websiteorganiser-favicons-v1';
 
 // Files to pre-cache on install (app shell — enough to show something offline)
 const PRECACHE_URLS = [
@@ -25,8 +26,11 @@ const PRECACHE_URLS = [
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',
-  '/bundle.min.css?v=1038',
-  '/bundle.min.js?v=1038',
+  '/fonts/inter-latin-400.woff2',
+  '/fonts/inter-latin-500.woff2',
+  '/fonts/inter-latin-700.woff2',
+  '/bundle.min.css?v=1039',
+  '/bundle.min.js?v=1039',
 ];
 
 // ─── Install ──────────────────────────────────────────────────────────────────
@@ -49,18 +53,19 @@ self.addEventListener('install', (event) => {
 // Delete ALL old caches from previous SW versions so stale files never linger.
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys()
-      .then((keys) =>
+    Promise.all([
+      self.registration.navigationPreload ? self.registration.navigationPreload.enable() : Promise.resolve(),
+      caches.keys().then((keys) =>
         Promise.all(
           keys
-            .filter((key) => key !== CACHE_NAME) // keep only current version
+            .filter((key) => key !== CACHE_NAME && key !== FAVICON_CACHE_NAME) // keep current and favicon cache
             .map((key) => {
               console.log('[SW] Deleting old cache:', key);
               return caches.delete(key);
             })
         )
       )
-      .then(() => self.clients.claim()) // take control of all open tabs immediately
+    ]).then(() => self.clients.claim()) // take control of all open tabs immediately
   );
 });
 
@@ -72,48 +77,60 @@ self.addEventListener('fetch', (event) => {
   // Only handle GET requests
   if (req.method !== 'GET') return;
 
-  // ── Skip cross-origin requests (Firebase, Google APIs, fonts CDN, etc.) ──
+  // ── Favicon IM Cache (external favicons) ──────────────────────────────────
+  if (url.hostname === 'favicon.im') {
+    event.respondWith(staleWhileRevalidateFavicon(req));
+    return;
+  }
+
+  // ── Skip other cross-origin requests (Firebase, Google APIs, fonts CDN, etc.) ──
   // These are live data / third-party — let them go straight to network.
   if (url.origin !== self.location.origin) return;
 
   const path = url.pathname;
   const search = url.search;
 
-  // ── 1. HTML pages → Network-First ─────────────────────────────────────────
-  // Always try to fetch the latest HTML. This means the user immediately picks
-  // up new ?v= version numbers the developer publishes, busting JS/CSS caches.
-  // Falls back to cached copy only when truly offline.
+  // ── 1. HTML pages → Network-First with Navigation Preload ─────────────────
   if (req.headers.get('accept')?.includes('text/html') || path === '/' || path.endsWith('.html')) {
-    event.respondWith(networkFirst(req));
+    event.respondWith(networkFirst(req, event.preloadResponse));
     return;
   }
 
   // ── 2. sw.js itself → Network-First ────────────────────────────────────────
-  // The browser already enforces byte-for-byte check on SW, but being explicit.
   if (path === '/sw.js') {
     event.respondWith(networkFirst(req));
     return;
   }
 
-
-  // ── 4. Versioned JS / CSS (has ?v= in URL) → Cache-First ──────────────────
-  // The ?v= query string changes every time the developer updates the file,
-  // so a new version = new URL = automatic cache miss = fresh fetch.
-  // Old versioned URLs are simply never matched again (auto-busted).
+  // ── 3. Versioned JS / CSS (has ?v= in URL) → Cache-First ──────────────────
   if (search.includes('v=') && (path.endsWith('.js') || path.endsWith('.css'))) {
     event.respondWith(cacheFirst(req));
     return;
   }
 
-  // ── 5. Images / Icons / Fonts → Cache-First (long-lived) ──────────────────
+  // ── 4. Images / Icons / Fonts → Cache-First (long-lived) ──────────────────
   if (/\.(png|jpg|jpeg|gif|svg|webp|ico|woff2?|ttf|eot)$/i.test(path)) {
     event.respondWith(cacheFirst(req));
     return;
   }
 
-  // ── 6. Everything else → Network-First ────────────────────────────────────
+  // ── 5. Everything else → Network-First ────────────────────────────────────
   event.respondWith(networkFirst(req));
 });
+
+// ─── Strategy: Stale-While-Revalidate for Favicons ────────────────────────────
+async function staleWhileRevalidateFavicon(request) {
+  const cache = await caches.open(FAVICON_CACHE_NAME);
+  const cached = await cache.match(request);
+  const fetchPromise = fetch(request).then((res) => {
+    if (res && res.status === 200) {
+      cache.put(request, res.clone());
+    }
+    return res;
+  }).catch(() => null);
+
+  return cached || (await fetchPromise) || new Response('', { status: 404 });
+}
 
 // ─── Strategy: Cache-First ────────────────────────────────────────────────────
 // Return cached response instantly if available; otherwise fetch, cache & return.
@@ -136,8 +153,14 @@ async function cacheFirst(request) {
 
 // ─── Strategy: Network-First ──────────────────────────────────────────────────
 // Try network first; if offline/failed, serve from cache as fallback.
-async function networkFirst(request) {
+async function networkFirst(request, preloadResponsePromise) {
   try {
+    const preloaded = preloadResponsePromise ? await preloadResponsePromise : null;
+    if (preloaded) {
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(request, preloaded.clone());
+      return preloaded;
+    }
     const response = await fetch(request);
     if (response.ok) {
       const cache = await caches.open(CACHE_NAME);
