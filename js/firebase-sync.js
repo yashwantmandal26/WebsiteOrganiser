@@ -5,15 +5,12 @@
 (function (WO) {
 
     // ─── Firestore Setup ──────────────────────────────────────────────────────
-    const cloudSyncEnabled = typeof window.firebaseModular !== 'undefined' && window.db;
-    WO.firestoreFieldValue = cloudSyncEnabled ? {
-        increment: (v) => window.firebaseModular.increment(v),
-        delete:    () => window.firebaseModular.deleteField(),
-        serverTimestamp: () => window.firebaseModular.serverTimestamp()
-    } : {
-        increment: (v) => v,
-        delete:    () => undefined,
-        serverTimestamp: () => null
+    const _isCloudSyncEnabled = () => Boolean(typeof window.firebaseModular !== 'undefined' && window.db);
+
+    WO.firestoreFieldValue = {
+        increment: (v) => _isCloudSyncEnabled() ? window.firebaseModular.increment(v) : v,
+        delete:    () => _isCloudSyncEnabled() ? window.firebaseModular.deleteField() : undefined,
+        serverTimestamp: () => _isCloudSyncEnabled() ? window.firebaseModular.serverTimestamp() : null
     };
 
     const _offline = () => ({
@@ -29,16 +26,41 @@
     });
 
     const _makeRef = (col, docName) => {
-        if (!cloudSyncEnabled) return _offline();
-        const dRef = window.firebaseModular.doc(window.db, col, docName);
         return {
-            set: async (data, opts) => window.firebaseModular.setDoc(dRef, data, opts),
-            update: async (data) => window.firebaseModular.updateDoc(dRef, data),
+            set: async (data, opts) => {
+                if (!_isCloudSyncEnabled()) return;
+                const dRef = window.firebaseModular.doc(window.db, col, docName);
+                return window.firebaseModular.setDoc(dRef, data, opts);
+            },
+            update: async (data) => {
+                if (!_isCloudSyncEnabled()) return;
+                const dRef = window.firebaseModular.doc(window.db, col, docName);
+                return window.firebaseModular.updateDoc(dRef, data);
+            },
             get: async () => {
+                if (!_isCloudSyncEnabled()) return _offline().get();
+                const dRef = window.firebaseModular.doc(window.db, col, docName);
                 const snap = await window.firebaseModular.getDoc(dRef);
                 return _wrapSnap(snap);
             },
-            onSnapshot: (cb, onError) => window.firebaseModular.onSnapshot(dRef, (snap) => cb(_wrapSnap(snap)), onError)
+            onSnapshot: (cb, onError) => {
+                if (!_isCloudSyncEnabled()) {
+                    let active = true;
+                    let unsub = null;
+                    const checkInterval = setInterval(() => {
+                        if (!active) { clearInterval(checkInterval); return; }
+                        if (_isCloudSyncEnabled()) {
+                            clearInterval(checkInterval);
+                            const dRef = window.firebaseModular.doc(window.db, col, docName);
+                            unsub = window.firebaseModular.onSnapshot(dRef, (snap) => cb(_wrapSnap(snap)), onError);
+                        }
+                    }, 50);
+                    setTimeout(() => clearInterval(checkInterval), 15000);
+                    return () => { active = false; clearInterval(checkInterval); if (unsub) unsub(); };
+                }
+                const dRef = window.firebaseModular.doc(window.db, col, docName);
+                return window.firebaseModular.onSnapshot(dRef, (snap) => cb(_wrapSnap(snap)), onError);
+            }
         };
     };
 
@@ -198,16 +220,18 @@
     WO.saveLocalDataBackupNow = _doSaveLocalDataBackup; // synchronous version for critical paths
 
     WO.applyLocalDataBackup = function (backup) {
-        if (!backup || !Array.isArray(backup.groups)) return false;
+        if (!backup || !Array.isArray(backup.groups) || backup.groups.length === 0) return false;
         const backupGroups = cloneForStorage(backup.groups, []);
         backupGroups.forEach(g => { if (g.clickCounts) delete g.clickCounts; if (!Array.isArray(g.keywords)) g.keywords = []; });
-        WO.groups = backupGroups.filter(g => g && typeof g.name === 'string' && Array.isArray(g.keywords));
+        const validGroups = backupGroups.filter(g => g && typeof g.name === 'string' && Array.isArray(g.keywords));
+        if (validGroups.length === 0) return false;
+        WO.groups = validGroups;
         if (backup.globalClickCounts)   WO.globalClickCounts   = cloneForStorage(backup.globalClickCounts, {});
         if (backup.keywordDescriptions) WO.keywordDescriptions = cloneForStorage(backup.keywordDescriptions, {});
         if (backup.keywordAddedAt)      WO.keywordAddedAt      = cloneForStorage(backup.keywordAddedAt, {});
         if (backup.keywordDeletedStatus) WO.keywordDeletedStatus = cloneForStorage(backup.keywordDeletedStatus, {});
         WO.migrateMetadataToStableIds();
-        return backup.initialized === true || Array.isArray(backup.groups);
+        return true;
     };
 
     // ─── Local Group Order ────────────────────────────────────────────────────
@@ -336,7 +360,7 @@
                 const n = deletedStatusDoc.data() || {};
                 if (shallowObjectChanged(WO.keywordDeletedStatus, n)) { WO.keywordDeletedStatus = n; changed = true; }
             }
-            if (groupsDoc.exists && Array.isArray(groupsDoc.data().data)) {
+            if (groupsDoc.exists && Array.isArray(groupsDoc.data().data) && groupsDoc.data().data.length > 0) {
                 const newGroups = groupsDoc.data().data;
                 newGroups.forEach(g => { if (g.clickCounts) delete g.clickCounts; });
                 if (JSON.stringify(newGroups) !== JSON.stringify(WO.groups)) { WO.groups = newGroups; changed = true; }

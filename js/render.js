@@ -29,6 +29,14 @@
         }
 
         resetKeywordStates(false, true); // Global fn defined in app.js
+        if (!WO.groups || WO.groups.length === 0) {
+            const backup = WO.loadLocalDataBackup();
+            if (!backup || !WO.applyLocalDataBackup(backup)) {
+                if (WO.DEFAULT_GROUPS && WO.DEFAULT_GROUPS.length > 0) {
+                    WO.groups = JSON.parse(JSON.stringify(WO.DEFAULT_GROUPS));
+                }
+            }
+        }
         WO.ensureStableBookmarkIds();
 
         const fragment = document.createDocumentFragment();

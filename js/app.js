@@ -82,6 +82,16 @@
         }, delay);
     }
 
+    async function waitForFirebase(timeoutMs = 3500) {
+        if (typeof window.firebaseModular !== 'undefined' && window.db) return true;
+        const start = Date.now();
+        while (Date.now() - start < timeoutMs) {
+            if (typeof window.firebaseModular !== 'undefined' && window.db) return true;
+            await new Promise(r => setTimeout(r, 40));
+        }
+        return Boolean(typeof window.firebaseModular !== 'undefined' && window.db);
+    }
+
     async function loadDataFromServer() {
         // ── Step 1: Show cached data instantly (zero-delay first paint) ──────
         const backup = WO.loadLocalDataBackup();
@@ -97,8 +107,12 @@
 
         // ── Step 2: Fetch fresh data from Firestore in background ────────────
         try {
+            await waitForFirebase(3500);
             const changed = await WO.loadGroups();
-            if (changed || !hadCachedData) {
+            if (changed || !hadCachedData || WO.groups.length === 0) {
+                if (WO.groups.length === 0) {
+                    WO.groups = JSON.parse(JSON.stringify(WO.DEFAULT_GROUPS));
+                }
                 WO.renderGroups();
             }
             WO.hideLoading();
