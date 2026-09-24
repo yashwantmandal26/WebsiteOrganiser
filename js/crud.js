@@ -210,10 +210,14 @@
             const ek = bookmarkId;
             WO.lastAddedKeyword    = kw;
             WO.lastAddedGroupIndex = WO.addKeywordTargetGroupIndex;
-            group.keywords.push(kw);
-            group.keywordIds.push(bookmarkId);
+            group.keywords.unshift(kw);
+            group.keywordIds.unshift(bookmarkId);
             if (!WO.keywordAddedAt || typeof WO.keywordAddedAt !== 'object') WO.keywordAddedAt = {};
             WO.keywordAddedAt[ek] = addedAt;
+            const legacyKey = WO.getKeywordEncodedKey(kw);
+            if (legacyKey && legacyKey !== ek) {
+                WO.keywordAddedAt[legacyKey] = addedAt;
+            }
 
             WO.resetAddKeywordModalState();
             WO.toggleModal(document.getElementById('add-keyword-modal'), false);

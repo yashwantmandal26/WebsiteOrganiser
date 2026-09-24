@@ -46,18 +46,35 @@
                 const ek          = bookmarkId || WO.getKeywordEncodedKey(keyword);
                 const description = WO.getBookmarkMetadata(WO.keywordDescriptions, originalIndex, keywordIndex, keyword, '');
                 const isSoftDeleted = WO.getBookmarkMetadata(WO.keywordDeletedStatus, originalIndex, keywordIndex, keyword, false) === true;
-                const isNew       = WO.isKeywordNew(keyword, ek);
                 const addedAt     = WO.getBookmarkMetadata(WO.keywordAddedAt, originalIndex, keywordIndex, keyword, 0);
+                const isNew       = WO.isKeywordNew(keyword, ek) || (Boolean(addedAt) && (Date.now() - Number(addedAt)) <= WO.NEW_BADGE_DURATION_MS);
                 const tags        = Array.isArray(group.keywordTags[bookmarkId]) ? group.keywordTags[bookmarkId] : [];
                 const searchText  = [keyword, displayText, targetUrl, description, tags.join(' '), group.name].join(' ').toLowerCase();
                 return { keyword, keywordIndex, bookmarkId, displayText, targetUrl, description, tags, ek, isNew, addedAt, searchText, isSoftDeleted };
             }).sort((a, b) => {
+                // 1. Newly added websites ALWAYS come at the top
+                if (a.isNew !== b.isNew) {
+                    return a.isNew ? -1 : 1;
+                }
+                if (a.isNew && b.isNew) {
+                    // Both newly added: newest addedAt first
+                    const diffTime = (Number(b.addedAt) || 0) - (Number(a.addedAt) || 0);
+                    if (diffTime !== 0) return diffTime;
+                    const ca = Number(WO.localClickCounts[a.ek]) || 0;
+                    const cb = Number(WO.localClickCounts[b.ek]) || 0;
+                    if (cb !== ca) return cb - ca;
+                    return a.displayText.localeCompare(b.displayText, undefined, { sensitivity: 'base' });
+                }
+
+                // 2. Regular websites: sort by usage (clicks)
                 const ca = Number(WO.localClickCounts[a.ek]) || 0;
                 const cb = Number(WO.localClickCounts[b.ek]) || 0;
                 // Keywords with clicks come before keywords with 0 clicks
                 if (ca === 0 && cb === 0) {
-                    // Both unclicked: sort oldest first so newest appears last
-                    return a.addedAt - b.addedAt;
+                    if (a.addedAt && b.addedAt && a.addedAt !== b.addedAt) {
+                        return a.addedAt - b.addedAt;
+                    }
+                    return a.keywordIndex - b.keywordIndex;
                 }
                 if (ca === 0) return 1;  // a has no clicks → goes after b
                 if (cb === 0) return -1; // b has no clicks → a goes first

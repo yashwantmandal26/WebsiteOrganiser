@@ -450,7 +450,13 @@
     // ─── Keyword Metadata Helpers ─────────────────────────────────────────────
     WO.getKeywordAddedTimestamp = function (keyword, metadataKey) {
         if (!keyword) return null;
-        const v = WO.keywordAddedAt[metadataKey || WO.getKeywordEncodedKey(keyword)];
+        let v = null;
+        if (metadataKey && WO.keywordAddedAt) {
+            v = WO.keywordAddedAt[metadataKey];
+        }
+        if (v == null && WO.keywordAddedAt) {
+            v = WO.keywordAddedAt[WO.getKeywordEncodedKey(keyword)];
+        }
         if (v == null) return null;
         const t = typeof v === 'string' ? Date.parse(v) : Number(v);
         return Number.isFinite(t) ? t : null;
@@ -464,9 +470,17 @@
     WO.saveKeywordAddedAt = async function (keyword, timestamp = Date.now(), metadataKey) {
         if (!keyword) return;
         const ek = metadataKey || WO.getKeywordEncodedKey(keyword);
+        const legacyKey = WO.getKeywordEncodedKey(keyword);
         WO.keywordAddedAt[ek] = timestamp;
+        if (legacyKey && legacyKey !== ek) {
+            WO.keywordAddedAt[legacyKey] = timestamp;
+        }
         WO.saveLocalDataBackup();
-        try { await WO.keywordAddedAtRef.set({ [ek]: timestamp }, { merge: true }); }
+        try {
+            const payload = { [ek]: timestamp };
+            if (legacyKey && legacyKey !== ek) payload[legacyKey] = timestamp;
+            await WO.keywordAddedAtRef.set(payload, { merge: true });
+        }
         catch (e) { console.error('Failed to save keyword timestamp:', e); }
     };
 

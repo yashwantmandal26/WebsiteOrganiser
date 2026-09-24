@@ -6477,13 +6477,9 @@ html {
 
 @media (max-width: 900px) and (max-height: 500px) and (orientation: landscape) {
   .clock-ms { display: none !important; }
-  body:not(.admin-mode) .header-row {
-    display: grid !important;
-    grid-template-columns: minmax(150px, auto) minmax(240px, 1fr) auto !important;
-    align-items: center !important;
-  }
-  body:not(.admin-mode) .header-left { grid-column: 1 !important; grid-row: 1 !important; }
-  body:not(.admin-mode) .search-bar-container { grid-column: 2 !important; grid-row: 1 !important; }
-  body:not(.admin-mode) .header-controls { grid-column: 3 !important; grid-row: 1 !important; }
+  .header-row { display: grid !important; grid-template-columns: auto 1fr auto !important; }
+  .header-left { grid-column: 1 !important; }
+  .header-controls { grid-column: 3 !important; }
+  .search-bar-container { grid-column: 1 / -1 !important; }
   .groups-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 }
