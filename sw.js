@@ -15,7 +15,7 @@
 //   The activate event will wipe all old caches automatically.
 // =====================================================
 
-const CACHE_VERSION = 'wo-v1042';
+const CACHE_VERSION = 'wo-v1043';
 const CACHE_NAME = `websiteorganiser-${CACHE_VERSION}`;
 const FAVICON_CACHE_NAME = 'websiteorganiser-favicons-v1';
 
@@ -29,8 +29,8 @@ const PRECACHE_URLS = [
   '/fonts/inter-latin-400.woff2',
   '/fonts/inter-latin-500.woff2',
   '/fonts/inter-latin-700.woff2',
-  '/bundle.min.css?v=1042',
-  '/bundle.min.js?v=1042',
+  '/bundle.min.css?v=1043',
+  '/bundle.min.js?v=1043',
 ];
 
 // ─── Install ──────────────────────────────────────────────────────────────────

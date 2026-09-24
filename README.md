@@ -1,4 +1,4 @@
-# 🌐 WebsiteOrganiser — v1.0.13
+# 🌐 WebsiteOrganiser — v1.0.17
 
 A professional, high-performance Progressive Web Application (PWA) designed to organize, manage, and synchronize your favorite websites, bookmarks, and search keywords. Built with a focus on modern UI/UX, real-time cloud sync, and offline reliability.
 
@@ -109,6 +109,15 @@ Administrative actions are protected to maintain organization integrity.
 ---
 
 ## 📋 Changelog
+
+### v1.0.17 (2026-09-24)
+- 🛡️ **Comprehensive Audit & Security Trail**: Added real-time action logging for all additions, deletions, edits, and restores in Firestore.
+- 📱 **Hardware & Model Device Detection**: Full device model & OS identification (Client Hints API + UA parser for Android, iPhone, Windows, Mac).
+- 📍 **Geolocation & Google Maps**: Location tracking with direct Google Maps link for tracing action origin.
+- ⚠️ **Suspicious Activity Alert & Rate-Limiter**: Automatic red security lock and banner when 5+ links are deleted, blocking further destructive actions until Admin unlock.
+- ↩️ **One-Click Undo / Restore**: Restores deleted keywords or groups directly from the audit log.
+- 🔍 **Activity Search, Filter & CSV Export**: Real-time filtering by category/action and one-click audit trail CSV download.
+- ⚡ **Performance & Bundle Sync**: Updated Service Worker caching (`wo-v1043`), minified CSS/JS bundle pipeline, and instant asset cache busting.
 
 ### v1.0.5 (2026-07-15)
 - ✅ **Search History Auto-Collapse** — The search history / suggestions dropdown now automatically collapses and loses focus immediately after executing a search, preventing it from unexpectedly re-opening when switching tabs or returning to the page.
