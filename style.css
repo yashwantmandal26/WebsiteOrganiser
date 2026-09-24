@@ -3546,7 +3546,7 @@ body.is-touch .group-expand-chip {
   /* Monospace + tabular numbers = zero layout shift */
   font-family: 'Courier New', 'Consolas', monospace;
   font-variant-numeric: tabular-nums;
-  font-size: clamp(1.3rem, 2.4vw, 1.85rem);
+  font-size: clamp(1.02rem, 1.3vw, 1.22rem);
   font-weight: 700;
   letter-spacing: 0;
   user-select: none;
@@ -4122,15 +4122,16 @@ body.is-touch .group-expand-chip {
     align-self: unset !important;
   }
 
-  /* Logo + Title */
+  /* Logo + Title centered on Row 1 */
   .header-left {
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: flex-start;
-    gap: 6px;
-    width: auto;
-    margin: 0;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    flex: 0 0 100%;
+    margin: 0 0 6px 0;
     order: 1;
     position: static;
   }
@@ -4141,57 +4142,57 @@ body.is-touch .group-expand-chip {
     align-items: flex-start;
   }
 
-  .site-logo { height: 35px; }
+  .site-logo { height: 42px; width: 42px; }
 
   .site-logo-refresh-dot {
     width: 10px; height: 10px; top: 1px; right: 1px;
   }
 
   .site-title {
-    font-size: 1.15rem;
+    font-size: 1.35rem;
     line-height: 1.1;
   }
 
-  /* Timer + Toggle on one line */
+  /* Row 2: Controls (Theme button) on left */
   .header-controls {
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
     align-items: center;
-    justify-content: flex-end;
-    gap: 6px;
+    justify-content: flex-start;
+    gap: 8px;
     width: auto;
+    flex: 0 0 auto;
     margin-bottom: 0;
     order: 2;
   }
 
   .live-clock {
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.05rem;
-    height: 40px;
-    box-sizing: border-box;
-    padding: 0 12px;
-    margin: 0;
+    display: none !important;
   }
 
   .header-right {
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
-    justify-content: flex-end;
+    justify-content: flex-start;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     width: auto;
+    flex: 0 0 auto;
     margin: 0;
     overflow: visible;
   }
 
-  /* Search bar full width on its own row */
+  /* Search bar on Row 2: right side of theme toggle */
   .search-bar-container {
-    width: 100%;
+    display: flex;
+    align-items: center;
+    width: auto;
+    flex: 1 1 0%;
+    min-width: 120px;
     margin-top: 0;
+    margin-left: 10px;
     order: 3;
   }
 
@@ -6274,25 +6275,24 @@ html {
     gap: 6px 8px !important;
   }
 
-  .site-logo { height: 32px !important; }
-  .site-title { font-size: clamp(.98rem, 4.4vw, 1.12rem) !important; }
+  .site-logo { height: 42px !important; width: 42px !important; }
+  .site-title { font-size: clamp(1.3rem, 5vw, 1.55rem) !important; }
   .live-clock {
-    height: 36px !important;
-    min-height: 36px !important;
-    padding: 0 9px !important;
-    font-size: .9rem !important;
+    display: none !important;
   }
   .clock-ms { display: none !important; }
   .header-right #theme-toggle-btn {
-    width: 36px !important;
-    min-width: 36px !important;
-    height: 36px !important;
-    min-height: 36px !important;
+    width: 40px !important;
+    min-width: 40px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    border-radius: 50% !important;
   }
-  body.admin-mode .header-left { flex: 1 1 auto; }
+  body.admin-mode .header-left { flex: 0 0 100%; width: 100%; }
   body.admin-mode .header-controls {
-    width: 100% !important;
-    justify-content: space-between !important;
+    width: auto !important;
+    flex: 0 0 auto !important;
+    justify-content: flex-start !important;
     order: 2 !important;
   }
   body.admin-mode .header-right { gap: 6px !important; }

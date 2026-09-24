@@ -265,7 +265,7 @@
 
 @media (max-width: 900px) {
   body {
-    padding-top: 135px !important;
+    padding-top: 125px !important;
   }
 
   .live-clock {
@@ -276,38 +276,39 @@
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: wrap !important;
-    gap: 8px 10px !important;
+    gap: 6px 0 !important;
     padding: 6px 12px !important;
     min-height: auto;
     align-items: center !important;
-    justify-content: center !important;
+    justify-content: space-between !important;
     overflow: visible;
     width: 100%;
     box-sizing: border-box;
   }
   
   .header-left {
-    flex: 1 1 100% !important;
+    flex: 0 0 100% !important;
     width: 100% !important;
     order: 1 !important;
     justify-content: center !important;
-    margin: 0 0 4px 0 !important;
+    align-items: center !important;
+    margin: 0 0 6px 0 !important;
     gap: 10px !important;
     padding: 0 !important;
   }
   
   .site-logo {
-    width: 46px !important;
-    height: 46px !important;
+    width: 44px !important;
+    height: 44px !important;
   }
 
   .site-title {
-    font-size: clamp(1.45rem, 5.5vw, 1.75rem) !important;
+    font-size: clamp(1.4rem, 5.2vw, 1.7rem) !important;
     visibility: visible !important;
     opacity: 1 !important;
   }
   
-  /* Row 2 Left: Theme Toggle & Admin Tools (where the arrow pointed) */
+  /* Row 2 Left: Theme Toggle & Admin Tools */
   .header-controls {
     display: flex !important;
     align-items: center !important;
@@ -315,6 +316,7 @@
     width: auto !important;
     flex: 0 0 auto !important;
     margin: 0 !important;
+    padding: 0 !important;
   }
 
   .header-right {
@@ -330,87 +332,53 @@
   }
 
   #theme-toggle-btn {
-    width: 44px !important;
-    height: 44px !important;
-    min-width: 44px !important;
-    border-radius: 12px !important;
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    max-width: 42px !important;
+    border-radius: 50% !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     padding: 0 !important;
+    flex-shrink: 0 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12) !important;
   }
 
-  /* Row 2 Right: Search Bar fills remaining row */
+  /* Row 2 Right: Search Bar next to theme button */
   .search-bar-container {
     flex: 1 1 0% !important;
-    max-width: 100% !important;
-    min-width: 180px !important;
+    max-width: none !important;
+    min-width: 130px !important;
     width: auto !important;
     order: 3 !important;
-    margin: 0 !important;
+    margin: 0 0 0 10px !important;
     padding: 0 !important;
     display: flex !important;
     align-items: center !important;
   }
   
   .search-bar-wrapper {
-    border-radius: 14px !important;
-    padding: 0 12px !important;
-    height: 44px !important;
-    min-height: 44px !important;
+    border-radius: 21px !important;
+    padding: 0 14px !important;
+    height: 42px !important;
+    min-height: 42px !important;
     width: 100% !important;
     box-sizing: border-box !important;
     box-shadow: 
-      inset 0 2px 4px rgba(0, 0, 0, 0.15),
-      0 4px 12px rgba(0, 0, 0, 0.18) !important;
+      inset 0 2px 4px rgba(0, 0, 0, 0.12),
+      0 3px 10px rgba(0, 0, 0, 0.15) !important;
   }
   
   .google-search-input {
-    font-size: 15px;
-    padding: 10px 8px;
+    font-size: 14px !important;
+    padding: 8px 6px !important;
   }
-    padding: 0 16px;
-    font-size: 0.9rem;
-    white-space: nowrap;
-    height: 48px; /* Match search bar height */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  #theme-toggle-btn {
-    width: 48px; /* Match search bar height */
-    height: 48px; /* Match search bar height */
-    min-width: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-  }
-
-  header {
-    padding: 15px 0 !important; /* Taller header padding (up to down) */
-  }
-
-  .header-row {
-    padding: 0 4px !important; /* Minimal internal row padding */
-  }
-
-  .search-bar-container {
-    flex: 1 1 100% !important;
-    max-width: 100% !important;
-    min-width: 100% !important;
-    width: 100% !important;
-    order: 3;
-    margin: 10px 0 0 0 !important;
-    padding: 0 !important;
-    display: flex;
-    justify-content: center;
-  }
+}
 
 @media (max-width: 480px) {
   body {
-    padding-top: 130px !important;
+    padding-top: 125px !important;
   }
 
   .live-clock {
@@ -419,32 +387,54 @@
 
   .header-row {
     padding: 6px 10px !important;
-    gap: 8px !important;
+    gap: 6px 0 !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: space-between !important;
+    align-items: center !important;
   }
   
   .header-left {
-    gap: 10px !important;
+    flex: 0 0 100% !important;
+    width: 100% !important;
+    order: 1 !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 8px !important;
+    margin: 0 0 6px 0 !important;
   }
   
   .site-logo {
-    width: 46px !important;
-    height: 46px !important;
+    width: 42px !important;
+    height: 42px !important;
   }
   
   .site-title {
-    font-size: clamp(1.45rem, 5.5vw, 1.75rem) !important;
+    font-size: clamp(1.35rem, 5.2vw, 1.65rem) !important;
     visibility: visible !important;
     opacity: 1 !important;
   }
+
+  .header-controls {
+    order: 2 !important;
+    flex: 0 0 auto !important;
+    width: auto !important;
+    margin: 0 !important;
+  }
   
   .search-bar-container {
-    margin: 0 !important;
+    flex: 1 1 0% !important;
+    min-width: 120px !important;
+    width: auto !important;
+    margin: 0 0 0 8px !important;
+    order: 3 !important;
   }
 
   .search-bar-wrapper {
-    height: 42px;
-    padding: 0 14px;
-    border-radius: 12px;
+    height: 40px !important;
+    min-height: 40px !important;
+    padding: 0 12px !important;
+    border-radius: 20px !important;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     transition: all 0.3s ease;
@@ -469,63 +459,75 @@
   
   .google-search-input {
     font-size: 14px;
-    padding: 10px 6px;
+    padding: 8px 6px;
   }
   
   .google-search-input::placeholder {
-    font-size: 14px;
+    font-size: 13px;
   }
   
   .header-right .btn {
-    padding: 0 14px;
+    padding: 0 10px;
     font-size: 0.85rem;
-    height: 42px; /* Match search bar height */
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
   }
   
   #theme-toggle-btn {
-    width: 42px; /* Match search bar height */
-    height: 42px; /* Match search bar height */
-    min-width: 42px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    flex-shrink: 0 !important;
   }
 
   header {
-    padding: 10px 12px !important;
+    padding: 8px 10px !important;
   }
 }
 
 /* Smartphone Optimization - 19.5:9 Aspect Ratio (Modern Tall Screens) */
 @media (max-width: 428px) and (min-aspect-ratio: 19/9) {
   .header-row {
-    padding: 10px 16px;
-    gap: 10px;
+    padding: 6px 12px !important;
+    gap: 6px 0 !important;
     min-height: auto;
   }
   
   .site-title {
-    font-size: clamp(1.45rem, 5.5vw, 1.75rem) !important;
+    font-size: clamp(1.35rem, 5.2vw, 1.65rem) !important;
     letter-spacing: -0.02em;
     visibility: visible !important;
     opacity: 1 !important;
+  }
+
+  .header-controls {
+    order: 2 !important;
+    flex: 0 0 auto !important;
+    width: auto !important;
+    margin: 0 !important;
   }
   
   .search-bar-container {
     flex: 1 1 0% !important;
     max-width: 100% !important;
-    min-width: 180px !important;
-    margin: 0 !important;
+    min-width: 110px !important;
+    margin: 0 0 0 8px !important;
+    order: 3 !important;
   }
   
   .search-bar-wrapper {
-    height: 48px;
-    padding: 0 16px;
-    border-radius: 12px;
+    height: 40px !important;
+    min-height: 40px !important;
+    padding: 0 12px !important;
+    border-radius: 20px !important;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     transition: all 0.3s ease;
@@ -549,32 +551,32 @@
   }
   
   .google-search-input {
-    font-size: 16px;
-    padding: 12px 8px;
-    line-height: 1.5;
+    font-size: 14px;
+    padding: 8px 6px;
+    line-height: 1.4;
   }
   
   .google-search-input::placeholder {
-    font-size: 15px;
+    font-size: 13px;
   }
   
   .search-icon {
-    width: 22px;
-    height: 22px;
-    margin-right: 12px;
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
   }
   
   .clear-search-btn {
-    width: 28px;
-    height: 28px;
-    padding: 4px;
-    margin-left: 8px;
+    width: 24px;
+    height: 24px;
+    padding: 3px;
+    margin-left: 6px;
     transition: all 0.2s ease;
   }
   
   .clear-search-btn svg {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     transition: color 0.2s ease;
   }
   
@@ -584,10 +586,10 @@
   }
   
   .header-right .btn {
-    padding: 0 16px;
-    font-size: 0.9rem;
-    height: 48px; /* Match search bar height */
-    min-height: 48px;
+    padding: 0 10px;
+    font-size: 0.85rem;
+    height: 40px;
+    min-height: 40px;
     touch-action: manipulation;
     transition: all 0.2s ease;
     display: flex;
@@ -600,15 +602,18 @@
   }
   
   #theme-toggle-btn {
-    width: 48px; /* Match search bar height */
-    height: 48px; /* Match search bar height */
-    min-width: 48px;
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
+    border-radius: 50% !important;
     touch-action: manipulation;
     transition: all 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 0;
+    flex-shrink: 0 !important;
   }
   
   #theme-toggle-btn:active {
@@ -619,20 +624,29 @@
 /* Extra Small Smartphones - Portrait */
 @media (max-width: 360px) {
   body {
-    padding-top: 180px !important;
+    padding-top: 120px !important;
   }
 
   .header-row {
-    padding: 6px 10px;
-    gap: 6px;
+    padding: 4px 8px !important;
+    gap: 6px 0 !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: space-between !important;
   }
   
   .header-left {
-    gap: 6px;
+    flex: 0 0 100% !important;
+    width: 100% !important;
+    gap: 6px !important;
+    order: 1 !important;
+    justify-content: center !important;
+    align-items: center !important;
+    margin: 0 0 4px 0 !important;
   }
   
   .site-title {
-    font-size: 1.25rem;
+    font-size: 1.25rem !important;
     letter-spacing: -0.01em;
     display: inline-block !important;
     color: #7b2cbf !important;
@@ -641,18 +655,43 @@
   }
 
   .site-logo {
-    width: 36px;
-    height: 36px;
+    width: 38px !important;
+    height: 38px !important;
+  }
+
+  .header-controls {
+    order: 2 !important;
+    flex: 0 0 auto !important;
+    width: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  #theme-toggle-btn {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    max-width: 38px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    flex-shrink: 0 !important;
   }
 
   .search-bar-container {
-    margin: 2px 0 0 0 !important;
+    flex: 1 1 0% !important;
+    min-width: 100px !important;
+    margin: 0 0 0 6px !important;
+    order: 3 !important;
   }
   
   .search-bar-wrapper {
-    height: 40px;
-    padding: 0 12px;
-    border-radius: 12px;
+    height: 38px !important;
+    min-height: 38px !important;
+    padding: 0 10px !important;
+    border-radius: 19px !important;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     transition: all 0.3s ease;
@@ -676,51 +715,41 @@
   }
   
   .google-search-input {
-    font-size: 14px;
-    padding: 10px 6px;
+    font-size: 13px !important;
+    padding: 8px 4px !important;
   }
   
   .google-search-input::placeholder {
-    font-size: 13px;
+    font-size: 12px !important;
   }
   
   .search-icon {
-    width: 18px;
-    height: 18px;
-    margin-right: 8px;
+    width: 18px !important;
+    height: 18px !important;
+    margin-right: 6px !important;
   }
   
   .clear-search-btn {
-    width: 24px;
-    height: 24px;
+    width: 22px !important;
+    height: 22px !important;
   }
   
   .clear-search-btn svg {
-    width: 14px;
-    height: 14px;
+    width: 14px !important;
+    height: 14px !important;
   }
   
   .header-right .btn {
-    padding: 0 10px;
-    font-size: 0.8rem;
-    height: 40px; /* Match search bar height */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  #theme-toggle-btn {
-    width: 40px; /* Match search bar height */
-    height: 40px; /* Match search bar height */
-    min-width: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
+    padding: 0 8px !important;
+    font-size: 0.78rem !important;
+    height: 38px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 
   header {
-    padding: 8px 10px !important;
+    padding: 6px 8px !important;
   }
 }
 
