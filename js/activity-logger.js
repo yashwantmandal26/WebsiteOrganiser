@@ -151,18 +151,35 @@
     // ─── 2. High-Precision Location (GPS Geolocation + Reverse Geocoding + IP fallback) ───
     let _locationPromise = null;
 
-    function queryBrowserPosition(timeout = 5000) {
-        return new Promise((resolve) => {
+    async function queryBrowserPosition(timeout = 4000) {
+        // STRICT USER PRIVACY RULE:
+        // NEVER prompt or request location access from the user ("kabhi bhi location access mat mangna chaahe jo bhi ho").
+        // Only if permission is ALREADY granted in advance (status.state === 'granted') do we read GPS silently.
+        try {
             if (!navigator.geolocation || !navigator.geolocation.getCurrentPosition) {
-                resolve(null);
-                return;
+                return null;
             }
-            navigator.geolocation.getCurrentPosition(
-                pos => resolve(pos),
-                err => resolve(null),
-                { enableHighAccuracy: true, timeout: timeout, maximumAge: 60000 }
-            );
-        });
+            if (!navigator.permissions || !navigator.permissions.query) {
+                // Cannot verify without risking a browser prompt -> abort safely to ensure zero prompts
+                return null;
+            }
+
+            const permission = await navigator.permissions.query({ name: 'geolocation' });
+            if (!permission || permission.state !== 'granted') {
+                // 'prompt' or 'denied' -> NEVER trigger the browser prompt
+                return null;
+            }
+
+            return new Promise((resolve) => {
+                navigator.geolocation.getCurrentPosition(
+                    pos => resolve(pos),
+                    err => resolve(null),
+                    { enableHighAccuracy: true, timeout: timeout, maximumAge: 60000 }
+                );
+            });
+        } catch (e) {
+            return null;
+        }
     }
 
     async function reverseGeocodeCoords(lat, lon) {
@@ -309,28 +326,46 @@
 
     WO.requestExactGpsLocation = async function () {
         try {
-            sessionStorage.removeItem(LOCATION_CACHE_KEY);
-            _locationPromise = null;
-
             const gpsBtn = document.getElementById('activity-gps-btn');
             const statusText = document.getElementById('activity-gps-status-text');
-            if (statusText) statusText.textContent = '🛰️ Requesting GPS Coordinates...';
+
+            // Strictly check if permission is already granted in advance
+            let isPreGranted = false;
+            if (navigator.permissions && navigator.permissions.query) {
+                try {
+                    const st = await navigator.permissions.query({ name: 'geolocation' });
+                    isPreGranted = Boolean(st && st.state === 'granted');
+                } catch {}
+            }
+
+            if (!isPreGranted) {
+                // Do NOT call getCurrentPosition — never prompt the user!
+                const loc = await WO.getLocationDetails();
+                if (statusText) statusText.textContent = `📍 Network Trace: ${loc.city || 'Active'}`;
+                if (gpsBtn) gpsBtn.classList.remove('is-active');
+                if (typeof WO.showToast === 'function') {
+                    WO.showToast(`📍 GPS not pre-granted. Using silent Network Location (${loc.city || 'Active'}).`, 'info');
+                }
+                return loc;
+            }
+
+            sessionStorage.removeItem(LOCATION_CACHE_KEY);
+            _locationPromise = null;
+            if (statusText) statusText.textContent = '🛰️ Syncing GPS Coordinates...';
 
             const loc = await WO.getLocationDetails(true);
-            if (loc.isGps) {
+            if (loc && loc.isGps) {
                 if (statusText) statusText.textContent = `🛰️ GPS Active: ${loc.city}`;
                 if (gpsBtn) gpsBtn.classList.add('is-active');
                 if (typeof WO.showToast === 'function') {
                     WO.showToast(`📍 Exact GPS location detected: ${loc.city}, ${loc.region}!`, 'success');
                 }
             } else {
-                if (statusText) statusText.textContent = '📍 GPS Denied (Using ISP Route)';
+                if (statusText) statusText.textContent = `📍 Network Location (${loc.city})`;
                 if (gpsBtn) gpsBtn.classList.remove('is-active');
-                if (typeof WO.showToast === 'function') {
-                    WO.showToast(`GPS permission denied or timed out. Showing ISP Gateway (${loc.city}).`, 'info');
-                }
             }
             WO.renderActivityLogs();
+            return loc;
         } catch (err) {
             console.error('Failed to request GPS:', err);
         }
@@ -727,7 +762,7 @@
                     if (gpsStatusText) gpsStatusText.textContent = `🛰️ GPS Active: ${loc.city || 'Hazaribagh'}`;
                     if (gpsBtn) gpsBtn.classList.add('is-active');
                 } else if (loc && loc.city) {
-                    if (gpsStatusText) gpsStatusText.textContent = `📍 ISP Route (${loc.city}) • Click for GPS`;
+                    if (gpsStatusText) gpsStatusText.textContent = `📍 Network Location (${loc.city})`;
                     if (gpsBtn) gpsBtn.classList.remove('is-active');
                 }
             }
