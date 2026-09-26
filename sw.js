@@ -15,7 +15,7 @@
 //   The activate event will wipe all old caches automatically.
 // =====================================================
 
-const CACHE_VERSION = 'wo-v1063';
+const CACHE_VERSION = 'wo-v1064';
 const CACHE_NAME = `websiteorganiser-${CACHE_VERSION}`;
 const FAVICON_CACHE_NAME = 'websiteorganiser-favicons-v1';
 
@@ -29,8 +29,8 @@ const PRECACHE_URLS = [
   '/fonts/inter-latin-400.woff2',
   '/fonts/inter-latin-500.woff2',
   '/fonts/inter-latin-700.woff2',
-  '/bundle.min.css?v=1063',
-  '/bundle.min.js?v=1063',
+  '/bundle.min.css?v=1064',
+  '/bundle.min.js?v=1064',
 ];
 
 // ─── Install ──────────────────────────────────────────────────────────────────
@@ -54,7 +54,7 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     Promise.all([
-      self.registration.navigationPreload ? self.registration.navigationPreload.enable() : Promise.resolve(),
+      self.registration.navigationPreload ? self.registration.navigationPreload.disable() : Promise.resolve(),
       caches.keys().then((keys) =>
         Promise.all(
           keys
