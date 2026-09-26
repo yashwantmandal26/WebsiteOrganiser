@@ -128,7 +128,42 @@
                 const header = document.createElement('div');
                 header.className = 'group-card-header';
                 const h3 = document.createElement('h3');
-                h3.textContent = group.name;
+                // Presentation aliases keep stored group names and admin editing intact.
+                const categoryKey = group.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const categoryHeaders = {
+                    watchmovies: ['WATCH MOVIES', 'movies'], streamingmoviesites: ['WATCH MOVIES', 'movies'],
+                    downloadmovies: ['DOWNLOAD MOVIES', 'download'], downloadmoviesites: ['DOWNLOAD MOVIES', 'download'],
+                    instantbrowsergames: ['Instant BrowserGames', 'games'], browsergames: ['Instant BrowserGames', 'games']
+                };
+                const groupIcons = {
+                    lifehacks: 'bulb', pcdwdgameswebsites: 'desktopGame', utilities: 'tools',
+                    popularsites: 'globe', usefulai: 'sparkles', crackedpcsoftwaredwnd: 'software',
+                    mocksandcourses: 'graduation', ai2: 'chip', skillsdevelopmentwithfun: 'rocket'
+                };
+                const category = categoryHeaders[categoryKey] || [group.name, groupIcons[categoryKey] || 'folder'];
+                h3.textContent = category ? category[0] : group.name;
+                if (category) {
+                    const paths = {
+                        bulb: '<path d="M9 18h6m-5 3h4M8 14a6 6 0 1 1 8 0c-1 1-1 2-1 3H9c0-1 0-2-1-3ZM12 1v1M3 4l2 2m16-2-2 2M1 11h2m18 0h2"/>',
+                        desktopGame: '<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4M7 8v4m-2-2h4"/><circle cx="16" cy="8" r="1" fill="currentColor"/><circle cx="18" cy="11" r="1" fill="currentColor"/>',
+                        tools: '<path d="m14 6 4 4 3-3a6 6 0 0 1-7 8l-6 6a3 3 0 0 1-4-4l6-6a6 6 0 0 1 8-7l-4 2Z"/>',
+                        globe: '<circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18M5 6h14M5 18h14"/>',
+                        sparkles: '<path d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5L12 3Z" fill="currentColor"/><path d="M20 2v4m-2-2h4M3 18v4m-2-2h4"/>',
+                        software: '<rect x="2" y="3" width="20" height="18" rx="2"/><path d="M2 8h20m-15 4-3 3 3 3m10-6 3 3-3 3m-4-6-2 6M5 5.5h.01M8 5.5h.01"/>',
+                        graduation: '<path d="m2 8 10-5 10 5-10 5L2 8Zm4 3v7c4 3 8 3 12 0v-7m4-3v9"/>',
+                        chip: '<rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M9 2v4m6-4v4M9 18v4m6-4v4M2 9h4m-4 6h4m12-6h4m-4 6h4"/>',
+                        rocket: '<path d="M9 15c-1-5 4-12 12-12 0 8-7 13-12 12ZM9 8H5l-3 6 7 1m7 0v4l-6 3-1-7M6 18l-3 3m0-4-1 3m5 1-3 1"/><circle cx="16" cy="8" r="2"/>',
+                        folder: '<path d="M3 5h6l2 3h10v12H3V5Z"/><path d="M7 12h10m-10 4h6"/>',
+                        movies: '<path d="M3 10h18v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1Z" fill="currentColor"/><path d="m3 10-1-6 18-3 1 6Z"/><path d="m6 4 3 4m3-5 3 4m-9 7h2m3 0h2m-7 3h2"/>',
+                        download: '<path d="M12 3v12m-5-5 5 5 5-5M3 16v5h18v-5"/>',
+                        games: '<path d="M7 6h10c3 0 4 4 5 11 .3 3-2 4-4 1l-2-2H8l-2 2c-2 3-4.3 2-4-1C3 10 4 6 7 6Z" fill="currentColor"/><path d="M7 9v5m-2.5-2.5h5" stroke="var(--group-color)"/><circle cx="16" cy="10" r="1" fill="var(--group-color)" stroke="none"/><circle cx="18" cy="13" r="1" fill="var(--group-color)" stroke="none"/>'
+                    };
+                    const icon = document.createElement('span');
+                    icon.className = 'category-heading-icon';
+                    icon.setAttribute('aria-hidden', 'true');
+                    icon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + paths[category[1]] + '</svg>';
+                    h3.prepend(icon);
+                }
                 h3.dataset.groupIndex = originalIndex;
                 h3.style.cursor = WO.adminLoggedIn ? 'pointer' : 'default';
 

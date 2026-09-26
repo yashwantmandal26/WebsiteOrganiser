@@ -41,7 +41,7 @@
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js">
-  <link rel="stylesheet" href="bundle.min.css?v=1053">
+  <link rel="stylesheet" href="bundle.min.css?v=1062">
 
   <link rel="manifest" href="manifest.json">
 
@@ -63,7 +63,7 @@
 
 <body>
 
-  <header>
+  <header class="premium-header">
     <div class="header-row">
       <div class="header-left">
         <a href="./" class="site-logo-link" title="Tap the red dot on the WebsiteOrganiser icon to refresh cached changes">
@@ -72,13 +72,14 @@
         </a>
         <div class="header-brand">
           <span class="site-title"><span class="title-website">Website</span><span class="title-organiser">Organiser</span></span>
+          <span class="site-tagline">YOUR WEB APPS, ALL IN ONE PLACE</span>
         </div>
       </div>
 
       <!-- Row 2: Timer + Theme Toggle -->
       <div class="header-controls">
-        <div class="live-clock" id="live-clock" aria-live="polite" aria-label="Current time">
-          <span class="clock-hours" id="clock-hh">12</span><span class="clock-sep">:</span><span class="clock-minutes" id="clock-mm">00</span><span class="clock-sep">:</span><span class="clock-seconds" id="clock-ss">00</span><span class="clock-ms" id="clock-ms" style="display: none; font-size: 0.7em; opacity: 0.8; padding-left: 2px;">.000</span><span class="clock-ampm" id="clock-ampm">&nbsp;AM</span>
+        <div class="live-clock" id="live-clock" aria-label="Current time">
+          <span class="clock-hours" id="clock-hh">12</span><span class="clock-sep">:</span><span class="clock-minutes" id="clock-mm">00</span><span class="clock-sep clock-seconds-sep">:</span><span class="clock-seconds" id="clock-ss">00</span><span class="clock-ms" id="clock-ms" style="display: none; font-size: 0.7em; opacity: 0.8; padding-left: 2px;">.000</span><span class="clock-ampm" id="clock-ampm">&nbsp;AM</span>
         </div>
         <div class="header-right">
           <!-- Admin Tools Hub Dropdown (Visible only to Admin) -->
@@ -144,6 +145,7 @@
               </div>
             </div>
           </div>
+          <button type="button" id="preferences-button" aria-label="Open settings" title="Settings" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.8 3.5h4.4l.5 2.1 1.6.9 2.1-.6 2.2 3.8-1.6 1.5v1.8l1.6 1.5-2.2 3.8-2.1-.6-1.6.9-.5 2.1H9.8l-.5-2.1-1.6-.9-2.1.6-2.2-3.8L5 13v-1.8L3.4 9.7l2.2-3.8 2.1.6 1.6-.9.5-2.1Z"/><circle cx="12" cy="12" r="3.25"/></svg></button>
           <input type="file" id="import-file-input" accept=".json" style="display: none;">
           <button id="theme-toggle-btn" class="btn icon-btn holo-btn" aria-label="Toggle theme" title="Toggle theme"><img src="media/theme.png" alt="Theme" class="theme-icon" width="24" height="24" decoding="async"></button>
         </div>
@@ -152,12 +154,12 @@
       <div class="search-bar-container">
         <div class="search-bar-wrapper">
           <input type="text" id="google-search-input" class="google-search-input"
-            placeholder="Search anything..."
+            placeholder="Search websites, games, tools..." aria-label="Search websites, games and tools"
             autocomplete="new-password" spellcheck="false">
 
           <button type="button" id="search-submit-btn" class="search-submit-btn" aria-label="Search"
             title="Search">
-            <img src="media/google.png" alt="" class="search-icon" width="24" height="24" decoding="async">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7.5"/><path d="m16 16 5 5"/></svg>
           </button>
           <button id="clear-search-btn" class="clear-search-btn" style="display: none;" title="Clear">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -175,6 +177,26 @@
       </div>
     </div>
   </header>
+
+  <dialog id="preferences-dialog" aria-labelledby="preferences-title">
+    <div class="preferences-heading"><div><p>MAKE IT YOURS</p><h2 id="preferences-title">Settings</h2></div><button type="button" id="preferences-close" aria-label="Close settings">×</button></div>
+    <p class="preferences-intro">Little details. Your kind of experience.</p>
+    <form id="preferences-form">
+      <fieldset><legend>Sound & interaction</legend>
+        <label class="preference-row"><span>Hover sounds<small>A soft tone when you explore website tiles</small></span><input type="checkbox" name="hoverSound" role="switch"></label>
+        <label class="preference-row"><span>Click sounds<small>Audio feedback when opening a website</small></span><input type="checkbox" name="clickSound" role="switch"></label>
+        <label class="preference-row" for="sound-volume"><span>Sound volume <output id="volume-value"></output></span><input id="sound-volume" type="range" name="volume" min="0" max="100" step="1"></label>
+        <button type="button" id="preview-sound" class="preference-button">Preview sound</button>
+      </fieldset>
+      <fieldset><legend>Header & appearance</legend>
+        <label class="preference-row"><span>Show clock<small>Keep the current time in your header</small></span><input type="checkbox" name="showClock" role="switch"></label>
+        <label class="preference-row"><span>Show seconds</span><input type="checkbox" name="showSeconds" role="switch"></label>
+        <label class="preference-row"><span>Glass effect<small>Translucent lavender and sky-blue gradient</small></span><input type="checkbox" name="glass" role="switch"></label>
+        <label class="preference-row"><span>Reduced motion<small>Keep transitions and animations minimal</small></span><input type="checkbox" name="reducedMotion" role="switch"></label>
+      </fieldset>
+      <div class="preferences-footer"><span id="preferences-status" role="status">Saved on this device</span><button type="button" id="preferences-reset" class="preference-button">Reset defaults</button></div>
+    </form>
+  </dialog>
 
   <!-- PWA Installation Prompt -->
   <!-- PWA Installation Prompt removed -->
@@ -376,77 +398,23 @@
   <!-- Live Clock Script -->
   <script>
     (function () {
-      var hh = document.getElementById('clock-hh');
-      var mm = document.getElementById('clock-mm');
-      var ss = document.getElementById('clock-ss');
-      var msSpan = document.getElementById('clock-ms');
-      var ap = document.getElementById('clock-ampm');
-      var msVisible = false;
-      var clockInterval;
-      var rafId;
-
       function updateClock() {
         var now = new Date();
-        var h = now.getHours();
-        var m = now.getMinutes();
-        var s = now.getSeconds();
-        var ms = now.getMilliseconds();
-        var ampm = h >= 12 ? 'PM' : 'AM';
-        h = h % 12;
-        if (h === 0) h = 12;
-        
-        var newH = String(h).padStart(2, '0');
-        var newM = String(m).padStart(2, '0');
-        var newS = String(s).padStart(2, '0');
-        var newAp = '\u00a0' + ampm;
-        if (hh && hh.textContent !== newH) hh.textContent = newH;
-        if (mm && mm.textContent !== newM) mm.textContent = newM;
-        if (ss && ss.textContent !== newS) ss.textContent = newS;
-        if (ap && ap.textContent !== newAp) ap.textContent = newAp;
-        if (msVisible && msSpan) msSpan.textContent = '.' + String(ms).padStart(3, '0');
-
-        if (msVisible) {
-            rafId = requestAnimationFrame(updateClock);
-        }
+        var use24 = document.documentElement.dataset.clockFormat === '24';
+        document.getElementById('clock-hh').textContent = String(use24 ? now.getHours() : (now.getHours() % 12 || 12)).padStart(2, '0');
+        document.getElementById('clock-mm').textContent = String(now.getMinutes()).padStart(2, '0');
+        document.getElementById('clock-ss').textContent = String(now.getSeconds()).padStart(2, '0');
+        document.getElementById('clock-ampm').textContent = use24 ? '' : '\u00a0' + (now.getHours() >= 12 ? 'PM' : 'AM');
       }
-
-      var liveClock = document.getElementById('live-clock');
-      if (liveClock) {
-        liveClock.style.cursor = 'pointer';
-        liveClock.addEventListener('click', function() {
-            msVisible = !msVisible;
-            if (msSpan) msSpan.style.display = msVisible ? 'inline-block' : 'none';
-            if (msVisible) {
-                clearInterval(clockInterval);
-                updateClock();
-            } else {
-                cancelAnimationFrame(rafId);
-                updateClock();
-                clockInterval = setInterval(updateClock, 1000);
-            }
-        });
-      }
-
-      // Conserve CPU when tab is hidden
-      document.addEventListener('visibilitychange', function () {
-        if (document.hidden) {
-          clearInterval(clockInterval);
-          if (rafId) cancelAnimationFrame(rafId);
-        } else {
-          updateClock();
-          if (!msVisible) {
-            clearInterval(clockInterval);
-            clockInterval = setInterval(updateClock, 1000);
-          }
-        }
-      }, { passive: true });
-
-      updateClock();
-      clockInterval = setInterval(updateClock, 1000);
+      var timer;
+      function resume() { clearInterval(timer); updateClock(); if (!document.hidden) timer = setInterval(updateClock, 1000); }
+      document.addEventListener('visibilitychange', resume);
+      document.addEventListener('wo-preferences-changed', updateClock);
+      resume();
     })();
   </script>
   <!-- Application Bundle -->
-  <script defer src="bundle.min.js?v=1053"></script>
+  <script defer src="bundle.min.js?v=1062"></script>
 
   <div id="toast-container"></div>
   <!-- Global keyword tooltip portal — lives at body level to avoid contain:paint clipping -->

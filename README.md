@@ -1,8 +1,17 @@
-# 🌐 WebsiteOrganiser — v1.0.20
+# 🌐 WebsiteOrganiser
 
-A professional, high-performance Progressive Web Application (PWA) designed to organize, manage, and synchronize your favorite websites, bookmarks, and search keywords. Built with a focus on modern UI/UX, real-time cloud sync, and offline reliability.
+A customizable website organizer with a glass-gradient header, smart search, category icons, real-time cloud sync, and offline PWA support. Personalize hover and click sounds, accent colors, website tiles, and your clock.
 
 ---
+
+## Latest interface update
+
+- Responsive glass-gradient header, centered search, rounded clock and centered settings gear.
+- Twelve distinct category icons.
+- Six hover/click sound tones with independent volumes, previews and a master volume.
+- Accent colors, tile size, spacing, corners and hover effects.
+- 12/24-hour clock, seconds, tagline, glass and reduced-motion preferences.
+- Preferences save on your device; Ctrl/Cmd+K focuses search.
 
 ## 🚀 Key Features
 

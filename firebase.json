@@ -21,7 +21,8 @@
       "node_modules/**",
       "**/.*",
       "**/node_modules/**",
-      "test-round.html"
+      "test-round.html",
+      "ChatGPT Image*.png"
     ],
     "rewrites": [
       {

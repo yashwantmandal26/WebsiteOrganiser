@@ -75,7 +75,7 @@ async function build() {
     console.log('2. Merging and minifying CSS...');
     const CleanCSS = require('clean-css');
 
-    const cssFiles = ['style.css', 'add-keyword-modal.css', 'search-bar-update.css', 'activity-log.css'];
+    const cssFiles = ['style.css', 'add-keyword-modal.css', 'search-bar-update.css', 'activity-log.css', 'header-settings.css'];
     let combinedCSS = '';
 
     const fontCssPath = path.join(ROOT, 'fonts', 'inter.css');
@@ -119,6 +119,7 @@ async function build() {
         'js/render.js',
         'js/crud.js',
         'js/ui.js',
+        'js/preferences.js',
         'js/search.js',
         'js/app.js'
     ];
