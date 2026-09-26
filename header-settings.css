@@ -131,3 +131,32 @@ html:not([data-theme="light"]) .preference-section { background:#ffffff04; }
 /* Keep the settings glyph centered independently of legacy button sizing. */
 .premium-header #preferences-button { position:relative; box-sizing:border-box !important; padding:0 !important; line-height:0; }
 .premium-header #preferences-button svg { position:absolute; left:50%; top:50%; margin:0; transform:translate(-50%,-50%); width:24px; height:24px; }
+/* Portrait controls share one sizing model; override legacy theme-only flex rules. */
+@media (max-width:800px) {
+  .premium-header .header-left { min-width:0; }
+  .premium-header .header-controls,.premium-header .header-right { align-items:center !important; margin:0 !important; padding:0 !important; }
+  .premium-header .header-right { gap:8px !important; }
+  .premium-header #theme-toggle-btn,.premium-header #preferences-button {
+    position:relative !important; display:grid !important; place-items:center !important;
+    box-sizing:border-box !important; flex:0 0 40px !important;
+    width:40px !important; min-width:40px !important; max-width:40px !important;
+    height:40px !important; min-height:40px !important; max-height:40px !important;
+    margin:0 !important; padding:0 !important; line-height:0 !important;
+    border-radius:50% !important; border:1px solid #ffffffb8 !important;
+    background:linear-gradient(145deg,#fffffff0,#eeeaffcf) !important;
+    box-shadow:0 4px 14px #52408512 !important; transform:none !important;
+  }
+  .premium-header #theme-toggle-btn .theme-icon,.premium-header #preferences-button svg {
+    position:absolute !important; left:50% !important; top:50% !important;
+    width:24px !important; height:24px !important; margin:0 !important;
+    display:block !important; transform:translate(-50%,-50%) !important; object-fit:contain;
+  }
+}
+@media (max-width:390px) {
+  .premium-header .header-row { gap:10px !important; }
+  .premium-header .header-left { gap:6px; }
+  .premium-header .site-title { font-size:clamp(15px,4.6vw,18px) !important; }
+  .premium-header .site-tagline { font-size:4.5px; letter-spacing:.8px; }
+  .premium-header .site-logo { width:28px !important; height:28px !important; }
+  .premium-header .header-right { gap:6px !important; }
+}
