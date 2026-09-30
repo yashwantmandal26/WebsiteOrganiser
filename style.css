@@ -1272,6 +1272,7 @@ header h1 {
 .group-card-wrapper {
   position: relative;
   width: 100%;
+  min-width: 0;
   height: 100%;
   /* Modern CSS containment: off-screen cards skip layout and paint calculations until nearing viewport */
   content-visibility: auto;
@@ -3250,6 +3251,7 @@ body.is-touch .group-expand-chip {
   position: relative;
   overflow: visible; /* Changed from hidden to allow tooltip overflow */
   min-height: auto;
+  min-width: 0; /* Prevent grid blowout from long text */
   box-sizing: border-box;
   flex-shrink: 0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
