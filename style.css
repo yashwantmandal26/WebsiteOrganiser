@@ -406,12 +406,15 @@ body::after {
   /* Remove background image for light theme */
 }
 
-body.modal-open {
+body.modal-open,
+html.modal-open,
+body:has(dialog[open]),
+html:has(dialog[open]) {
   overflow: hidden !important;
-}
-
-html.modal-open {
-  overflow: hidden !important;
+  overflow-y: hidden !important;
+  overscroll-behavior: none !important;
+  overscroll-behavior-y: none !important;
+  touch-action: none !important;
 }
 
 /* Ensure page can always scroll on desktop */
@@ -1977,6 +1980,9 @@ li[draggable="true"][data-keyword-index]:active {
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.4s ease, visibility 0.4s ease;
+  overscroll-behavior: contain !important;
+  overscroll-behavior-y: contain !important;
+  touch-action: none;
 }
 
 /* Freeze body background animation while any modal is open */
@@ -2017,6 +2023,9 @@ body:has(.modal-container.visible)::after {
   flex-direction: column;
   gap: 15px;
   /* Added gap for spacing between elements */
+  overscroll-behavior: contain !important;
+  overscroll-behavior-y: contain !important;
+  touch-action: pan-y;
 }
 
 /* Modal Header Controls */

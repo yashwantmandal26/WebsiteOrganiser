@@ -32,8 +32,16 @@ html:not([data-theme="light"]) .premium-header .search-bar-wrapper { background:
 html:not([data-theme="light"]) .premium-header .google-search-input { color:#f3eeff; }
 html[data-glass="false"] .premium-header { backdrop-filter:none; background:#e9e0f8 !important; }
 html:not([data-theme="light"])[data-glass="false"] .premium-header { background:#242132 !important; }
-#preferences-dialog { width:min(460px,calc(100vw - 32px)); max-height:calc(100dvh - 40px); padding:28px; border:1px solid #ffffff90; border-radius:26px; background:#f9f7ff; color:#252039; box-shadow:0 30px 100px #24124b45; overflow:auto; }
-#preferences-dialog::backdrop { background:#20133355; backdrop-filter:blur(6px); }
+html:has(#preferences-dialog[open]),
+body:has(#preferences-dialog[open]) {
+  overflow: hidden !important;
+  overflow-y: hidden !important;
+  overscroll-behavior: none !important;
+  overscroll-behavior-y: none !important;
+  touch-action: none !important;
+}
+#preferences-dialog { width:min(460px,calc(100vw - 32px)); max-height:calc(100dvh - 40px); padding:28px; border:1px solid #ffffff90; border-radius:26px; background:#f9f7ff; color:#252039; box-shadow:0 30px 100px #24124b45; overflow:auto; overscroll-behavior:contain !important; overscroll-behavior-y:contain !important; -webkit-overflow-scrolling:touch !important; touch-action:pan-y !important; }
+#preferences-dialog::backdrop { background:#20133355; backdrop-filter:blur(6px); overscroll-behavior:none !important; touch-action:none !important; }
 .preferences-heading { display:flex; justify-content:space-between; align-items:center; }
 .preferences-heading p { font-size:10px; font-weight:700; letter-spacing:2px; color:#9264c5; margin:0 0 7px; }
 .preferences-heading h2 { font-size:28px; margin:0; }
