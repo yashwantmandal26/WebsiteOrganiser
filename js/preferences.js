@@ -62,10 +62,54 @@
         try { localStorage.setItem('wo-preferences', JSON.stringify(WO.preferences)); document.getElementById('preferences-status').textContent = 'Saved on this device'; }
         catch { document.getElementById('preferences-status').textContent = 'Applied for this session'; }
     }
-    trigger.addEventListener('click', () => dialog.showModal());
-    document.getElementById('preferences-close').addEventListener('click', () => dialog.close());
-    dialog.addEventListener('click', e => { if (e.target === dialog) { const r = dialog.getBoundingClientRect(); if(e.clientX<r.left || e.clientX>r.right || e.clientY<r.top || e.clientY>r.bottom) dialog.close(); } });
-    dialog.addEventListener('close', () => trigger.focus());
+    function openPreferences() {
+        if (typeof WO.lockScroll === 'function') WO.lockScroll();
+        if (typeof dialog.showModal === 'function') {
+            dialog.showModal();
+        } else {
+            dialog.setAttribute('open', '');
+        }
+    }
+    function closePreferences() {
+        if (dialog.open) dialog.close();
+        if (typeof WO.unlockScroll === 'function') WO.unlockScroll();
+    }
+    trigger.addEventListener('click', openPreferences);
+    document.getElementById('preferences-close').addEventListener('click', closePreferences);
+    dialog.addEventListener('click', e => {
+        if (e.target === dialog) {
+            const r = dialog.getBoundingClientRect();
+            if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) closePreferences();
+        }
+    });
+    dialog.addEventListener('close', () => {
+        if (typeof WO.unlockScroll === 'function') WO.unlockScroll();
+        trigger.focus();
+    });
+    dialog.addEventListener('cancel', () => {
+        if (typeof WO.unlockScroll === 'function') WO.unlockScroll();
+    });
+    dialog.addEventListener('touchmove', e => {
+        if (e.target === dialog) {
+            const r = dialog.getBoundingClientRect();
+            if (e.touches && e.touches[0]) {
+                const t = e.touches[0];
+                if (t.clientX < r.left || t.clientX > r.right || t.clientY < r.top || t.clientY > r.bottom) {
+                    e.preventDefault();
+                }
+            }
+        }
+    }, { passive: false });
+    if (typeof MutationObserver !== 'undefined') {
+        const dialogObserver = new MutationObserver(() => {
+            if (dialog.open) {
+                if (typeof WO.lockScroll === 'function') WO.lockScroll();
+            } else {
+                if (typeof WO.unlockScroll === 'function') WO.unlockScroll();
+            }
+        });
+        dialogObserver.observe(dialog, { attributes: true, attributeFilter: ['open'] });
+    }
     form.addEventListener('submit', e=>e.preventDefault());
     form.addEventListener('input', e=>{const input=e.target; if (!Object.hasOwn(defaults,input.name)) return; WO.preferences[input.name]= input.type==='checkbox' ? input.checked : input.type==='range' ? Number(input.value) : input.value; save();});
     document.getElementById('preferences-reset').addEventListener('click',()=>{WO.preferences={...defaults};save();});

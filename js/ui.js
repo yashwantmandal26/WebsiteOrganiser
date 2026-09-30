@@ -92,26 +92,66 @@
         if (btn) btn.title = 'Switch to ' + (THEME_NAMES[nextTheme] || nextTheme);
     };
 
-    // ── Modal Helpers ────────────────────────────────────────────────────
-    const ensureScrollUnlocked = () => {
-        if (!document.querySelector('.modal-container.visible')) {
-            document.body.classList.remove('modal-open');
-            document.documentElement.classList.remove('modal-open');
-            document.documentElement.style.overflowY = 'auto';
-            document.body.style.overflowY = 'auto';
+    // ── Modal & Scroll Lock Helpers ────────────────────────────────────────
+    let scrollYPosition = 0;
+    let isScrollLocked = false;
+
+    WO.lockScroll = function () {
+        if (isScrollLocked) return;
+        scrollYPosition = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+        isScrollLocked = true;
+        document.documentElement.classList.add('modal-open');
+        document.body.classList.add('modal-open');
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${scrollYPosition}px`;
+        document.body.style.left = '0';
+        document.body.style.right = '0';
+        document.body.style.width = '100%';
+        document.body.style.overflow = 'hidden';
+        document.body.style.overflowY = 'hidden';
+        document.body.style.touchAction = 'none';
+        document.documentElement.style.overflow = 'hidden';
+        document.documentElement.style.overflowY = 'hidden';
+    };
+
+    WO.unlockScroll = function () {
+        if (document.querySelector('.modal-container.visible, #preferences-dialog[open]')) {
+            return;
         }
+        if (!isScrollLocked) return;
+        isScrollLocked = false;
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.left = '';
+        document.body.style.right = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        document.body.style.overflowY = '';
+        document.body.style.touchAction = '';
+        document.documentElement.style.overflow = '';
+        document.documentElement.style.overflowY = '';
+        document.documentElement.classList.remove('modal-open');
+        document.body.classList.remove('modal-open');
+
+        const prevBehavior = document.documentElement.style.scrollBehavior;
+        document.documentElement.style.scrollBehavior = 'auto';
+        window.scrollTo(0, scrollYPosition);
+        document.documentElement.style.scrollBehavior = prevBehavior;
+    };
+
+    const ensureScrollUnlocked = () => {
+        WO.unlockScroll();
     };
 
     WO.toggleModal = function (modal, show) {
         if (!modal) return;
         if (show) {
             modal.classList.add('visible');
-            document.body.classList.add('modal-open');
-            document.documentElement.classList.add('modal-open');
+            WO.lockScroll();
         }
         else {
             modal.classList.remove('visible');
-            ensureScrollUnlocked();
+            WO.unlockScroll();
         }
         if (typeof WO.highlightRecentlyAddedKeyword === 'function') {
             requestAnimationFrame(WO.highlightRecentlyAddedKeyword);

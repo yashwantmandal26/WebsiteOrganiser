@@ -28,13 +28,20 @@
 
     // ─── Keyword Zoom State Reset ─────────────────────────────────────────────
     WO.resetKeywordStates = function (preventScroll = false, isRendering = false) {
-        document.body.classList.remove('is-zooming', 'modal-open');
+        document.body.classList.remove('is-zooming');
+        if (!document.querySelector('.modal-container.visible, #preferences-dialog[open]')) {
+            document.body.classList.remove('modal-open');
+        }
         document.querySelectorAll('.keyword-grid-preview-item.expanded').forEach(item => {
             item.classList.remove('expanded');
         });
-        if (!preventScroll) {
-            document.documentElement.style.overflowY = 'auto';
-            document.body.style.overflowY = 'auto';
+        if (!preventScroll && !document.querySelector('.modal-container.visible, #preferences-dialog[open]')) {
+            if (typeof WO.unlockScroll === 'function') {
+                WO.unlockScroll();
+            } else {
+                document.documentElement.style.overflowY = 'auto';
+                document.body.style.overflowY = 'auto';
+            }
         }
         if (!isRendering) {
             WO.renderGroups();

@@ -406,12 +406,15 @@ body::after {
   /* Remove background image for light theme */
 }
 
-body.modal-open {
+body.modal-open,
+html.modal-open,
+body:has(dialog[open]),
+html:has(dialog[open]) {
   overflow: hidden !important;
-}
-
-html.modal-open {
-  overflow: hidden !important;
+  overflow-y: hidden !important;
+  overscroll-behavior: none !important;
+  overscroll-behavior-y: none !important;
+  touch-action: none !important;
 }
 
 /* Ensure page can always scroll on desktop */
@@ -1272,6 +1275,7 @@ header h1 {
 .group-card-wrapper {
   position: relative;
   width: 100%;
+  min-width: 0;
   height: 100%;
   /* Modern CSS containment: off-screen cards skip layout and paint calculations until nearing viewport */
   content-visibility: auto;
@@ -1976,6 +1980,9 @@ li[draggable="true"][data-keyword-index]:active {
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.4s ease, visibility 0.4s ease;
+  overscroll-behavior: contain !important;
+  overscroll-behavior-y: contain !important;
+  touch-action: none;
 }
 
 /* Freeze body background animation while any modal is open */
@@ -2016,6 +2023,9 @@ body:has(.modal-container.visible)::after {
   flex-direction: column;
   gap: 15px;
   /* Added gap for spacing between elements */
+  overscroll-behavior: contain !important;
+  overscroll-behavior-y: contain !important;
+  touch-action: pan-y;
 }
 
 /* Modal Header Controls */
@@ -3250,6 +3260,7 @@ body.is-touch .group-expand-chip {
   position: relative;
   overflow: visible; /* Changed from hidden to allow tooltip overflow */
   min-height: auto;
+  min-width: 0; /* Prevent grid blowout from long text */
   box-sizing: border-box;
   flex-shrink: 0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
