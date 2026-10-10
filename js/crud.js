@@ -698,6 +698,7 @@
                         if (imported.keywordDeletedStatus) Object.assign(WO.keywordDeletedStatus, imported.keywordDeletedStatus);
                     }
                     WO.ensureStableBookmarkIds();
+                    WO.migrateMetadataToStableIds();
                     if (imported.preferences) {
                         if (Array.isArray(imported.preferences.groupOrder)) { WO.localGroupOrder = imported.preferences.groupOrder; WO.saveLocalGroupOrder(); }
                         if (imported.preferences.personalUsage) { WO.localClickCounts = imported.preferences.personalUsage; WO.saveLocalUsage(); }

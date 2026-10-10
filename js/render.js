@@ -58,7 +58,8 @@
                 const isNew       = WO.isKeywordNew(keyword, ek) || (Boolean(addedAt) && (Date.now() - Number(addedAt)) <= WO.NEW_BADGE_DURATION_MS);
                 const tags        = Array.isArray(group.keywordTags[bookmarkId]) ? group.keywordTags[bookmarkId] : [];
                 const searchText  = [keyword, displayText, targetUrl, description, tags.join(' '), group.name].join(' ').toLowerCase();
-                return { keyword, keywordIndex, bookmarkId, displayText, targetUrl, description, tags, ek, isNew, addedAt, searchText, isSoftDeleted };
+                const clickCount  = WO.getBookmarkClickCount(originalIndex, keywordIndex, keyword);
+                return { keyword, keywordIndex, bookmarkId, displayText, targetUrl, description, tags, ek, isNew, addedAt, searchText, isSoftDeleted, clickCount };
             }).sort((a, b) => {
                 // 1. Newly added websites ALWAYS come at the top
                 if (a.isNew !== b.isNew) {
@@ -68,15 +69,15 @@
                     // Both newly added: newest addedAt first
                     const diffTime = (Number(b.addedAt) || 0) - (Number(a.addedAt) || 0);
                     if (diffTime !== 0) return diffTime;
-                    const ca = Number(WO.localClickCounts[a.ek]) || 0;
-                    const cb = Number(WO.localClickCounts[b.ek]) || 0;
+                    const ca = a.clickCount;
+                    const cb = b.clickCount;
                     if (cb !== ca) return cb - ca;
                     return a.displayText.localeCompare(b.displayText, undefined, { sensitivity: 'base' });
                 }
 
                 // 2. Regular websites: sort by usage (clicks)
-                const ca = Number(WO.localClickCounts[a.ek]) || 0;
-                const cb = Number(WO.localClickCounts[b.ek]) || 0;
+                const ca = a.clickCount;
+                const cb = b.clickCount;
                 // Keywords with clicks come before keywords with 0 clicks
                 if (ca === 0 && cb === 0) {
                     if (a.addedAt && b.addedAt && a.addedAt !== b.addedAt) {
@@ -245,7 +246,7 @@
                         item._searchText  = searchText;
                         item._displayText = displayText;
 
-                        const clickCount     = Number(WO.localClickCounts[ek]) || 0;
+                        const clickCount     = entry.clickCount !== undefined ? entry.clickCount : WO.getBookmarkClickCount(originalIndex, keywordIndex, keyword);
                         const keywordLabelHtml = isKeywordSearchActive
                             ? WO.highlightSearchHtml(displayText, normalizedSearchQuery)
                             : WO.escapeHtml(displayText);

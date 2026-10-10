@@ -142,12 +142,82 @@
         return store && store[legacy] !== undefined ? store[legacy] : fallback;
     };
 
+    WO.getBookmarkClickCount = function (groupIndex, keywordIndex, keyword) {
+        if (!keyword && groupIndex != null && keywordIndex != null && WO.groups[groupIndex]) {
+            keyword = WO.groups[groupIndex].keywords[keywordIndex];
+        }
+        if (!keyword) return 0;
+        const group = typeof groupIndex === 'number' ? WO.groups[groupIndex] : groupIndex;
+        const id = (group && typeof keywordIndex === 'number') ? WO.getBookmarkId(group, keywordIndex) : null;
+        const legacy = WO.getKeywordEncodedKey(keyword);
+
+        const store = WO.globalClickCounts;
+        const countLegacy = (store && legacy && store[legacy] !== undefined) ? (Number(store[legacy]) || 0) : null;
+        const countId = (store && id && store[id] !== undefined) ? (Number(store[id]) || 0) : null;
+
+        let defaultCount = 0;
+        if (WO.DEFAULT_CLICK_COUNTS && legacy && WO.DEFAULT_CLICK_COUNTS[legacy] !== undefined) {
+            defaultCount = Number(WO.DEFAULT_CLICK_COUNTS[legacy]) || 0;
+        }
+
+        if (countId === null && countLegacy === null) {
+            return defaultCount;
+        }
+        if (countId !== null && countLegacy === null) {
+            return Math.max(countId, defaultCount);
+        }
+        if (countId === null && countLegacy !== null) {
+            return Math.max(countLegacy, defaultCount);
+        }
+
+        if (countId === countLegacy) return countId;
+        if (countId < countLegacy) {
+            return countLegacy + countId;
+        }
+        return countId;
+    };
+
     WO.migrateMetadataToStableIds = function () {
         WO.ensureStableBookmarkIds();
-        WO.groups.forEach((group, gi) => group.keywords.forEach((keyword, ki) => {
+        if (WO.DEFAULT_CLICK_COUNTS && (!WO.globalClickCounts || Object.keys(WO.globalClickCounts).length === 0)) {
+            WO.globalClickCounts = JSON.parse(JSON.stringify(WO.DEFAULT_CLICK_COUNTS));
+        }
+        WO.groups.forEach((group, gi) => (group.keywords || []).forEach((keyword, ki) => {
             const id = WO.getBookmarkId(group, ki);
             const legacy = WO.getKeywordEncodedKey(keyword);
-            [[WO.globalClickCounts, 0], [WO.keywordDescriptions, ''], [WO.keywordAddedAt, null], [WO.keywordDeletedStatus, false]].forEach(([store]) => {
+
+            if (id && legacy && id !== legacy && WO.globalClickCounts) {
+                const legacyVal = WO.globalClickCounts[legacy];
+                const idVal = WO.globalClickCounts[id];
+                const hasLegacy = legacyVal !== undefined && Number.isFinite(Number(legacyVal));
+                const hasId = idVal !== undefined && Number.isFinite(Number(idVal));
+
+                if (hasLegacy && !hasId) {
+                    WO.globalClickCounts[id] = Number(legacyVal) || 0;
+                } else if (!hasLegacy && hasId) {
+                    WO.globalClickCounts[legacy] = Number(idVal) || 0;
+                } else if (hasLegacy && hasId) {
+                    const lNum = Number(legacyVal) || 0;
+                    const iNum = Number(idVal) || 0;
+                    if (iNum < lNum) {
+                        const total = lNum + iNum;
+                        WO.globalClickCounts[id] = total;
+                        WO.globalClickCounts[legacy] = total;
+                    } else {
+                        WO.globalClickCounts[legacy] = iNum;
+                    }
+                } else if (WO.DEFAULT_CLICK_COUNTS && WO.DEFAULT_CLICK_COUNTS[legacy] !== undefined) {
+                    const def = Number(WO.DEFAULT_CLICK_COUNTS[legacy]) || 0;
+                    WO.globalClickCounts[id] = def;
+                    WO.globalClickCounts[legacy] = def;
+                }
+            } else if (id && legacy && id === legacy && WO.globalClickCounts) {
+                if (WO.globalClickCounts[id] === undefined && WO.DEFAULT_CLICK_COUNTS && WO.DEFAULT_CLICK_COUNTS[id] !== undefined) {
+                    WO.globalClickCounts[id] = Number(WO.DEFAULT_CLICK_COUNTS[id]) || 0;
+                }
+            }
+
+            [[WO.keywordDescriptions, ''], [WO.keywordAddedAt, null], [WO.keywordDeletedStatus, false]].forEach(([store]) => {
                 if (id && store[id] === undefined && store[legacy] !== undefined) store[id] = store[legacy];
             });
         }));
@@ -347,6 +417,7 @@
             if (clicksDoc.exists) {
                 const n = clicksDoc.data() || {};
                 if (shallowObjectChanged(WO.globalClickCounts, n)) { WO.globalClickCounts = n; changed = true; }
+                WO.migrateMetadataToStableIds();
             }
             if (descriptionsDoc.exists) {
                 const n = descriptionsDoc.data() || {};
@@ -445,7 +516,12 @@
         WO.clickCountsRef.onSnapshot((doc) => {
             if (doc.exists) {
                 const n = doc.data() || {};
-                if (shallowObjectChanged(WO.globalClickCounts, n)) { WO.globalClickCounts = n; WO.saveLocalDataBackup(); WO.debouncedSnapshotRender(); }
+                if (shallowObjectChanged(WO.globalClickCounts, n)) {
+                    WO.globalClickCounts = n;
+                    WO.migrateMetadataToStableIds();
+                    WO.saveLocalDataBackup();
+                    WO.debouncedSnapshotRender();
+                }
             }
         }, (e) => console.warn('Click counts snapshot error:', e));
 
@@ -537,15 +613,41 @@
 
     WO.incrementKeywordClick = async function (groupIndex, keyword) {
         if (!keyword) return;
-        const keywordIndex = WO.groups[groupIndex] && WO.groups[groupIndex].keywords.indexOf(keyword);
-        const ek = WO.getBookmarkMetadataKey(groupIndex, keywordIndex, keyword);
+        const group = typeof groupIndex === 'number' ? WO.groups[groupIndex] : groupIndex;
+        const keywordIndex = group && Array.isArray(group.keywords) ? group.keywords.indexOf(keyword) : -1;
+        const id = (group && keywordIndex >= 0) ? WO.getBookmarkId(group, keywordIndex) : null;
+        const legacyKey = WO.getKeywordEncodedKey(keyword);
+        const ek = id || legacyKey;
+
+        // Local clicks tracking
         WO.localClickCounts[ek] = (Number(WO.localClickCounts[ek]) || 0) + 1;
+        if (id && legacyKey && id !== legacyKey) {
+            WO.localClickCounts[legacyKey] = WO.localClickCounts[ek];
+        }
         WO.saveLocalUsage();
-        WO.globalClickCounts[ek] = (WO.globalClickCounts[ek] || 0) + 1;
+
+        // Calculate resolved global count and increment
+        const currentCount = WO.getBookmarkClickCount(groupIndex, keywordIndex, keyword);
+        const nextCount = currentCount + 1;
+
+        if (id) WO.globalClickCounts[id] = nextCount;
+        if (legacyKey) WO.globalClickCounts[legacyKey] = nextCount;
         WO.saveLocalDataBackup();
-        // The Firestore onSnapshot listener will re-render when the server confirms the count update.
-        // No manual re-render needed here — avoids double-render on every keyword click.
-        try { await WO.clickCountsRef.set({ [ek]: WO.firestoreFieldValue.increment(1) }, { merge: true }); }
+
+        // Immediately update any visible DOM counters on tiles
+        const counterEls = WO.getKeywordCounterElements(keyword);
+        if (counterEls && counterEls.length) {
+            counterEls.forEach(el => { el.textContent = String(nextCount); });
+        }
+
+        // Sync to Firestore with atomic increment
+        try {
+            const payload = { [ek]: WO.firestoreFieldValue.increment(1) };
+            if (id && legacyKey && id !== legacyKey) {
+                payload[legacyKey] = WO.firestoreFieldValue.increment(1);
+            }
+            await WO.clickCountsRef.set(payload, { merge: true });
+        }
         catch (e) { console.error('Failed to sync click count:', e); }
     };
 
