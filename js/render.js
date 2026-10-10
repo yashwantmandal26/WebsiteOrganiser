@@ -433,6 +433,10 @@
         groupsContainer.innerHTML = '';
         groupsContainer.appendChild(fragment);
 
+        if (typeof WO.renderTopHits === 'function') {
+            WO.renderTopHits();
+        }
+
         // Schedule highlight AFTER DOM is updated — rAF ensures it runs in the next paint
         if (WO.lastAddedKeyword !== null) {
             requestAnimationFrame(WO.highlightRecentlyAddedKeyword);
@@ -568,6 +572,97 @@
                 addBtn.style.setProperty('background', addBtnBg, 'important');
             }
         });
+    };
+
+    // ── Quick Bar: Top Hits / Most Used ─────────────────────────────────────────
+    WO.renderTopHits = function () {
+        const section = document.getElementById('top-hits-section');
+        const scrollEl = document.getElementById('top-hits-scroll');
+        if (!section || !scrollEl) return;
+
+        if (document.documentElement.dataset.showTopHits === 'false' || (WO.preferences && WO.preferences.showTopHits === false)) {
+            section.style.display = 'none';
+            return;
+        }
+
+        if (WO.searchMode === WO.SEARCH_MODE_KEYWORDS && WO.activeKeywordSearchQuery) {
+            section.style.display = 'none';
+            return;
+        }
+
+        const hits = [];
+        if (Array.isArray(WO.groups)) {
+            WO.groups.forEach((group, gi) => {
+                if (!group || !Array.isArray(group.keywords)) return;
+                group.keywords.forEach((keyword, ki) => {
+                    if (!keyword) return;
+                    const isSoftDeleted = WO.getBookmarkMetadata(WO.keywordDeletedStatus, gi, ki, keyword, false) === true;
+                    if (isSoftDeleted && !WO.adminLoggedIn) return;
+                    const clickCount = WO.getBookmarkClickCount(gi, ki, keyword);
+                    if (clickCount > 0) {
+                        const { displayText, targetUrl } = WO.parseKeyword(keyword);
+                        hits.push({
+                            gi,
+                            ki,
+                            keyword,
+                            displayText,
+                            targetUrl,
+                            clickCount
+                        });
+                    }
+                });
+            });
+        }
+
+        hits.sort((a, b) => {
+            if (b.clickCount !== a.clickCount) return b.clickCount - a.clickCount;
+            return a.displayText.localeCompare(b.displayText, undefined, { sensitivity: 'base' });
+        });
+
+        const topHits = hits.slice(0, 8);
+        if (topHits.length === 0) {
+            section.style.display = 'none';
+            return;
+        }
+
+        section.style.display = 'block';
+        const fragment = document.createDocumentFragment();
+
+        topHits.forEach((item, idx) => {
+            const chip = document.createElement('a');
+            chip.className = 'top-hit-chip';
+            chip.href = WO.resolveDynamicURL(item.targetUrl) || '#';
+            chip.target = '_blank';
+            chip.rel = 'noopener';
+            chip.title = `${item.displayText} (${item.clickCount} clicks)`;
+
+            chip.innerHTML = `
+                <span class="top-hit-rank">#${idx + 1}</span>
+                <span class="top-hit-icon">${WO.getFaviconOrEmoji(item.keyword)}</span>
+                <span class="top-hit-name">${WO.escapeHtml(item.displayText)}</span>
+                <span class="top-hit-count">${item.clickCount}</span>
+            `;
+
+            chip.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (navigator.vibrate) navigator.vibrate(10);
+                if (typeof WO.playClickSound === 'function') WO.playClickSound();
+                WO.incrementKeywordClick(item.gi, item.keyword);
+                WO.openURLWithBrowser(item.targetUrl, true);
+            });
+
+            if (!('ontouchstart' in window) && !navigator.maxTouchPoints) {
+                chip.addEventListener('mouseenter', () => {
+                    if (typeof WO.playHoverSound === 'function') WO.playHoverSound();
+                });
+            }
+
+            fragment.appendChild(chip);
+        });
+
+        scrollEl.innerHTML = '';
+        scrollEl.appendChild(fragment);
     };
 
 })(window.WO);

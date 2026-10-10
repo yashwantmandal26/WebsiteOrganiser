@@ -41,7 +41,7 @@
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js">
-  <link rel="stylesheet" href="bundle.min.css?v=1070">
+  <link rel="stylesheet" href="bundle.min.css?v=1072">
 
   <link rel="manifest" href="manifest.json">
 
@@ -62,6 +62,8 @@
 </head>
 
 <body>
+  <div id="app-wallpaper" class="app-wallpaper" aria-hidden="true"></div>
+  <div id="app-wallpaper-overlay" class="app-wallpaper-overlay" aria-hidden="true"></div>
 
   <header class="premium-header">
     <div class="header-row">
@@ -80,6 +82,11 @@
       <div class="header-controls">
         <div class="live-clock" id="live-clock" aria-label="Current time">
           <span class="clock-hours" id="clock-hh">12</span><span class="clock-sep">:</span><span class="clock-minutes" id="clock-mm">00</span><span class="clock-sep clock-seconds-sep">:</span><span class="clock-seconds" id="clock-ss">00</span><span class="clock-ms" id="clock-ms" style="display: none; font-size: 0.7em; opacity: 0.8; padding-left: 2px;">.000</span><span class="clock-ampm" id="clock-ampm">&nbsp;AM</span>
+        </div>
+        <div class="weather-widget" id="weather-widget" aria-label="Current weather" title="Live weather" style="display: none;">
+          <span class="weather-icon" id="weather-icon">⛅</span>
+          <span class="weather-temp" id="weather-temp">--°</span>
+          <span class="weather-city" id="weather-city"></span>
         </div>
         <div class="header-right">
           <!-- Admin Tools Hub Dropdown (Visible only to Admin) -->
@@ -204,7 +211,19 @@
 
 
   <main class="container">
-
+    <!-- Quick Bar: Top Hits / Most Used -->
+    <section id="top-hits-section" class="top-hits-section" aria-label="Top hits" style="display: none;">
+      <div class="top-hits-header">
+        <div class="top-hits-title-wrap">
+          <span class="top-hits-icon" aria-hidden="true">⭐</span>
+          <span class="top-hits-title">Top Hits</span>
+          <span class="top-hits-badge">Most Used</span>
+        </div>
+      </div>
+      <div class="top-hits-scroll" id="top-hits-scroll">
+        <!-- Dynamically rendered Top Hits -->
+      </div>
+    </section>
 
     <div id="groups-container" class="groups-grid">
       <!-- Keyword groups will be dynamically inserted here -->
@@ -419,7 +438,7 @@
     })();
   </script>
   <!-- Application Bundle -->
-  <script defer src="bundle.min.js?v=1070"></script>
+  <script defer src="bundle.min.js?v=1072"></script>
 
   <div id="toast-container"></div>
   <!-- Global keyword tooltip portal — lives at body level to avoid contain:paint clipping -->

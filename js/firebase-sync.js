@@ -639,6 +639,9 @@
         if (counterEls && counterEls.length) {
             counterEls.forEach(el => { el.textContent = String(nextCount); });
         }
+        if (typeof WO.renderTopHits === 'function') {
+            WO.renderTopHits();
+        }
 
         // Sync to Firestore with atomic increment
         try {

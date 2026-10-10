@@ -396,6 +396,11 @@
             liveClock.style.cursor = 'pointer';
             liveClock.title = 'Click to toggle milliseconds';
         }
+
+        // Initialize Live Weather Widget (silent IP forecast)
+        if (typeof WO.initWeatherWidget === 'function') {
+            WO.initWeatherWidget();
+        }
         
         // Keep adminBtn handler as fallback if element exists
         if (adminBtn) {
@@ -916,5 +921,154 @@
         }
 
     }; // end WO.initUI
+
+    // ── Weather Widget (Silent IP-based Forecast) ──────────────────────────────
+    WO.initWeatherWidget = function () {
+        const widgetEl = document.getElementById('weather-widget');
+        const iconEl   = document.getElementById('weather-icon');
+        const tempEl   = document.getElementById('weather-temp');
+        const cityEl   = document.getElementById('weather-city');
+        if (!widgetEl || !iconEl || !tempEl) return;
+
+        const CACHE_KEY = 'wo-weather-cache-v1';
+        const CACHE_TTL_MS = 25 * 60 * 1000; // 25 minutes
+
+        function getWeatherIcon(code, isDay = 1) {
+            if (code === 0) return isDay ? '☀️' : '🌙';
+            if (code === 1) return isDay ? '🌤️' : '🌤️';
+            if (code === 2) return '⛅';
+            if (code === 3) return '☁️';
+            if (code >= 45 && code <= 48) return '🌫️';
+            if (code >= 51 && code <= 57) return '🌦️';
+            if (code >= 61 && code <= 67) return '🌧️';
+            if (code >= 71 && code <= 77) return '🌨️';
+            if (code >= 80 && code <= 82) return '🌧️';
+            if (code >= 85 && code <= 86) return '🌨️';
+            if (code >= 95 && code <= 99) return '⛈️';
+            return '⛅';
+        }
+
+        function getWeatherDesc(code) {
+            if (code === 0) return 'Clear sky';
+            if (code === 1) return 'Mainly clear';
+            if (code === 2) return 'Partly cloudy';
+            if (code === 3) return 'Overcast';
+            if (code >= 45 && code <= 48) return 'Foggy';
+            if (code >= 51 && code <= 57) return 'Drizzle';
+            if (code >= 61 && code <= 67) return 'Rain';
+            if (code >= 71 && code <= 77) return 'Snow';
+            if (code >= 80 && code <= 82) return 'Rain showers';
+            if (code >= 85 && code <= 86) return 'Snow showers';
+            if (code >= 95 && code <= 99) return 'Thunderstorm';
+            return 'Clear';
+        }
+
+        function renderWeather(data) {
+            if (!data) return;
+            const icon = getWeatherIcon(data.code, data.isDay !== undefined ? data.isDay : 1);
+            iconEl.textContent = icon;
+            tempEl.textContent = `${data.temp}°`;
+            if (cityEl) {
+                cityEl.textContent = data.city ? ` · ${data.city}` : '';
+            }
+            widgetEl.dataset.hasLoaded = 'true';
+            widgetEl.title = `${data.city || 'Weather'}: ${data.temp}°C, ${getWeatherDesc(data.code)} (Click for info)`;
+            if (document.documentElement.dataset.showWeather !== 'false' && (!WO.preferences || WO.preferences.showWeather !== false)) {
+                widgetEl.style.display = 'inline-flex';
+            }
+        }
+
+        // 1. Instant paint from cached weather
+        let cached = null;
+        try {
+            const raw = localStorage.getItem(CACHE_KEY);
+            if (raw) cached = JSON.parse(raw);
+        } catch {}
+
+        if (cached && Number.isFinite(cached.temp)) {
+            renderWeather(cached);
+        }
+
+        // 2. Fetch fresh weather silently if cache expired or missing
+        async function fetchWeather(force = false) {
+            if (!force && cached && (Date.now() - (cached.timestamp || 0) < CACHE_TTL_MS)) {
+                return;
+            }
+
+            try {
+                // Get silent network IP location (zero browser prompt)
+                let lat = 23.3441, lon = 85.3096, city = '';
+                if (typeof WO.getLocationDetails === 'function') {
+                    const loc = await WO.getLocationDetails(false);
+                    if (loc) {
+                        if (loc.lat && loc.lon) { lat = loc.lat; lon = loc.lon; }
+                        city = loc.city || '';
+                    }
+                }
+
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lon)}&current_weather=true`;
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('Weather API HTTP ' + res.status);
+                const json = await res.json();
+                if (json && json.current_weather) {
+                    const current = json.current_weather;
+                    const weatherData = {
+                        temp: Math.round(current.temperature),
+                        code: current.weathercode,
+                        isDay: current.is_day,
+                        city: city,
+                        timestamp: Date.now()
+                    };
+                    cached = weatherData;
+                    try { localStorage.setItem(CACHE_KEY, JSON.stringify(weatherData)); } catch {}
+                    renderWeather(weatherData);
+                }
+            } catch (err) {
+                // Silent fallback: if wttr.in is reachable
+                try {
+                    const res2 = await fetch('https://wttr.in/?format=j1');
+                    if (res2.ok) {
+                        const j2 = await res2.json();
+                        const cond = j2.current_condition && j2.current_condition[0];
+                        if (cond) {
+                            const weatherData = {
+                                temp: Math.round(Number(cond.temp_C)),
+                                code: 2,
+                                isDay: 1,
+                                city: (j2.nearest_area && j2.nearest_area[0]?.areaName && j2.nearest_area[0].areaName[0]?.value) || '',
+                                timestamp: Date.now()
+                            };
+                            cached = weatherData;
+                            try { localStorage.setItem(CACHE_KEY, JSON.stringify(weatherData)); } catch {}
+                            renderWeather(weatherData);
+                        }
+                    }
+                } catch {}
+            }
+        }
+
+        // Kick off fetch after short idle timeout to avoid competing with initial bundle paint
+        if (!cached || (Date.now() - (cached.timestamp || 0) >= CACHE_TTL_MS)) {
+            setTimeout(() => { fetchWeather(); }, 400);
+        }
+
+        // Click on widget gives instant feedback / refreshes
+        widgetEl.addEventListener('click', () => {
+            if (cached && typeof WO.showToastNotification === 'function') {
+                const desc = getWeatherDesc(cached.code);
+                WO.showToastNotification(`⛅ ${cached.city || 'Local'}: ${cached.temp}°C · ${desc}`);
+            }
+            fetchWeather(true);
+        });
+
+        // Sync with preferences change
+        document.addEventListener('wo-preferences-changed', () => {
+            if (document.documentElement.dataset.showWeather === 'false' || (WO.preferences && WO.preferences.showWeather === false)) {
+                widgetEl.style.display = 'none';
+            } else if (widgetEl.dataset.hasLoaded === 'true') {
+                widgetEl.style.display = 'inline-flex';
+            }
+        });
+    };
 
 })(window.WO);
