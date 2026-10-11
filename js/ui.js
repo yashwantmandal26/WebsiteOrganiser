@@ -922,7 +922,7 @@
 
     }; // end WO.initUI
 
-    // ── Weather Widget (Silent IP-based Forecast) ──────────────────────────────
+    // ── Weather Widget & Location Picker Modal ─────────────────────────────────
     WO.initWeatherWidget = function () {
         const widgetEl = document.getElementById('weather-widget');
         const iconEl   = document.getElementById('weather-icon');
@@ -930,7 +930,22 @@
         const cityEl   = document.getElementById('weather-city');
         if (!widgetEl || !iconEl || !tempEl) return;
 
+        // Modal Elements
+        const modalEl       = document.getElementById('weather-modal');
+        const wmIconEl      = document.getElementById('wm-icon');
+        const wmConditionEl = document.getElementById('wm-condition');
+        const wmTempEl      = document.getElementById('wm-temp');
+        const wmCityEl      = document.getElementById('wm-city');
+        const wmSourceEl    = document.getElementById('wm-source');
+        const wmGpsBtn      = document.getElementById('wm-gps-btn');
+        const wmGpsText     = document.getElementById('wm-gps-text');
+        const wmCityInput   = document.getElementById('wm-city-input');
+        const wmSaveBtn     = document.getElementById('wm-city-save-btn');
+        const wmResetBtn    = document.getElementById('wm-reset-btn');
+        const wmCloseBtn    = document.getElementById('wm-close-btn');
+
         const CACHE_KEY = 'wo-weather-cache-v1';
+        const CUSTOM_LOC_KEY = 'wo-custom-weather-loc-v1';
         const CACHE_TTL_MS = 25 * 60 * 1000; // 25 minutes
 
         function getWeatherIcon(code, isDay = 1) {
@@ -963,18 +978,48 @@
             return 'Clear';
         }
 
+        function getCustomLoc() {
+            try {
+                const raw = localStorage.getItem(CUSTOM_LOC_KEY);
+                if (raw) return JSON.parse(raw);
+            } catch {}
+            return null;
+        }
+
         function renderWeather(data) {
             if (!data) return;
             const icon = getWeatherIcon(data.code, data.isDay !== undefined ? data.isDay : 1);
+            const desc = getWeatherDesc(data.code);
             iconEl.textContent = icon;
             tempEl.textContent = `${data.temp}°`;
             if (cityEl) {
                 cityEl.textContent = data.city ? ` · ${data.city}` : '';
             }
             widgetEl.dataset.hasLoaded = 'true';
-            widgetEl.title = `${data.city || 'Weather'}: ${data.temp}°C, ${getWeatherDesc(data.code)} (Click for info)`;
+            widgetEl.title = `${data.city || 'Weather'}: ${data.temp}°C, ${desc} (Click to change location)`;
             if (document.documentElement.dataset.showWeather !== 'false' && (!WO.preferences || WO.preferences.showWeather !== false)) {
                 widgetEl.style.display = 'inline-flex';
+            }
+
+            // Sync with modal
+            if (wmIconEl)      wmIconEl.textContent = icon;
+            if (wmConditionEl) wmConditionEl.textContent = desc;
+            if (wmTempEl)      wmTempEl.textContent = `${data.temp}°C`;
+            if (wmCityEl)      wmCityEl.textContent = data.city || 'Local Area';
+            if (wmSourceEl) {
+                if (data.source === 'gps') {
+                    wmSourceEl.textContent = '📍 Exact GPS Location';
+                    wmSourceEl.style.background = 'rgba(76, 175, 80, 0.2)';
+                    wmSourceEl.style.color = '#2e7d32';
+                } else if (data.source === 'custom') {
+                    wmSourceEl.textContent = '✍️ Custom City';
+                    wmSourceEl.style.background = 'rgba(123, 44, 191, 0.18)';
+                    wmSourceEl.style.color = '#7b2cbf';
+                } else {
+                    wmSourceEl.textContent = '🌐 IP Network Gateway';
+                    wmSourceEl.style.background = 'rgba(128, 128, 128, 0.15)';
+                    wmSourceEl.style.color = 'inherit';
+                }
             }
         }
 
@@ -989,16 +1034,22 @@
             renderWeather(cached);
         }
 
-        // 2. Fetch fresh weather silently if cache expired or missing
+        // 2. Fetch fresh weather
         async function fetchWeather(force = false) {
             if (!force && cached && (Date.now() - (cached.timestamp || 0) < CACHE_TTL_MS)) {
                 return;
             }
 
             try {
-                // Get silent network IP location (zero browser prompt)
-                let lat = 23.3441, lon = 85.3096, city = '';
-                if (typeof WO.getLocationDetails === 'function') {
+                let lat = 23.3441, lon = 85.3096, city = '', source = 'ip';
+                const customLoc = getCustomLoc();
+
+                if (customLoc && customLoc.lat && customLoc.lon) {
+                    lat = customLoc.lat;
+                    lon = customLoc.lon;
+                    city = customLoc.city || '';
+                    source = customLoc.source || 'custom';
+                } else if (typeof WO.getLocationDetails === 'function') {
                     const loc = await WO.getLocationDetails(false);
                     if (loc) {
                         if (loc.lat && loc.lon) { lat = loc.lat; lon = loc.lon; }
@@ -1017,6 +1068,7 @@
                         code: current.weathercode,
                         isDay: current.is_day,
                         city: city,
+                        source: source,
                         timestamp: Date.now()
                     };
                     cached = weatherData;
@@ -1024,7 +1076,7 @@
                     renderWeather(weatherData);
                 }
             } catch (err) {
-                // Silent fallback: if wttr.in is reachable
+                // Silent fallback
                 try {
                     const res2 = await fetch('https://wttr.in/?format=j1');
                     if (res2.ok) {
@@ -1036,6 +1088,7 @@
                                 code: 2,
                                 isDay: 1,
                                 city: (j2.nearest_area && j2.nearest_area[0]?.areaName && j2.nearest_area[0].areaName[0]?.value) || '',
+                                source: 'ip',
                                 timestamp: Date.now()
                             };
                             cached = weatherData;
@@ -1047,19 +1100,170 @@
             }
         }
 
-        // Kick off fetch after short idle timeout to avoid competing with initial bundle paint
+        // Kick off fetch after short idle timeout
         if (!cached || (Date.now() - (cached.timestamp || 0) >= CACHE_TTL_MS)) {
             setTimeout(() => { fetchWeather(); }, 400);
         }
 
-        // Click on widget gives instant feedback / refreshes
+        // 3. Click on Header Widget opens the Location & Details Modal
         widgetEl.addEventListener('click', () => {
-            if (cached && typeof WO.showToastNotification === 'function') {
-                const desc = getWeatherDesc(cached.code);
-                WO.showToastNotification(`⛅ ${cached.city || 'Local'}: ${cached.temp}°C · ${desc}`);
+            if (modalEl && typeof WO.toggleModal === 'function') {
+                if (cached) renderWeather(cached);
+                WO.toggleModal(modalEl, true);
+                if (wmCityInput) {
+                    wmCityInput.value = '';
+                    setTimeout(() => wmCityInput.focus(), 150);
+                }
             }
-            fetchWeather(true);
         });
+
+        // 4. Modal Close Handlers
+        if (wmCloseBtn && modalEl) {
+            wmCloseBtn.addEventListener('click', () => WO.toggleModal(modalEl, false));
+        }
+        if (modalEl) {
+            modalEl.addEventListener('pointerdown', (e) => {
+                if (e.target === modalEl) WO.toggleModal(modalEl, false);
+            });
+        }
+
+        // 5. GPS Location Detection (On explicit user click only)
+        if (wmGpsBtn) {
+            wmGpsBtn.addEventListener('click', () => {
+                if (!navigator.geolocation || !navigator.geolocation.getCurrentPosition) {
+                    if (typeof WO.showToastNotification === 'function') {
+                        WO.showToastNotification('⚠️ Geolocation is not supported by your browser.');
+                    }
+                    return;
+                }
+
+                wmGpsBtn.disabled = true;
+                if (wmGpsText) wmGpsText.textContent = 'Acquiring GPS location...';
+
+                navigator.geolocation.getCurrentPosition(
+                    async (pos) => {
+                        try {
+                            const lat = pos.coords.latitude;
+                            const lon = pos.coords.longitude;
+                            let city = 'Hazaribagh';
+
+                            // Reverse geocode coords
+                            try {
+                                const revRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`);
+                                if (revRes.ok) {
+                                    const rData = await revRes.json();
+                                    city = rData.city || rData.locality || city;
+                                }
+                            } catch {}
+
+                            const newLoc = { lat, lon, city, source: 'gps' };
+                            localStorage.setItem(CUSTOM_LOC_KEY, JSON.stringify(newLoc));
+                            await fetchWeather(true);
+
+                            if (typeof WO.showToastNotification === 'function') {
+                                WO.showToastNotification(`📍 Location updated to ${city}!`);
+                            }
+                            if (modalEl) WO.toggleModal(modalEl, false);
+                        } catch (err) {
+                            if (typeof WO.showToastNotification === 'function') {
+                                WO.showToastNotification('⚠️ Failed to load weather for GPS position.');
+                            }
+                        } finally {
+                            wmGpsBtn.disabled = false;
+                            if (wmGpsText) wmGpsText.textContent = 'Detect My Exact Location (GPS)';
+                        }
+                    },
+                    (err) => {
+                        wmGpsBtn.disabled = false;
+                        if (wmGpsText) wmGpsText.textContent = 'Detect My Exact Location (GPS)';
+                        let msg = '⚠️ Location permission was denied in browser.';
+                        if (err.code === 2) msg = '⚠️ Location position unavailable.';
+                        else if (err.code === 3) msg = '⚠️ Location request timed out.';
+                        if (typeof WO.showToastNotification === 'function') {
+                            WO.showToastNotification(msg + ' Please type your city below.');
+                        }
+                    },
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                );
+            });
+        }
+
+        // 6. Manual City Search & Save
+        async function saveCustomCity() {
+            if (!wmCityInput) return;
+            const query = wmCityInput.value.trim();
+            if (!query) {
+                if (typeof WO.showToastNotification === 'function') {
+                    WO.showToastNotification('⚠️ Please enter a city name.');
+                }
+                wmCityInput.focus();
+                return;
+            }
+
+            if (wmSaveBtn) {
+                wmSaveBtn.disabled = true;
+                wmSaveBtn.textContent = '...';
+            }
+
+            try {
+                const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=5&language=en&format=json`;
+                const res = await fetch(geoUrl);
+                if (!res.ok) throw new Error('Geocoding HTTP ' + res.status);
+                const data = await res.json();
+                if (data && Array.isArray(data.results) && data.results.length > 0) {
+                    const match = data.results.find(r => r.country_code === 'IN') || data.results[0];
+                    const cityName = match.name;
+                    const newLoc = {
+                        lat: match.latitude,
+                        lon: match.longitude,
+                        city: cityName,
+                        source: 'custom'
+                    };
+                    localStorage.setItem(CUSTOM_LOC_KEY, JSON.stringify(newLoc));
+                    await fetchWeather(true);
+
+                    if (typeof WO.showToastNotification === 'function') {
+                        WO.showToastNotification(`🌤️ City updated to ${cityName}!`);
+                    }
+                    if (modalEl) WO.toggleModal(modalEl, false);
+                } else {
+                    if (typeof WO.showToastNotification === 'function') {
+                        WO.showToastNotification(`⚠️ City "${query}" not found. Please check spelling.`);
+                    }
+                }
+            } catch (err) {
+                if (typeof WO.showToastNotification === 'function') {
+                    WO.showToastNotification('⚠️ Could not resolve city location. Try again.');
+                }
+            } finally {
+                if (wmSaveBtn) {
+                    wmSaveBtn.disabled = false;
+                    wmSaveBtn.textContent = 'Save';
+                }
+            }
+        }
+
+        if (wmSaveBtn) wmSaveBtn.addEventListener('click', saveCustomCity);
+        if (wmCityInput) {
+            wmCityInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    saveCustomCity();
+                }
+            });
+        }
+
+        // 7. Reset to Auto-IP
+        if (wmResetBtn) {
+            wmResetBtn.addEventListener('click', async () => {
+                localStorage.removeItem(CUSTOM_LOC_KEY);
+                await fetchWeather(true);
+                if (typeof WO.showToastNotification === 'function') {
+                    WO.showToastNotification('↺ Reset to automatic IP location.');
+                }
+                if (modalEl) WO.toggleModal(modalEl, false);
+            });
+        }
 
         // Sync with preferences change
         document.addEventListener('wo-preferences-changed', () => {
