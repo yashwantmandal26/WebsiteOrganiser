@@ -398,9 +398,29 @@ html:not([data-theme="light"]) .top-hits-badge {
   -ms-overflow-style: none;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
+  /* Soft fade-out on the end side so overflowing chips gracefully fade */
+  mask-image: linear-gradient(to right, #000 0%, #000 calc(100% - 70px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, #000 0%, #000 calc(100% - 70px), transparent 100%);
+  transition: mask-image 0.25s ease, -webkit-mask-image 0.25s ease;
 }
 .top-hits-scroll::-webkit-scrollbar {
   display: none;
+}
+.top-hits-scroll[data-scroll-state="start"] {
+  mask-image: linear-gradient(to right, #000 0%, #000 calc(100% - 70px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, #000 0%, #000 calc(100% - 70px), transparent 100%);
+}
+.top-hits-scroll[data-scroll-state="middle"] {
+  mask-image: linear-gradient(to right, transparent 0%, #000 50px, #000 calc(100% - 70px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 50px, #000 calc(100% - 70px), transparent 100%);
+}
+.top-hits-scroll[data-scroll-state="end"] {
+  mask-image: linear-gradient(to right, transparent 0%, #000 50px, #000 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 50px, #000 100%);
+}
+.top-hits-scroll[data-scroll-state="none"] {
+  mask-image: none;
+  -webkit-mask-image: none;
 }
 .top-hit-chip {
   display: inline-flex;
@@ -501,6 +521,19 @@ html:not([data-theme="light"]) .top-hit-count {
   .top-hits-section {
     padding: 0 10px;
     margin: 14px auto 22px;
+  }
+  .top-hits-scroll,
+  .top-hits-scroll[data-scroll-state="start"] {
+    mask-image: linear-gradient(to right, #000 0%, #000 calc(100% - 45px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, #000 0%, #000 calc(100% - 45px), transparent 100%);
+  }
+  .top-hits-scroll[data-scroll-state="middle"] {
+    mask-image: linear-gradient(to right, transparent 0%, #000 32px, #000 calc(100% - 45px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 32px, #000 calc(100% - 45px), transparent 100%);
+  }
+  .top-hits-scroll[data-scroll-state="end"] {
+    mask-image: linear-gradient(to right, transparent 0%, #000 32px, #000 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 32px, #000 100%);
   }
   .top-hit-chip {
     padding: 7px 13px;

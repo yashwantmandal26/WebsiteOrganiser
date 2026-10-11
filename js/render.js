@@ -576,6 +576,24 @@
 
     // ── Quick Bar: Top Hits / Most Used ─────────────────────────────────────────
     let _topHitsWheelBound = false;
+    function _updateTopHitsScrollMask(scrollEl) {
+        if (!scrollEl) return;
+        const hasOverflow = scrollEl.scrollWidth > scrollEl.clientWidth + 4;
+        if (!hasOverflow) {
+            scrollEl.dataset.scrollState = 'none';
+            return;
+        }
+        const maxScroll = scrollEl.scrollWidth - scrollEl.clientWidth;
+        const current = scrollEl.scrollLeft;
+        if (current <= 6) {
+            scrollEl.dataset.scrollState = 'start';
+        } else if (current >= maxScroll - 6) {
+            scrollEl.dataset.scrollState = 'end';
+        } else {
+            scrollEl.dataset.scrollState = 'middle';
+        }
+    }
+
     function _initTopHitsWheel() {
         if (_topHitsWheelBound) return;
         const section = document.getElementById('top-hits-section');
@@ -593,10 +611,20 @@
                             left: e.deltaY * 1.3,
                             behavior: 'auto'
                         });
+                        _updateTopHitsScrollMask(scrollEl);
                     }
                 }
             }
         }, { passive: false });
+
+        scrollEl.addEventListener('scroll', () => {
+            _updateTopHitsScrollMask(scrollEl);
+        }, { passive: true });
+
+        window.addEventListener('resize', () => {
+            _updateTopHitsScrollMask(scrollEl);
+        }, { passive: true });
+
         _topHitsWheelBound = true;
     }
 
@@ -689,6 +717,7 @@
         scrollEl.innerHTML = '';
         scrollEl.appendChild(fragment);
         _initTopHitsWheel();
+        requestAnimationFrame(() => _updateTopHitsScrollMask(scrollEl));
     };
 
 })(window.WO);
