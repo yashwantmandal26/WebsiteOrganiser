@@ -117,8 +117,16 @@
 
                 // Read theme once before the loop instead of inside every iteration
                 const theme = document.documentElement.dataset.theme;
-                groupCard.style.background = (theme === 'dark') ? WO.darkenColor(groupColor, 0.6) : groupColor;
-                groupCard.style.color = '#222';
+                if (theme === 'solid-dark') {
+                    groupCard.style.background = '#0a0a0f';
+                    groupCard.style.color = '#fff';
+                } else if (theme === 'dark') {
+                    groupCard.style.background = WO.darkenColor(groupColor, 0.6);
+                    groupCard.style.color = '#fff';
+                } else {
+                    groupCard.style.background = groupColor;
+                    groupCard.style.color = '#222';
+                }
                 // Expose group color as CSS vars for header divider, border glow, tile tint, and accent strip
                 groupCard.style.setProperty('--group-color', groupColor);
                 groupCard.style.setProperty('--group-header-color', groupColor + 'aa');
@@ -181,7 +189,7 @@
                 const actions   = document.createElement('div');
                 actions.className = 'group-actions';
                 let addBtnBg;
-                if (theme === 'solid-dark')  addBtnBg = WO.darkenColor(groupColor, 0.75);
+                if (theme === 'solid-dark')  addBtnBg = '#1a1a22';
                 else if (theme === 'dark')   addBtnBg = WO.darkenColor(groupColor, 0.45);
                 else                         addBtnBg = '#ffffff';
 
@@ -550,10 +558,10 @@
             const group = WO.groups[gi];
             if (!group) return;
             const groupColor = WO.getGroupColor(group, usedColors, parseInt(gi, 10));
-            if (theme === 'dark') {
+            if (theme === 'solid-dark') {
+                card.style.background = '#0a0a0f';
+            } else if (theme === 'dark') {
                 card.style.background = WO.darkenColor(groupColor, 0.6);
-            } else if (theme === 'solid-dark') {
-                card.style.background = WO.darkenColor(groupColor, 0.75);
             } else {
                 card.style.background = groupColor;
             }
@@ -566,7 +574,7 @@
             const addBtn = card.querySelector('.icon-btn--add-keyword');
             if (addBtn) {
                 let addBtnBg;
-                if (theme === 'solid-dark')  addBtnBg = WO.darkenColor(groupColor, 0.75);
+                if (theme === 'solid-dark')  addBtnBg = '#1a1a22';
                 else if (theme === 'dark')   addBtnBg = WO.darkenColor(groupColor, 0.45);
                 else                         addBtnBg = '#ffffff';
                 addBtn.style.setProperty('background', addBtnBg, 'important');

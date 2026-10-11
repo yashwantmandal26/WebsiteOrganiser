@@ -645,10 +645,23 @@
             WO.renderTopHits();
         }
 
-        // Sync to Firestore with atomic increment (only the primary canonical key 'ek')
+        // Sync to Firestore with atomic increment for legacyKey and synced id
         try {
-            const payload = { [ek]: WO.firestoreFieldValue.increment(1) };
-            await WO.clickCountsRef.set(payload, { merge: true });
+            const payload = {};
+            if (legacyKey) {
+                const legacyVal = WO.globalClickCounts ? WO.globalClickCounts[legacyKey] : undefined;
+                if (legacyVal !== undefined && legacyVal >= currentCount) {
+                    payload[legacyKey] = WO.firestoreFieldValue.increment(1);
+                } else {
+                    payload[legacyKey] = nextCount;
+                }
+            }
+            if (id && id !== legacyKey) {
+                payload[id] = nextCount;
+            }
+            if (Object.keys(payload).length > 0) {
+                await WO.clickCountsRef.set(payload, { merge: true });
+            }
         }
         catch (e) { console.error('Failed to sync click count:', e); }
     };
