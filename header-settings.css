@@ -330,7 +330,7 @@ html:not([data-theme="light"]) .preference-input-text {
    Feature 3: Top Hits / Most Used Quick Bar
    ============================================================================= */
 .top-hits-section {
-  margin: 18px auto 30px;
+  margin: 10px auto 14px;
   width: 100%;
   max-width: 1400px;
   padding: 0 14px;
@@ -351,19 +351,19 @@ html[data-show-top-hits="false"] .top-hits-section {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   padding: 0 4px;
 }
 .top-hits-title-wrap {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
 }
 .top-hits-icon {
-  font-size: 16px;
+  font-size: 14px;
 }
 .top-hits-title {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 750;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -371,11 +371,11 @@ html[data-show-top-hits="false"] .top-hits-section {
   opacity: 0.9;
 }
 .top-hits-badge {
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  padding: 2px 7px;
+  padding: 2px 6px;
   border-radius: 999px;
   background: rgba(123, 44, 191, 0.15);
   color: var(--preference-accent, #9750e9);
@@ -390,33 +390,33 @@ html:not([data-theme="light"]) .top-hits-badge {
 .top-hits-scroll {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 6px 4px 12px;
+  padding: 2px 4px 6px;
   scrollbar-width: none;
   -ms-overflow-style: none;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
   /* Soft fade-out on the end side so overflowing chips gracefully fade */
-  mask-image: linear-gradient(to right, #000 0%, #000 calc(100% - 70px), transparent 100%);
-  -webkit-mask-image: linear-gradient(to right, #000 0%, #000 calc(100% - 70px), transparent 100%);
+  mask-image: linear-gradient(to right, #000 0%, #000 calc(100% - 60px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, #000 0%, #000 calc(100% - 60px), transparent 100%);
   transition: mask-image 0.25s ease, -webkit-mask-image 0.25s ease;
 }
 .top-hits-scroll::-webkit-scrollbar {
   display: none;
 }
 .top-hits-scroll[data-scroll-state="start"] {
-  mask-image: linear-gradient(to right, #000 0%, #000 calc(100% - 70px), transparent 100%);
-  -webkit-mask-image: linear-gradient(to right, #000 0%, #000 calc(100% - 70px), transparent 100%);
+  mask-image: linear-gradient(to right, #000 0%, #000 calc(100% - 60px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, #000 0%, #000 calc(100% - 60px), transparent 100%);
 }
 .top-hits-scroll[data-scroll-state="middle"] {
-  mask-image: linear-gradient(to right, transparent 0%, #000 50px, #000 calc(100% - 70px), transparent 100%);
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 50px, #000 calc(100% - 70px), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, #000 40px, #000 calc(100% - 60px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 40px, #000 calc(100% - 60px), transparent 100%);
 }
 .top-hits-scroll[data-scroll-state="end"] {
-  mask-image: linear-gradient(to right, transparent 0%, #000 50px, #000 100%);
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 50px, #000 100%);
+  mask-image: linear-gradient(to right, transparent 0%, #000 40px, #000 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 40px, #000 100%);
 }
 .top-hits-scroll[data-scroll-state="none"] {
   mask-image: none;
@@ -425,23 +425,25 @@ html:not([data-theme="light"]) .top-hits-badge {
 .top-hit-chip {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 16px;
+  gap: 7px;
+  padding: 5px 12px;
+  height: 32px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.78);
   border: 1px solid rgba(123, 44, 191, 0.18);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
   text-decoration: none;
   color: var(--text-color, #2b223a);
-  font-size: 13.5px;
+  font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
   flex-shrink: 0;
-  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   cursor: pointer;
   user-select: none;
+  box-sizing: border-box;
 }
 html:not([data-theme="light"]) .top-hit-chip {
   background: rgba(30, 26, 42, 0.78);
@@ -452,47 +454,47 @@ html:not([data-theme="light"]) .top-hit-chip {
 .top-hit-chip:hover {
   transform: translateY(-2px);
   border-color: var(--preference-accent, #9750e9);
-  box-shadow: 0 8px 22px rgba(123, 44, 191, 0.2);
+  box-shadow: 0 6px 18px rgba(123, 44, 191, 0.2);
   color: var(--preference-accent, #9750e9);
 }
 html:not([data-theme="light"]) .top-hit-chip:hover {
   border-color: #ca9aff;
-  box-shadow: 0 8px 24px rgba(187, 134, 252, 0.25);
+  box-shadow: 0 6px 20px rgba(187, 134, 252, 0.25);
   color: #ca9aff;
 }
 .top-hit-rank {
-  font-size: 11.5px;
-  font-weight: 800;
+  font-size: 10px;
+  font-weight: 750;
   opacity: 0.55;
 }
 .top-hit-icon {
-  width: 26px;
-  height: 26px;
-  min-width: 26px;
-  min-height: 26px;
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  min-height: 18px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 7px;
+  border-radius: 4px;
   overflow: hidden;
   flex-shrink: 0;
+  position: relative;
 }
 .top-hit-icon img,
 .top-hit-icon .keyword-favicon {
   width: 100% !important;
   height: 100% !important;
-  object-fit: contain;
+  object-fit: contain !important;
   display: block;
 }
 .top-hit-icon .keyword-fallback-container {
-  width: 100% !important;
-  height: 100% !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
 }
 .top-hit-icon .keyword-letter {
-  font-size: 16px !important;
+  font-size: 12px !important;
   font-weight: 800 !important;
   line-height: 1 !important;
   display: flex;
@@ -500,15 +502,17 @@ html:not([data-theme="light"]) .top-hit-chip:hover {
   justify-content: center;
 }
 .top-hit-name {
-  max-width: 160px;
+  max-width: 120px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: 12px;
+  font-weight: 600;
 }
 .top-hit-count {
-  font-size: 10.5px;
+  font-size: 9.5px;
   font-weight: 800;
-  padding: 2px 8px;
+  padding: 1.5px 6px;
   border-radius: 999px;
   background: rgba(123, 44, 191, 0.12);
   color: #7b2cbf;
@@ -520,34 +524,35 @@ html:not([data-theme="light"]) .top-hit-count {
 @media (max-width: 768px) {
   .top-hits-section {
     padding: 0 10px;
-    margin: 14px auto 22px;
+    margin: 8px auto 12px;
   }
   .top-hits-scroll,
   .top-hits-scroll[data-scroll-state="start"] {
-    mask-image: linear-gradient(to right, #000 0%, #000 calc(100% - 45px), transparent 100%);
-    -webkit-mask-image: linear-gradient(to right, #000 0%, #000 calc(100% - 45px), transparent 100%);
+    mask-image: linear-gradient(to right, #000 0%, #000 calc(100% - 40px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, #000 0%, #000 calc(100% - 40px), transparent 100%);
   }
   .top-hits-scroll[data-scroll-state="middle"] {
-    mask-image: linear-gradient(to right, transparent 0%, #000 32px, #000 calc(100% - 45px), transparent 100%);
-    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 32px, #000 calc(100% - 45px), transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0%, #000 28px, #000 calc(100% - 40px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 28px, #000 calc(100% - 40px), transparent 100%);
   }
   .top-hits-scroll[data-scroll-state="end"] {
-    mask-image: linear-gradient(to right, transparent 0%, #000 32px, #000 100%);
-    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 32px, #000 100%);
+    mask-image: linear-gradient(to right, transparent 0%, #000 28px, #000 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 28px, #000 100%);
   }
   .top-hit-chip {
-    padding: 7px 13px;
-    font-size: 12.5px;
-    gap: 8px;
+    padding: 4px 10px;
+    font-size: 11.5px;
+    height: 30px;
+    gap: 6px;
   }
   .top-hit-icon {
-    width: 23px;
-    height: 23px;
-    min-width: 23px;
-    min-height: 23px;
-    border-radius: 6px;
+    width: 16px;
+    height: 16px;
+    min-width: 16px;
+    min-height: 16px;
+    border-radius: 3.5px;
   }
   .top-hit-icon .keyword-letter {
-    font-size: 14px !important;
+    font-size: 11px !important;
   }
 }

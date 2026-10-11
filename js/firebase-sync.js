@@ -170,11 +170,7 @@
             return Math.max(countLegacy, defaultCount);
         }
 
-        if (countId === countLegacy) return countId;
-        if (countId < countLegacy) {
-            return countLegacy + countId;
-        }
-        return countId;
+        return Math.max(countId, countLegacy, defaultCount);
     };
 
     WO.migrateMetadataToStableIds = function () {
@@ -199,13 +195,9 @@
                 } else if (hasLegacy && hasId) {
                     const lNum = Number(legacyVal) || 0;
                     const iNum = Number(idVal) || 0;
-                    if (iNum < lNum) {
-                        const total = lNum + iNum;
-                        WO.globalClickCounts[id] = total;
-                        WO.globalClickCounts[legacy] = total;
-                    } else {
-                        WO.globalClickCounts[legacy] = iNum;
-                    }
+                    const maxVal = Math.max(lNum, iNum);
+                    WO.globalClickCounts[id] = maxVal;
+                    WO.globalClickCounts[legacy] = maxVal;
                 } else if (WO.DEFAULT_CLICK_COUNTS && WO.DEFAULT_CLICK_COUNTS[legacy] !== undefined) {
                     const def = Number(WO.DEFAULT_CLICK_COUNTS[legacy]) || 0;
                     WO.globalClickCounts[id] = def;
@@ -611,8 +603,18 @@
         } catch (e) { console.error('Failed to sync deleted status:', e); }
     };
 
+    const _clickDebounce = new Map();
     WO.incrementKeywordClick = async function (groupIndex, keyword) {
         if (!keyword) return;
+
+        // Anti-double-increment debounce (400ms)
+        const debounceKey = `${groupIndex}_${keyword}`;
+        const now = Date.now();
+        if (_clickDebounce.has(debounceKey) && (now - _clickDebounce.get(debounceKey) < 400)) {
+            return;
+        }
+        _clickDebounce.set(debounceKey, now);
+
         const group = typeof groupIndex === 'number' ? WO.groups[groupIndex] : groupIndex;
         const keywordIndex = group && Array.isArray(group.keywords) ? group.keywords.indexOf(keyword) : -1;
         const id = (group && keywordIndex >= 0) ? WO.getBookmarkId(group, keywordIndex) : null;
@@ -643,12 +645,9 @@
             WO.renderTopHits();
         }
 
-        // Sync to Firestore with atomic increment
+        // Sync to Firestore with atomic increment (only the primary canonical key 'ek')
         try {
             const payload = { [ek]: WO.firestoreFieldValue.increment(1) };
-            if (id && legacyKey && id !== legacyKey) {
-                payload[legacyKey] = WO.firestoreFieldValue.increment(1);
-            }
             await WO.clickCountsRef.set(payload, { merge: true });
         }
         catch (e) { console.error('Failed to sync click count:', e); }
