@@ -308,7 +308,7 @@
         if (modalTitle) {
             modalTitle.innerHTML = commentOnly
                 ? '<img src="media/comment.png" style="width:24px;height:24px;margin-right:10px;vertical-align:middle;">Edit Comment'
-                : '<img src="media/rename.png" style="width:24px;height:24px;margin-right:10px;vertical-align:middle;">Edit Keyword';
+                : '<img src="media/rename.png" style="width:24px;height:24px;margin-right:10px;vertical-align:middle;">Rename Website / Link';
         }
         if (commentOnly) {
             renameKeywordInput.setAttribute('readonly', 'true');
@@ -344,10 +344,8 @@
         }
         const oldKeyword  = WO.groups[WO.renameTargetGroupIndex].keywords[WO.renameTargetKeywordIndex];
 
-        if (newKeyword !== oldKeyword && !WO.adminLoggedIn) {
-            alert('Admin access required to rename keywords.');
-            return;
-        }
+        // Anyone can rename website names & links now.
+        // Full device and location audit trace is recorded and visible to Admin.
 
         if (WO.containsBlockedContent(newKeyword)) { window.showToast('⛔ Inappropriate content', 3000); return; }
 
@@ -368,9 +366,24 @@
         }
 
         const metadataKey = WO.renameTargetBookmarkId || encodeURIComponent(oldKeyword).replace(/\./g, '%2E');
+        const oldDescription = WO.keywordDescriptions[metadataKey] || '';
 
         if (newKeyword === oldKeyword) {
-            await WO.saveKeywordDescription(newKeyword, newDescription, metadataKey);
+            if (newDescription !== oldDescription) {
+                await WO.saveKeywordDescription(newKeyword, newDescription, metadataKey);
+                if (typeof WO.logActivity === 'function') {
+                    const parsed = typeof WO.parseKeyword === 'function' ? WO.parseKeyword(newKeyword) : null;
+                    WO.logActivity('EDIT_KEYWORD', {
+                        targetName: parsed ? parsed.displayText : newKeyword,
+                        groupName: WO.groups[WO.renameTargetGroupIndex] ? WO.groups[WO.renameTargetGroupIndex].name : '',
+                        groupIndex: WO.renameTargetGroupIndex,
+                        diff: {
+                            oldComment: oldDescription,
+                            newComment: newDescription
+                        }
+                    });
+                }
+            }
             WO.toggleModal(renameModal, false);
             WO.renderGroups();
             return;
@@ -383,11 +396,18 @@
         WO.toggleModal(renameModal, false);
 
         if (typeof WO.logActivity === 'function') {
+            const oldParsed = typeof WO.parseKeyword === 'function' ? WO.parseKeyword(oldKeyword) : null;
+            const newParsed = typeof WO.parseKeyword === 'function' ? WO.parseKeyword(newKeyword) : null;
             WO.logActivity('EDIT_KEYWORD', {
-                targetName: newKeyword,
+                targetName: newParsed ? newParsed.displayText : newKeyword,
                 groupName: WO.groups[WO.renameTargetGroupIndex] ? WO.groups[WO.renameTargetGroupIndex].name : '',
                 groupIndex: WO.renameTargetGroupIndex,
-                diff: { oldName: oldKeyword, newName: newKeyword }
+                diff: {
+                    oldName: oldParsed ? oldParsed.displayText : oldKeyword,
+                    newName: newParsed ? newParsed.displayText : newKeyword,
+                    oldUrl: oldParsed ? oldParsed.targetUrl : oldKeyword,
+                    newUrl: newParsed ? newParsed.targetUrl : newKeyword
+                }
             });
         }
     };

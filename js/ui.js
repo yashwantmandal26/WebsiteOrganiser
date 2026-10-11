@@ -593,13 +593,9 @@
             const ek = WO.getBookmarkMetadataKey(groupIndex, keywordIndex, keyword);
             const isSoftDeleted = WO.keywordDeletedStatus && WO.keywordDeletedStatus[ek] === true;
 
-            editEl.style.display = 'block';
-            editEl.onclick = () => { hideContextMenu(); WO.renameKeyword(groupIndex, keywordIndex, keyword, true); };
-            
-            renameEl.style.display = WO.adminLoggedIn ? 'block' : 'none';
-            renameEl.onclick = () => { hideContextMenu(); WO.renameKeyword(groupIndex, keywordIndex, keyword, false); };
-
             if (isSoftDeleted) {
+                editEl.style.display = WO.adminLoggedIn ? 'block' : 'none';
+                renameEl.style.display = WO.adminLoggedIn ? 'block' : 'none';
                 if (WO.adminLoggedIn) {
                     restoreEl.style.display = 'block';
                     restoreEl.onclick = () => { hideContextMenu(); WO.restoreKeyword(groupIndex, keywordIndex); };
@@ -610,15 +606,21 @@
                     deleteEl.style.display = 'none';
                 }
             } else {
+                editEl.style.display = 'block';
+                renameEl.style.display = 'block';
                 restoreEl.style.display = 'none';
                 deleteEl.style.display = 'block';
                 deleteText.textContent = 'Delete';
             }
             
+            editEl.onclick = () => { hideContextMenu(); WO.renameKeyword(groupIndex, keywordIndex, keyword, true); };
+            renameEl.onclick = () => { hideContextMenu(); WO.renameKeyword(groupIndex, keywordIndex, keyword, false); };
             deleteEl.onclick = () => { hideContextMenu(); WO.deleteKeyword(groupIndex, keywordIndex); };
         }
 
         function hideContextMenu() { if (contextMenu) contextMenu.style.display = 'none'; }
+        WO.showContextMenu = showContextMenu;
+        WO.hideContextMenu = hideContextMenu;
         document.addEventListener('click', hideContextMenu);
         document.addEventListener('scroll', hideContextMenu, { passive: true });
 

@@ -705,6 +705,43 @@
                 WO.openURLWithBrowser(item.targetUrl, true);
             });
 
+            // Right-click context menu (Desktop)
+            chip.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (typeof WO.showContextMenu === 'function') {
+                    WO.showContextMenu(e.clientX, e.clientY, item.gi, item.ki, item.keyword);
+                }
+            });
+
+            // Long-press context menu (Touch mobile)
+            let _chipLpTimer = null, _chipLpMoved = false, _chipLpStartX = 0, _chipLpStartY = 0;
+            chip.addEventListener('touchstart', (e) => {
+                _chipLpMoved = false;
+                const t = e.touches[0];
+                _chipLpStartX = t ? t.clientX : 0;
+                _chipLpStartY = t ? t.clientY : 0;
+                _chipLpTimer = setTimeout(() => {
+                    if (!_chipLpMoved && typeof WO.showContextMenu === 'function') {
+                        if (navigator.vibrate) navigator.vibrate(30);
+                        WO.showContextMenu(_chipLpStartX, _chipLpStartY, item.gi, item.ki, item.keyword);
+                    }
+                }, 520);
+            }, { passive: true });
+            chip.addEventListener('touchmove', (e) => {
+                const t = e.touches[0];
+                if (t && (Math.abs(t.clientX - _chipLpStartX) > 10 || Math.abs(t.clientY - _chipLpStartY) > 10)) {
+                    _chipLpMoved = true;
+                    if (_chipLpTimer) clearTimeout(_chipLpTimer);
+                }
+            }, { passive: true });
+            chip.addEventListener('touchend', () => {
+                if (_chipLpTimer) clearTimeout(_chipLpTimer);
+            }, { passive: true });
+            chip.addEventListener('touchcancel', () => {
+                if (_chipLpTimer) clearTimeout(_chipLpTimer);
+            }, { passive: true });
+
             if (!('ontouchstart' in window) && !navigator.maxTouchPoints) {
                 chip.addEventListener('mouseenter', () => {
                     if (typeof WO.playHoverSound === 'function') WO.playHoverSound();
