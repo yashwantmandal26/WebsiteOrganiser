@@ -575,6 +575,31 @@
     };
 
     // ── Quick Bar: Top Hits / Most Used ─────────────────────────────────────────
+    let _topHitsWheelBound = false;
+    function _initTopHitsWheel() {
+        if (_topHitsWheelBound) return;
+        const section = document.getElementById('top-hits-section');
+        const scrollEl = document.getElementById('top-hits-scroll');
+        if (!section || !scrollEl) return;
+
+        section.addEventListener('wheel', (e) => {
+            if (scrollEl.scrollWidth > scrollEl.clientWidth) {
+                if (Math.abs(e.deltaY) >= Math.abs(e.deltaX) && e.deltaY !== 0) {
+                    const atStart = scrollEl.scrollLeft <= 0 && e.deltaY < 0;
+                    const atEnd = (scrollEl.scrollLeft + scrollEl.clientWidth >= scrollEl.scrollWidth - 2) && e.deltaY > 0;
+                    if (!atStart && !atEnd) {
+                        e.preventDefault();
+                        scrollEl.scrollBy({
+                            left: e.deltaY * 1.3,
+                            behavior: 'auto'
+                        });
+                    }
+                }
+            }
+        }, { passive: false });
+        _topHitsWheelBound = true;
+    }
+
     WO.renderTopHits = function () {
         const section = document.getElementById('top-hits-section');
         const scrollEl = document.getElementById('top-hits-scroll');
@@ -663,6 +688,7 @@
 
         scrollEl.innerHTML = '';
         scrollEl.appendChild(fragment);
+        _initTopHitsWheel();
     };
 
 })(window.WO);
