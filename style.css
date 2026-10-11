@@ -1438,8 +1438,7 @@ body.search-active .group-card-wrapper {
   inset: 1px;
   border-radius: inherit;
   box-shadow:
-    inset 0 12px 28px rgba(255, 255, 255, 0.12),
-    inset 0 -10px 26px rgba(0, 0, 0, 0.10);
+    inset 0 12px 28px rgba(255, 255, 255, 0.12);
   pointer-events: none;
   z-index: 0;
 }
@@ -3125,7 +3124,7 @@ body.is-zooming .search-suggestions {
   justify-content: center;
   align-items: center;
   margin-top: 12px;
-  margin-bottom: -4px;
+  margin-bottom: 2px;
   cursor: pointer;
 }
 
@@ -4286,14 +4285,12 @@ body.admin-mode .admin-hub-wrapper {
   box-shadow:
     0 2px 8px 0 rgba(123, 44, 191, 0.10),
     0 6px 24px 0 rgba(80, 80, 120, 0.10),
-    0 1.5px 0 0 #fff inset,
-    0 -2px 8px 0 rgba(0, 0, 0, 0.10) inset !important;
+    0 1.5px 0 0 #fff inset !important;
   /* backdrop-filter removed to fix severe mobile scrolling/rendering lag */
   position: relative;
   overflow: hidden;
 }
 
-.group-card::after,
 .modal-content::after,
 .keyword-item::after {
   content: '';
@@ -4314,8 +4311,7 @@ body.admin-mode .admin-hub-wrapper {
   box-shadow:
     0 2px 8px 0 rgba(179, 136, 255, 0.10),
     0 6px 24px 0 rgba(0, 0, 0, 0.18),
-    0 1.5px 0 0 #222 inset,
-    0 -2px 8px 0 rgba(0, 0, 0, 0.18) inset !important;
+    0 1.5px 0 0 #222 inset !important;
 }
 
 [data-theme="dark"] .keyword-item , [data-theme="solid-dark"] .keyword-item {
@@ -4324,13 +4320,11 @@ body.admin-mode .admin-hub-wrapper {
   box-shadow:
     0 2px 8px 0 rgba(179, 136, 255, 0.15),
     0 6px 24px 0 rgba(0, 0, 0, 0.18),
-    0 1.5px 0 0 #333 inset,
-    0 -2px 8px 0 rgba(0, 0, 0, 0.18) inset !important;
+    0 1.5px 0 0 #333 inset !important;
 }
 
 /* Removed solid light mode keyword-item background to allow frosted glass */
 
-[data-theme="dark"] .group-card::after, [data-theme="solid-dark"] .group-card::after,
 [data-theme="dark"] .modal-content::after, [data-theme="solid-dark"] .modal-content::after,
 [data-theme="dark"] .keyword-item::after , [data-theme="solid-dark"] .keyword-item::after {
   background: linear-gradient(120deg, rgba(255, 255, 255, 0.08) 0%, rgba(0, 0, 0, 0.10) 100%);

@@ -271,16 +271,23 @@ html[data-wallpaper-active="true"]:not([data-theme="light"]) .premium-header {
   border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
 }
 html[data-wallpaper-active="true"] .group-card {
-  backdrop-filter: blur(20px) saturate(160%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(160%) !important;
-  background: color-mix(in srgb, var(--group-color, #ffffff) 28%, rgba(255, 255, 255, 0.65)) !important;
-  border: 1px solid rgba(255, 255, 255, 0.5) !important;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15) !important;
+  backdrop-filter: blur(24px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(150%) !important;
+  background: color-mix(in srgb, var(--group-color, #ffffff) 84%, rgba(255, 255, 255, 0.28)) !important;
+  border: 1.5px solid color-mix(in srgb, var(--group-color, #7b2cbf) 45%, rgba(255, 255, 255, 0.75)) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1) !important;
 }
 html[data-wallpaper-active="true"]:not([data-theme="light"]) .group-card {
-  background: color-mix(in srgb, var(--group-color, #181424) 22%, rgba(18, 16, 28, 0.72)) !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4) !important;
+  background: color-mix(in srgb, var(--group-color, #181424) 52%, rgba(14, 12, 22, 0.74)) !important;
+  border: 1.5px solid color-mix(in srgb, var(--group-color, #bb86fc) 45%, rgba(255, 255, 255, 0.18)) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.32) !important;
+}
+html[data-wallpaper-active="true"] .group-card::before,
+html[data-wallpaper-active="true"] .group-card::after {
+  display: none !important;
+  content: none !important;
+  background: none !important;
+  box-shadow: none !important;
 }
 
 .preference-input-text {
