@@ -672,7 +672,7 @@
             return a.displayText.localeCompare(b.displayText, undefined, { sensitivity: 'base' });
         });
 
-        const topHits = hits.slice(0, 8);
+        const topHits = hits.slice(0, 10);
         if (topHits.length === 0) {
             section.style.display = 'none';
             return;
