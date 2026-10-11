@@ -608,7 +608,7 @@
                     if (!atStart && !atEnd) {
                         e.preventDefault();
                         scrollEl.scrollBy({
-                            left: e.deltaY * 1.3,
+                            left: e.deltaY * 2.8,
                             behavior: 'auto'
                         });
                         _updateTopHitsScrollMask(scrollEl);

@@ -129,8 +129,8 @@
     <details class="preference-section"><summary>Website tiles <span>Size, spacing & hover effects</span></summary><fieldset><legend class="sr-only">Website tiles</legend>
         ${row('tileSize','Tile size')}${row('tileSpacing','Tile spacing')}${row('tileCorners','Tile corners')}${row('hoverEffect','Hover effect')}${row('showCategoryIcons','Category icons')}
     </fieldset></details>
-    <details class="preference-section"><summary>Header, Quick Bar & Clock <span>Weather, Top Hits & details</span></summary><fieldset><legend class="sr-only">Header and clock</legend>
-        ${row('showWeather','Show weather widget','Subtle temperature & icon next to clock')}${row('showTopHits','Show Top Hits bar','Automatic 1-click access to most clicked websites')}${row('showClock','Show clock','Visible on wide screens')}${row('showSeconds','Show seconds')}${row('clockFormat','Time format')}${row('showTagline','Brand tagline')}
+    <details class="preference-section"><summary>Header, Quick Bar & Clock <span>Weather, Most Used & details</span></summary><fieldset><legend class="sr-only">Header and clock</legend>
+        ${row('showWeather','Show weather widget','Subtle temperature & icon next to clock')}${row('showTopHits','Show Most Used bar','Automatic 1-click access to most clicked websites')}${row('showClock','Show clock','Visible on wide screens')}${row('showSeconds','Show seconds')}${row('clockFormat','Time format')}${row('showTagline','Brand tagline')}
     </fieldset></details>
     <div class="preferences-footer"><span id="preferences-status" role="status">Saved on this device</span><button type="button" id="preferences-reset" class="preference-button">Reset defaults</button></div>`;
 
