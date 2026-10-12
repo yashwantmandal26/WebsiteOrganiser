@@ -376,7 +376,7 @@ html[data-wallpaper-active="true"][data-theme="dark"] .group-card {
   -webkit-backdrop-filter: blur(24px) saturate(150%) !important;
   background: color-mix(in srgb, var(--group-color, #181424) 52%, rgba(14, 12, 22, 0.74)) !important;
   border: 1.5px solid color-mix(in srgb, var(--group-color, #bb86fc) 45%, rgba(255, 255, 255, 0.18)) !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.32) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28) !important;
 }
 html[data-theme="solid-dark"] .group-card,
 html[data-wallpaper-active="true"][data-theme="solid-dark"] .group-card {
@@ -384,12 +384,12 @@ html[data-wallpaper-active="true"][data-theme="solid-dark"] .group-card {
   backdrop-filter: blur(24px) saturate(120%) !important;
   -webkit-backdrop-filter: blur(24px) saturate(120%) !important;
   border: 1.5px solid rgba(255, 255, 255, 0.12) !important;
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
 }
 html[data-theme="solid-dark"] .group-card:hover,
 html[data-wallpaper-active="true"][data-theme="solid-dark"] .group-card:hover {
   border-color: rgba(255, 255, 255, 0.22) !important;
-  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.75) !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55) !important;
 }
 html[data-theme="solid-dark"] .group-card .keyword-grid-preview-item,
 html[data-wallpaper-active="true"][data-theme="solid-dark"] .group-card .keyword-grid-preview-item,
@@ -428,12 +428,35 @@ html[data-wallpaper-active="true"][data-theme="solid-dark"] .top-hit-chip:hover 
   color: #fff !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35) !important;
 }
+.group-card::before,
+.group-card::after,
 html[data-wallpaper-active="true"] .group-card::before,
-html[data-wallpaper-active="true"] .group-card::after {
+html[data-wallpaper-active="true"] .group-card::after,
+[data-theme="dark"] .group-card::before,
+[data-theme="dark"] .group-card::after,
+[data-theme="solid-dark"] .group-card::before,
+[data-theme="solid-dark"] .group-card::after {
   display: none !important;
   content: none !important;
   background: none !important;
   box-shadow: none !important;
+}
+
+.group-card-wrapper {
+  content-visibility: visible !important;
+  contain: none !important;
+  overflow: visible !important;
+}
+.group-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.group-card .keyword-grid-preview {
+  flex: 1 1 auto;
+}
+.group-card .group-expand-indicator {
+  margin-top: auto;
 }
 
 .preference-input-text {

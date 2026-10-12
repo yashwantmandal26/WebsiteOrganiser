@@ -1277,9 +1277,7 @@ header h1 {
   width: 100%;
   min-width: 0;
   height: 100%;
-  /* Modern CSS containment: off-screen cards skip layout and paint calculations until nearing viewport */
-  content-visibility: auto;
-  contain-intrinsic-size: auto 340px;
+  overflow: visible !important;
 }
 
 /* Ensure expanded cards or animating cards calculate layout immediately */
@@ -1302,6 +1300,9 @@ body.search-active .group-card-wrapper {
   width: 100%;
   max-width: 100%;
   min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
   position: relative;
   overflow: visible; /* MUST stay visible — tooltip appears above card */
   contain: style;
@@ -1310,20 +1311,28 @@ body.search-active .group-card-wrapper {
     inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
-/* Improvement 2 + Dark Colored Theme: card-color border, stronger shadow */
+.group-card .keyword-grid-preview {
+  flex: 1 1 auto;
+}
+
+.group-card .group-expand-indicator {
+  margin-top: auto;
+}
+
+/* Improvement 2 + Dark Colored Theme: card-color border, natural shadow */
 [data-theme="dark"] .group-card {
   /* Improvement 4: border uses the group's own color */
   border: 1.5px solid color-mix(in srgb, var(--group-color, #7b2cbf) 35%, transparent) !important;
   box-shadow:
-    0 8px 28px rgba(0, 0, 0, 0.55),
-    0 2px 8px rgba(0, 0, 0, 0.4),
+    0 6px 20px rgba(0, 0, 0, 0.35),
+    0 2px 6px rgba(0, 0, 0, 0.2),
     0 0 0 1px color-mix(in srgb, var(--group-color, #7b2cbf) 20%, transparent),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 [data-theme="solid-dark"] .group-card {
   box-shadow:
-    0 8px 28px rgba(0, 0, 0, 0.55),
-    0 2px 8px rgba(0, 0, 0, 0.4),
+    0 8px 24px rgba(0, 0, 0, 0.45),
+    0 2px 8px rgba(0, 0, 0, 0.25),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
