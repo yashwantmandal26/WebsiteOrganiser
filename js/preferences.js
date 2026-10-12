@@ -147,6 +147,8 @@
     }
     let saved;
     try { saved = JSON.parse(localStorage.getItem('wo-preferences')); } catch {}
+    WO.preferences = normalize(saved);
+
     WO.syncWallpaperDim = function () {
         const root = document.documentElement;
         const theme = root.dataset.theme;
@@ -172,7 +174,7 @@
     };
 
     function apply() {
-        const p = WO.preferences, root = document.documentElement;
+        const p = WO.preferences || normalize({}); root = document.documentElement;
         for (const key of ['showClock','showSeconds','clockFormat','glass','reducedMotion','showTagline','accent','tileSize','tileSpacing','tileCorners','hoverEffect','showCategoryIcons','showWeather','showTopHits']) root.dataset[key] = String(p[key]);
         const accents = {purple:['#9750e9','#ca9aff'],blue:['#2876d7','#82baff'],pink:['#d23e90','#ff9dcb'],teal:['#087e80','#6fe0d4'],orange:['#b96313','#ffc17e']};
         if (accents[p.accent]) {
