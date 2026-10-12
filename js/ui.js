@@ -90,6 +90,7 @@
         const btn = document.getElementById('theme-toggle-btn');
         const nextTheme = theme === 'light' ? 'dark' : theme === 'dark' ? 'solid-dark' : 'light';
         if (btn) btn.title = 'Switch to ' + (THEME_NAMES[nextTheme] || nextTheme);
+        if (typeof WO.syncWallpaperDim === 'function') WO.syncWallpaperDim();
     };
 
     // ── Modal & Scroll Lock Helpers ────────────────────────────────────────

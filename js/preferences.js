@@ -147,7 +147,29 @@
     }
     let saved;
     try { saved = JSON.parse(localStorage.getItem('wo-preferences')); } catch {}
-    WO.preferences = normalize(saved);
+    WO.syncWallpaperDim = function () {
+        const root = document.documentElement;
+        const theme = root.dataset.theme;
+        const p = WO.preferences || {};
+        const baseDim = Number(p.wallpaperDim != null ? p.wallpaperDim : 25) / 100;
+        let effectiveDim = baseDim;
+        if (theme === 'solid-dark') {
+            effectiveDim = Math.min(0.92, Math.max(0.60, baseDim + 0.35));
+        } else if (theme === 'dark') {
+            effectiveDim = Math.min(0.85, Math.max(0.40, baseDim + 0.15));
+        }
+        root.style.setProperty('--wallpaper-dim', String(effectiveDim));
+        const wpOverlay = document.getElementById('app-wallpaper-overlay');
+        if (wpOverlay) {
+            wpOverlay.style.backgroundColor = `rgba(0, 0, 0, ${effectiveDim})`;
+        }
+        const wpEl = document.getElementById('app-wallpaper');
+        if (wpEl && root.dataset.wallpaperActive === 'true') {
+            const blur = Number(p.wallpaperBlur || 0);
+            const brightness = theme === 'solid-dark' ? ' brightness(0.92)' : theme === 'dark' ? ' brightness(0.96)' : '';
+            wpEl.style.filter = `blur(${blur}px)${brightness}`;
+        }
+    };
 
     function apply() {
         const p = WO.preferences, root = document.documentElement;
@@ -160,7 +182,6 @@
 
         // Apply Wallpaper
         const wpEl = document.getElementById('app-wallpaper');
-        const wpOverlay = document.getElementById('app-wallpaper-overlay');
         let activeWp = '';
         if (p.wallpaper !== 'none') {
             if (p.wallpaper === 'custom') {
@@ -175,11 +196,8 @@
             root.dataset.wallpaperActive = 'true';
             if (wpEl) {
                 wpEl.style.backgroundImage = `url("${activeWp}")`;
-                wpEl.style.filter = `blur(${p.wallpaperBlur || 0}px)`;
             }
-            if (wpOverlay) {
-                wpOverlay.style.backgroundColor = `rgba(0, 0, 0, ${(p.wallpaperDim || 25) / 100})`;
-            }
+            WO.syncWallpaperDim();
         } else {
             root.dataset.wallpaperActive = 'false';
             if (wpEl) wpEl.style.backgroundImage = 'none';

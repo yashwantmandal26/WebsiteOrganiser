@@ -247,7 +247,7 @@ html[data-show-weather="false"] .weather-widget {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
   width: 100vw; height: 100vh;
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(0, 0, 0, var(--wallpaper-dim, 0.25));
   z-index: -2;
   pointer-events: none;
   opacity: 0;
@@ -256,6 +256,12 @@ html[data-show-weather="false"] .weather-widget {
 html[data-wallpaper-active="true"] .app-wallpaper,
 html[data-wallpaper-active="true"] .app-wallpaper-overlay {
   opacity: 1;
+}
+html[data-wallpaper-active="true"][data-theme="dark"] .app-wallpaper-overlay {
+  background-color: rgba(0, 0, 0, var(--wallpaper-dim, 0.40));
+}
+html[data-wallpaper-active="true"][data-theme="solid-dark"] .app-wallpaper-overlay {
+  background-color: rgba(0, 0, 0, var(--wallpaper-dim, 0.60)) !important;
 }
 html[data-wallpaper-active="true"] body {
   background: transparent !important;
