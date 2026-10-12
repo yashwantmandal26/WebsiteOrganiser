@@ -189,7 +189,7 @@
                 const actions   = document.createElement('div');
                 actions.className = 'group-actions';
                 let addBtnBg;
-                if (theme === 'solid-dark')  addBtnBg = '#1a1a22';
+                if (theme === 'solid-dark')  addBtnBg = '#25252e';
                 else if (theme === 'dark')   addBtnBg = WO.darkenColor(groupColor, 0.45);
                 else                         addBtnBg = '#ffffff';
 

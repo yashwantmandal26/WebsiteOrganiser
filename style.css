@@ -1503,15 +1503,14 @@ body.search-active .group-card-wrapper {
     inset 0 -1px 0 rgba(0, 0, 0, 0.5) !important;
 }
 
-/* Black theme tiles keep original flat dark style (no color tint) */
+/* Black theme tiles: sleek dark grey with subtle contrast against black card */
 [data-theme="solid-dark"] .group-card .keyword-grid-preview-item,
 [data-theme="solid-dark"] .group-card .keyword-grid-preview-more {
-  background: linear-gradient(160deg, rgba(42, 40, 58, 1) 0%, rgba(22, 20, 32, 1) 100%) !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.14) !important;
+  background: #25252e !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
   box-shadow:
-    0 8px 22px rgba(0, 0, 0, 0.65),
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.16),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.4) !important;
+    0 4px 12px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
 }
 
 
