@@ -1,3 +1,52 @@
+/* =============================================================================
+   Global Caret & Cursor Control:
+   Disable blinking text insertion caret everywhere except actual input fields.
+   ============================================================================= */
+*,
+*::before,
+*::after {
+  caret-color: transparent !important;
+}
+
+input,
+textarea,
+[contenteditable="true"],
+[contenteditable=""] {
+  caret-color: auto !important;
+}
+
+button,
+.btn,
+.fab,
+.icon-btn,
+.top-hit-chip,
+.keyword-grid-preview-item,
+.group-card,
+.site-title,
+.site-logo,
+.live-clock,
+.weather-widget {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+}
+
+.fab,
+#add-fab,
+.fab-plus-icon,
+.icon-btn,
+.btn {
+  outline: none !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
+.fab-plus-icon {
+  pointer-events: none;
+  user-select: none !important;
+}
+
 /* Screenshot-inspired header; loaded after the legacy responsive layers. */
 body { padding-top: 112px !important; }
 header.premium-header { padding: 0 3.3% !important; height: 96px; background: linear-gradient(115deg,rgba(247,231,250,.88),rgba(213,192,255,.86) 38%,rgba(180,236,251,.86) 75%,rgba(213,199,255,.86)) !important; border-top: none !important; border-right: none !important; border-left: none !important; border-bottom: 1px solid rgba(255, 255, 255, 0.5) !important; border-radius: 0 !important; backdrop-filter: blur(18px); box-shadow: 0 8px 30px #764bc51a !important; }
@@ -370,13 +419,14 @@ html[data-wallpaper-active="true"][data-theme="solid-dark"] .top-hit-chip {
   background: rgba(14, 14, 18, 0.88) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   color: #f1ecfa !important;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4) !important;
+  box-shadow: none !important;
 }
 html[data-theme="solid-dark"] .top-hit-chip:hover,
 html[data-wallpaper-active="true"][data-theme="solid-dark"] .top-hit-chip:hover {
   background: rgba(28, 28, 36, 0.95) !important;
   border-color: rgba(255, 255, 255, 0.28) !important;
   color: #fff !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35) !important;
 }
 html[data-wallpaper-active="true"] .group-card::before,
 html[data-wallpaper-active="true"] .group-card::after {
@@ -433,11 +483,13 @@ html:not([data-theme="light"]) .preference-input-text {
    Feature 3: Top Hits / Most Used Quick Bar
    ============================================================================= */
 .top-hits-section {
-  margin: 10px auto 14px;
+  margin: 8px auto 8px !important;
   width: 100%;
   max-width: 1400px;
   padding: 0 14px;
   box-sizing: border-box;
+  border: none !important;
+  box-shadow: none !important;
   animation: fadeInTopHits 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 @keyframes fadeInTopHits {
@@ -454,7 +506,7 @@ html[data-show-top-hits="false"] .top-hits-section {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   padding: 0 4px;
 }
 .top-hits-title-wrap {
@@ -466,12 +518,12 @@ html[data-show-top-hits="false"] .top-hits-section {
   font-size: 14px;
 }
 .top-hits-title {
-  font-size: 12px;
-  font-weight: 750;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: none;
   color: var(--text-color, #2d2338);
-  opacity: 0.9;
+  opacity: 0.95;
 }
 .top-hits-badge {
   font-size: 9.5px;
@@ -496,18 +548,22 @@ html:not([data-theme="light"]) .top-hits-badge {
   gap: 8px;
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 2px 4px 6px;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  padding: 3px 4px 6px !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
+  border: none !important;
+  box-shadow: none !important;
   /* Soft fade-out on the end side so overflowing chips gracefully fade */
   mask-image: linear-gradient(to right, #000 0%, #000 calc(100% - 60px), transparent 100%);
   -webkit-mask-image: linear-gradient(to right, #000 0%, #000 calc(100% - 60px), transparent 100%);
   transition: mask-image 0.25s ease, -webkit-mask-image 0.25s ease;
 }
 .top-hits-scroll::-webkit-scrollbar {
-  display: none;
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 .top-hits-scroll[data-scroll-state="start"] {
   mask-image: linear-gradient(to right, #000 0%, #000 calc(100% - 60px), transparent 100%);
@@ -534,7 +590,7 @@ html:not([data-theme="light"]) .top-hits-badge {
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.78);
   border: 1px solid rgba(123, 44, 191, 0.18);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  box-shadow: none !important;
   text-decoration: none;
   color: var(--text-color, #2b223a);
   font-size: 12px;
@@ -551,18 +607,18 @@ html:not([data-theme="light"]) .top-hits-badge {
 html:not([data-theme="light"]) .top-hit-chip {
   background: rgba(30, 26, 42, 0.78);
   border-color: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  box-shadow: none !important;
   color: #f1ecfa;
 }
 .top-hit-chip:hover {
-  transform: translateY(-2px);
+  transform: translateY(-1px);
   border-color: var(--preference-accent, #9750e9);
-  box-shadow: 0 6px 18px rgba(123, 44, 191, 0.2);
+  box-shadow: 0 3px 10px rgba(123, 44, 191, 0.2) !important;
   color: var(--preference-accent, #9750e9);
 }
 html:not([data-theme="light"]) .top-hit-chip:hover {
   border-color: #ca9aff;
-  box-shadow: 0 6px 20px rgba(187, 134, 252, 0.25);
+  box-shadow: 0 3px 10px rgba(187, 134, 252, 0.25) !important;
   color: #ca9aff;
 }
 .top-hit-rank {
