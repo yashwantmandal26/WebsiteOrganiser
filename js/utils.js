@@ -231,6 +231,123 @@
         return null;
     };
 
+    // ─── Search Scoring & Priority by Match Position ───────────────────────────
+    WO.isWordBoundary = function (str, idx) {
+        if (!str || idx <= 0) return true;
+        const prev = str.charCodeAt(idx - 1);
+        const isAlnum = (prev >= 48 && prev <= 57) || (prev >= 65 && prev <= 90) || (prev >= 97 && prev <= 122);
+        return !isAlnum;
+    };
+
+    WO.getAcronym = function (str) {
+        if (!str) return '';
+        const words = str.split(/[^a-zA-Z0-9]+/).filter(Boolean);
+        let init = '';
+        words.forEach(w => {
+            const parts = w.replace(/([a-z])([A-Z])/g, '$1 $2').split(' ');
+            parts.forEach(p => { if (p[0]) init += p[0].toLowerCase(); });
+        });
+        return init;
+    };
+
+    function calculateSingleTokenScore(item, token) {
+        const t = (token || '').trim().toLowerCase();
+        if (!t) return 300;
+
+        const ld = (item.displayText || '').toLowerCase();
+        const lk = (item.keyword || '').toLowerCase();
+        const ldc = (item.description || '').toLowerCase();
+        const tags = (item.tags || []).map(x => String(x).toLowerCase());
+        const lurl = (item.targetUrl || '').toLowerCase().replace(/^https?:\/\/(www\.)?/, '');
+        const lg = (item.groupName || '').toLowerCase();
+
+        // 1. Exact title match (best possible)
+        if (ld === t || lk === t) return 0;
+
+        // 2. Exact comment or tag match (e.g. comment/tag is exactly "yt")
+        if (ldc === t || tags.includes(t)) return 5;
+
+        // 3. Title prefix match (query starts at 1st character / index 0 of title)
+        if (ld.startsWith(t) || lk.startsWith(t)) return 10;
+
+        // 4. Word initials/acronym match (e.g. "YouTube" -> "yt")
+        const initials = WO.getAcronym(item.displayText || '');
+        if (t.length >= 2 && initials.startsWith(t)) return 15;
+
+        // 5. Comment / Tag prefix match (query starts at 1st character / index 0 of comment/tag)
+        if (ldc.startsWith(t) || tags.some(x => x.startsWith(t))) return 20;
+
+        // 6. Word-boundary match in title (starts at word beginning, e.g. "Free YT")
+        const titleIdx = ld.indexOf(t) >= 0 ? ld.indexOf(t) : lk.indexOf(t);
+        if (titleIdx > 0 && WO.isWordBoundary(ld, titleIdx)) {
+            return 30 + Math.min(titleIdx, 20);
+        }
+
+        // 7. Word-boundary match in comment or tags (starts at word beginning)
+        const descIdx = ldc.indexOf(t);
+        if (descIdx > 0 && WO.isWordBoundary(ldc, descIdx)) {
+            return 45 + Math.min(descIdx, 20);
+        }
+        const matchingTag = tags.find(x => x.indexOf(t) >= 0);
+        if (matchingTag) {
+            const ti = matchingTag.indexOf(t);
+            if (ti === 0) return 20;
+            if (WO.isWordBoundary(matchingTag, ti)) return 45 + Math.min(ti, 20);
+        }
+
+        // 8. Word-boundary match in clean URL
+        const urlIdx = lurl.indexOf(t);
+        if (urlIdx >= 0 && WO.isWordBoundary(lurl, urlIdx)) {
+            return 70 + Math.min(urlIdx, 25);
+        }
+
+        // 9. Substring match inside a word in title (e.g. Monkeytype -> index 5)
+        // Earlier character positions get lower scores (higher priority)!
+        if (titleIdx >= 0) {
+            return 100 + titleIdx;
+        }
+
+        // 10. Substring match inside a word in comment
+        if (descIdx >= 0) {
+            return 130 + descIdx;
+        }
+
+        // 11. Substring in tag
+        if (matchingTag) {
+            return 150 + matchingTag.indexOf(t);
+        }
+
+        // 12. Substring in URL
+        if (urlIdx >= 0) {
+            return 170 + urlIdx;
+        }
+
+        // 13. Group name match
+        const gIdx = lg.indexOf(t);
+        if (gIdx >= 0) return 200 + (WO.isWordBoundary(lg, gIdx) ? gIdx : 50 + gIdx);
+
+        return 300;
+    }
+
+    WO.calculateSearchScore = function (item, query) {
+        const lnq = (query || '').trim().toLowerCase();
+        if (!lnq) return 300;
+        const tokens = lnq.split(/\s+/).filter(Boolean);
+        if (!tokens.length) return 300;
+
+        const fullScore = calculateSingleTokenScore(item, lnq);
+        if (tokens.length === 1 || fullScore < 100) {
+            return fullScore;
+        }
+
+        const firstScore = calculateSingleTokenScore(item, tokens[0]);
+        let otherSum = 0;
+        for (let i = 1; i < tokens.length; i++) {
+            otherSum += calculateSingleTokenScore(item, tokens[i]);
+        }
+        return firstScore + (otherSum / (tokens.length - 1)) * 0.1;
+    };
+
     // ─── Counter Element Selector ─────────────────────────────────────────────
     WO.getKeywordCounterElements = function (keyword) {
         try { return document.querySelectorAll(`[data-keyword-value="${WO.escapeCssAttributeValue(keyword)}"] .keyword-click-counter`); }

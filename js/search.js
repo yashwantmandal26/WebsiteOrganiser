@@ -68,15 +68,22 @@
                     const tags = group.keywordTags && group.keywordTags[ek] || [];
                     const st   = [keyword, displayText, targetUrl, desc, tags.join(' '), group.name].join(' ').toLowerCase();
                     if (!WO.matchesKeywordSearch(st, tokens)) return;
-                    let score = 2;
-                    const ld = displayText.toLowerCase(), lk = keyword.toLowerCase(), ldc = desc.toLowerCase(), lnq = nq.toLowerCase();
-                    if (ld.startsWith(lnq) || lk.startsWith(lnq)) score = 0;
-                    else if (ld.includes(lnq) || lk.includes(lnq)) score = 1;
-                    else if (ldc.includes(lnq)) score = 1.5;
-                    results.push({ groupIndex: gi, keywordIndex: ki, keyword, displayText, targetUrl, description: desc, groupName: group.name, score });
+                    const clickCount = WO.getBookmarkClickCount ? WO.getBookmarkClickCount(gi, ki, keyword) : 0;
+                    const candidate = { groupIndex: gi, keywordIndex: ki, keyword, displayText, targetUrl, description: desc, tags, groupName: group.name, clickCount };
+                    candidate.score = WO.calculateSearchScore ? WO.calculateSearchScore(candidate, nq) : 2;
+                    results.push(candidate);
                 });
             });
-            return results.sort((a, b) => a.score !== b.score ? a.score - b.score : a.displayText.localeCompare(b.displayText)).slice(0, WO.MAX_SEARCH_RESULTS);
+            return results.sort((a, b) => {
+                if (a.score !== b.score) return a.score - b.score;
+                const ca = a.clickCount || 0;
+                const cb = b.clickCount || 0;
+                if (cb !== ca) return cb - ca;
+                if (a.displayText.length !== b.displayText.length) {
+                    return a.displayText.length - b.displayText.length;
+                }
+                return a.displayText.localeCompare(b.displayText, undefined, { sensitivity: 'base' });
+            }).slice(0, WO.MAX_SEARCH_RESULTS);
         }
 
         // ── Favicon helper ────────────────────────────────────────────────────

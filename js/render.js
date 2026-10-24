@@ -59,8 +59,24 @@
                 const tags        = Array.isArray(group.keywordTags[bookmarkId]) ? group.keywordTags[bookmarkId] : [];
                 const searchText  = [keyword, displayText, targetUrl, description, tags.join(' '), group.name].join(' ').toLowerCase();
                 const clickCount  = WO.getBookmarkClickCount(originalIndex, keywordIndex, keyword);
-                return { keyword, keywordIndex, bookmarkId, displayText, targetUrl, description, tags, ek, isNew, addedAt, searchText, isSoftDeleted, clickCount };
+                const searchScore = isKeywordSearchActive
+                    ? WO.calculateSearchScore({ displayText, keyword, description, tags, targetUrl, groupName: group.name }, normalizedSearchQuery)
+                    : 300;
+                return { keyword, keywordIndex, bookmarkId, displayText, targetUrl, description, tags, ek, isNew, addedAt, searchText, isSoftDeleted, clickCount, searchScore };
             }).sort((a, b) => {
+                if (isKeywordSearchActive) {
+                    if (a.searchScore !== b.searchScore) {
+                        return a.searchScore - b.searchScore;
+                    }
+                    const cb = b.clickCount;
+                    const ca = a.clickCount;
+                    if (cb !== ca) return cb - ca;
+                    if (a.displayText.length !== b.displayText.length) {
+                        return a.displayText.length - b.displayText.length;
+                    }
+                    return a.displayText.localeCompare(b.displayText, undefined, { sensitivity: 'base' });
+                }
+
                 // 1. Newly added websites ALWAYS come at the top
                 if (a.isNew !== b.isNew) {
                     return a.isNew ? -1 : 1;
