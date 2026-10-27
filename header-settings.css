@@ -1801,24 +1801,28 @@ html:not([data-theme="light"]):not([data-theme="solid-dark"]) .top-hit-chip:acti
 /* ── Group-Card 3D Top Hit Chip: Solid-Dark (Black Theme) ── */
 html[data-theme="solid-dark"] .top-hit-chip,
 html[data-wallpaper-active="true"][data-theme="solid-dark"] .top-hit-chip {
-  background: linear-gradient(155deg, #24242c 0%, #15151a 100%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  background: rgba(10, 10, 14, 0.88) !important;
+  backdrop-filter: blur(20px) saturate(120%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(120%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
   color: #f0f0f5 !important;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
 }
 @media (hover: hover) {
   html[data-theme="solid-dark"] .top-hit-chip:hover,
   html[data-wallpaper-active="true"][data-theme="solid-dark"] .top-hit-chip:hover {
     transform: translateY(-2px) scale(1.02) !important;
-    border-color: rgba(255, 255, 255, 0.35) !important;
+    background: rgba(18, 18, 24, 0.95) !important;
+    border-color: rgba(255, 255, 255, 0.28) !important;
     color: #ffffff !important;
-    box-shadow: 0 0 12px rgba(255, 255, 255, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.75), 0 0 14px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
   }
 }
 html[data-theme="solid-dark"] .top-hit-chip:active,
 html[data-wallpaper-active="true"][data-theme="solid-dark"] .top-hit-chip:active {
   transform: translateY(1px) scale(0.98) !important;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.6), inset 0 1.5px 3px rgba(0, 0, 0, 0.5) !important;
+  background: rgba(6, 6, 8, 0.98) !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.7), inset 0 1.5px 3px rgba(0, 0, 0, 0.6) !important;
 }
 
 /* ── Sequence Badges: Crisp Podiums for #1, #2, #3 & Order Sequence ── */
