@@ -216,8 +216,8 @@ html[data-theme="solid-dark"] .google-search-input::placeholder {
 [data-theme="dark"] .title-organiser,
 [data-theme="solid-dark"] .title-organiser {
   color: var(--preference-accent-vivid, var(--preference-accent, #a855f7)) !important;
-  text-shadow: 0 0 16px color-mix(in srgb, var(--preference-accent-vivid, var(--preference-accent, #a855f7)) 55%, transparent) !important;
-  filter: saturate(1.45) brightness(1.12);
+  text-shadow: none !important;
+  filter: saturate(1.2) brightness(1.05);
 }
 
 /* ── All toggle styles removed (hybrid mode replaces toggle) ── */
