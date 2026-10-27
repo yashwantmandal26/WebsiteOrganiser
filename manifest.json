@@ -1,7 +1,7 @@
 {
   "name": "WebsiteOrganiser - Your Keywords, Organized",
   "short_name": "WebsiteOrganiser",
-  "version": "1.0.21",
+  "version": "1.0.22",
   "description": "Save and organize your favorite websites and keywords with smart categorization and cloud sync.",
   "start_url": "./",
   "scope": "./",
@@ -9,7 +9,11 @@
   "orientation": "portrait-primary",
   "background_color": "#1a1a1a",
   "theme_color": "#7b2cbf",
-  "categories": ["productivity", "utilities", "lifestyle"],
+  "categories": [
+    "productivity",
+    "utilities",
+    "lifestyle"
+  ],
   "lang": "en",
   "dir": "ltr",
   "icons": [
@@ -54,4 +58,4 @@
       ]
     }
   ]
-} 
+}

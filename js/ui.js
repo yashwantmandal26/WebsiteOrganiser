@@ -281,7 +281,7 @@
                 const s = localStorage.getItem(WO.THEME_STORAGE_KEY);
                 if (s === 'dark' || s === 'light' || s === 'solid-dark') return s;
             } catch {}
-            return 'light';
+            return 'dark';
         })();
         document.documentElement.dataset.theme = savedTheme;
 

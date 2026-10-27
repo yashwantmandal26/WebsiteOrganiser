@@ -14,7 +14,7 @@
         glass: true,
         reducedMotion: false,
         showTagline: true,
-        accent: 'purple',
+        accent: 'violet',
         tileSize: 'default',
         tileSpacing: 'default',
         tileCorners: 'rounded',
@@ -31,7 +31,7 @@
         hoverTone: ['soft','bell','pop','crystal','wood','digital'],
         clickTone: ['soft','bell','pop','crystal','wood','digital'],
         clockFormat: ['12','24'],
-        accent: ['purple','blue','pink','teal','orange'],
+        accent: ['violet','indigo','blue','green','yellow','orange','red'],
         tileSize: ['compact','default','large'],
         tileSpacing: ['tight','default','airy'],
         tileCorners: ['rounded','soft','square'],
@@ -54,6 +54,18 @@
         neon: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?auto=format&fit=crop&w=1920&q=80',
         abstract: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1920&q=80'
     };
+    const accents = {
+        violet:  ['#7c3aed', '#c4b5fd'],
+        indigo:  ['#4f46e5', '#a5b4fc'],
+        blue:    ['#2563eb', '#93c5fd'],
+        green:   ['#16a34a', '#86efac'],
+        yellow:  ['#d97706', '#fde047'],
+        orange:  ['#ea580c', '#fdba74'],
+        red:     ['#dc2626', '#fca5a5'],
+        purple:  ['#7c3aed', '#c4b5fd'],
+        pink:    ['#d23e90', '#ff9dcb'],
+        teal:    ['#087e80', '#6fe0d4']
+    };
     const form = document.getElementById('preferences-form');
     const dialog = document.getElementById('preferences-dialog');
     const trigger = document.getElementById('preferences-button');
@@ -74,11 +86,16 @@
         lift: 'Lift',
         glow: 'Glow',
         none: 'None (Solid / Gradient theme)',
-        purple: 'Purple',
+        violet: 'Violet',
+        indigo: 'Indigo',
         blue: 'Blue',
+        green: 'Green',
+        yellow: 'Yellow',
+        orange: 'Orange',
+        red: 'Red',
+        purple: 'Violet',
         pink: 'Pink',
         teal: 'Teal',
-        orange: 'Orange',
         '12': '12-hour',
         '24': '24-hour',
         mountain: 'Aesthetic Mountain (Unsplash)',
@@ -92,12 +109,23 @@
     };
     function row(key, label, description = '') {
         let control;
-        if (choices[key]) control = `<select name="${key}" id="pref-${key}">${choices[key].map(value=>`<option value="${value}">${key === 'tileCorners' && value === 'soft' ? 'Soft corners' : (names[value] || value)}</option>`).join('')}</select>`;
+        if (choices[key]) control = `<select name="${key}" id="pref-${key}">${choices[key].map(value=>{
+            let text = key === 'tileCorners' && value === 'soft' ? 'Soft corners' : (names[value] || value);
+            let extra = '';
+            if (key === 'accent' && accents[value]) {
+                extra = ` style="color: ${accents[value][0]}; font-weight: 750;"`;
+                text = `● ${text}`;
+            }
+            return `<option value="${value}"${extra}>${text}</option>`;
+        }).join('')}</select>`;
         else if (ranges[key]) control = `<div class="preference-range"><input id="pref-${key}" name="${key}" type="range" min="${ranges[key][0]}" max="${ranges[key][1]}" step="${key === 'hoverCooldown' ? 10 : 1}"><output for="pref-${key}" data-output="${key}"></output></div>`;
         else control = `<input id="pref-${key}" name="${key}" type="checkbox" role="switch">`;
         return `<label class="preference-row" for="pref-${key}"><span>${label}${description ? `<small>${description}</small>` : ''}</span>${control}</label>`;
     }
-    form.innerHTML = `<details class="preference-section" open><summary>Sound studio <span>Tones, volume & feedback</span></summary><fieldset><legend class="sr-only">Sound studio</legend>
+    form.innerHTML = `<details class="preference-section" open><summary>Look & feel <span>Color, glass & movement</span></summary><fieldset><legend class="sr-only">Look and feel</legend>
+        ${row('accent','Accent color','Brand, controls and focus highlights')}${row('glass','Glass header','Soft translucent gradient')}${row('reducedMotion','Reduced motion','Minimize animations; your system preference is also respected')}
+    </fieldset></details>
+    <details class="preference-section"><summary>Sound studio <span>Tones, volume & feedback</span></summary><fieldset><legend class="sr-only">Sound studio</legend>
         ${row('hoverSound','Hover sounds','Play a tone when you explore website tiles')}${row('hoverTone','Hover tone')}${row('hoverVolume','Hover volume')}
         <button type="button" class="preference-button sound-preview" data-sound="hover">▶ Preview hover tone</button>
         ${row('clickSound','Click sounds','Feedback when you open a website')}${row('clickTone','Click tone')}${row('clickVolume','Click volume')}
@@ -123,20 +151,18 @@
         ${row('wallpaperBlur','Background blur','Depth-of-field blur behind frosted glass cards')}
         ${row('wallpaperDim','Background dimming','Darkens wallpaper to ensure contrast and readability')}
     </fieldset></details>
-    <details class="preference-section"><summary>Look & feel <span>Color, glass & movement</span></summary><fieldset><legend class="sr-only">Look and feel</legend>
-        ${row('accent','Accent color','Brand, controls and focus highlights')}${row('glass','Glass header','Soft translucent gradient')}${row('reducedMotion','Reduced motion','Minimize animations; your system preference is also respected')}
-    </fieldset></details>
     <details class="preference-section"><summary>Website tiles <span>Size, spacing & hover effects</span></summary><fieldset><legend class="sr-only">Website tiles</legend>
         ${row('tileSize','Tile size')}${row('tileSpacing','Tile spacing')}${row('tileCorners','Tile corners')}${row('hoverEffect','Hover effect')}${row('showCategoryIcons','Category icons')}
     </fieldset></details>
-    <details class="preference-section"><summary>Header, Quick Bar & Clock <span>Weather, Frequently Used & details</span></summary><fieldset><legend class="sr-only">Header and clock</legend>
-        ${row('showWeather','Show weather widget','Subtle temperature & icon next to clock')}${row('showTopHits','Show Frequently Used bar','Automatic 1-click access to most clicked websites')}${row('showClock','Show clock','Visible on wide screens')}${row('showSeconds','Show seconds')}${row('clockFormat','Time format')}${row('showTagline','Brand tagline')}
+    <details class="preference-section"><summary>Header, Quick Bar & Clock <span>Weather, Frequently Used Sites & details</span></summary><fieldset><legend class="sr-only">Header and clock</legend>
+        ${row('showWeather','Show weather widget','Subtle temperature & icon next to clock')}${row('showTopHits','Show Frequently Used Sites bar','Automatic 1-click access to most clicked websites')}${row('showClock','Show clock','Visible on wide screens')}${row('showSeconds','Show seconds')}${row('clockFormat','Time format')}${row('showTagline','Brand tagline')}
     </fieldset></details>
     <div class="preferences-footer"><span id="preferences-status" role="status">Saved on this device</span><button type="button" id="preferences-reset" class="preference-button">Reset defaults</button></div>`;
 
     function normalize(saved) {
         const result = {...defaults};
         if (!saved || typeof saved !== 'object') return result;
+        if (saved.accent === 'purple') saved.accent = 'violet';
         for (const key of Object.keys(defaults)) {
             if (choices[key]) { if (choices[key].includes(saved[key])) result[key] = saved[key]; }
             else if (ranges[key]) { if (Number.isFinite(saved[key])) result[key] = Math.max(ranges[key][0],Math.min(ranges[key][1],saved[key])); }
@@ -176,10 +202,23 @@
     function apply() {
         const p = WO.preferences || normalize({}); root = document.documentElement;
         for (const key of ['showClock','showSeconds','clockFormat','glass','reducedMotion','showTagline','accent','tileSize','tileSpacing','tileCorners','hoverEffect','showCategoryIcons','showWeather','showTopHits']) root.dataset[key] = String(p[key]);
-        const accents = {purple:['#9750e9','#ca9aff'],blue:['#2876d7','#82baff'],pink:['#d23e90','#ff9dcb'],teal:['#087e80','#6fe0d4'],orange:['#b96313','#ffc17e']};
-        if (accents[p.accent]) {
-            root.style.setProperty('--preference-accent', accents[p.accent][0]);
-            root.style.setProperty('--preference-accent-light', accents[p.accent][1]);
+        const curAccent = accents[p.accent] || accents.violet;
+        root.style.setProperty('--preference-accent', curAccent[0]);
+        root.style.setProperty('--preference-accent-light', curAccent[1]);
+        root.style.setProperty('--accent-color', curAccent[0]);
+        root.style.setProperty('--fab-bg', curAccent[0]);
+        root.style.setProperty('--fab-hover-bg', curAccent[1]);
+        root.style.setProperty('--btn-glow-color', `color-mix(in srgb, ${curAccent[0]} 40%, transparent)`);
+        root.style.setProperty('--btn-border-hover', curAccent[1]);
+        root.style.setProperty('--search-focus-border', curAccent[1]);
+        root.style.setProperty('--search-focus-shadow', `color-mix(in srgb, ${curAccent[1]} 55%, transparent)`);
+        root.style.setProperty('--search-idle-shadow', `color-mix(in srgb, ${curAccent[0]} 18%, transparent)`);
+        root.style.setProperty('--selection-bg', `color-mix(in srgb, ${curAccent[0]} 30%, transparent)`);
+
+        const accentSelect = document.getElementById('pref-accent');
+        if (accentSelect) {
+            accentSelect.style.color = curAccent[0];
+            accentSelect.style.fontWeight = '750';
         }
 
         // Apply Wallpaper

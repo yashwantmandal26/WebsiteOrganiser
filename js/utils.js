@@ -162,9 +162,11 @@
             const fl = host.charAt(0).toUpperCase();
             const g  = WO.getKeywordGradient(host);
             const letterFallback = `<span class='keyword-letter' style='background: linear-gradient(135deg, ${g[0]}, ${g[1]}); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;'>${fl}</span>`;
-            const defAvatar = encodeURIComponent('https://upload.wikimedia.org/wikipedia/commons/4/47/Transparent.png');
-            const faviconUrl = `https://favicon.im/${host}?larger=true&default-avatar=${defAvatar}`;
-            result = `<img src='${faviconUrl}' class='keyword-favicon' loading='lazy' decoding='async' onload="if(this.naturalWidth===1){this.style.display='none';this.nextElementSibling.style.display='flex';}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">`
+            const faviconUrl = `https://favicone.com/${host}?s=64`;
+            const safeHost = host.replace(/'/g, "\\'");
+            result = `<img src='${faviconUrl}' class='keyword-favicon' alt='' loading='lazy' decoding='async' `
+                   + `onload="if(this.naturalWidth<=1){this.classList.add('favicon-failed');this.style.setProperty('display','none','important');if(this.nextElementSibling)this.nextElementSibling.style.setProperty('display','flex','important');}" `
+                   + `onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src='https://www.google.com/s2/favicons?domain=' + encodeURIComponent('${safeHost}') + '&sz=64';}else{this.classList.add('favicon-failed');this.style.setProperty('display','none','important');if(this.nextElementSibling)this.nextElementSibling.style.setProperty('display','flex','important');}">`
                    + `<div class='keyword-fallback-container' style='display:none;width:100%;height:100%;align-items:center;justify-content:center;'>${letterFallback}</div>`;
         } else {
             const fl = keyword.charAt(0).toUpperCase();

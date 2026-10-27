@@ -705,16 +705,23 @@
         section.style.display = 'block';
         const fragment = document.createDocumentFragment();
 
+        let currentRank = 1;
         topHits.forEach((item, idx) => {
+            if (idx > 0 && item.clickCount < topHits[idx - 1].clickCount) {
+                currentRank = idx + 1;
+            }
+            const displayRank = currentRank;
+
             const chip = document.createElement('a');
             chip.className = 'top-hit-chip';
+            chip.dataset.rank = String(displayRank);
             chip.href = WO.resolveDynamicURL(item.targetUrl) || '#';
             chip.target = '_blank';
             chip.rel = 'noopener';
             chip.title = `${item.displayText} (${item.clickCount} clicks)`;
 
             chip.innerHTML = `
-                <span class="top-hit-rank">#${idx + 1}</span>
+                <span class="top-hit-rank">#${displayRank}</span>
                 <span class="top-hit-icon">${WO.getFaviconOrEmoji(item.keyword)}</span>
                 <span class="top-hit-name">${WO.escapeHtml(item.displayText)}</span>
                 <span class="top-hit-count">${item.clickCount}</span>

@@ -95,6 +95,18 @@
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
+[data-theme="solid-dark"] .google-search-input,
+html[data-theme="solid-dark"] .google-search-input {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+[data-theme="solid-dark"] .google-search-input::placeholder,
+html[data-theme="solid-dark"] .google-search-input::placeholder {
+  color: rgba(255, 255, 255, 0.55) !important;
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.55) !important;
+}
+
 /* Prevent browser autofill background overlay */
 .google-search-input:-webkit-autofill,
 .google-search-input:-webkit-autofill:hover, 
@@ -196,14 +208,14 @@
 }
 
 .title-organiser {
-  color: #7b2cbf !important;
+  color: var(--preference-accent, #7c3aed) !important;
   letter-spacing: -0.02em;
   transition: color 0.25s ease;
 }
 
 [data-theme="dark"] .title-organiser,
 [data-theme="solid-dark"] .title-organiser {
-  color: #a855f7 !important;
+  color: var(--preference-accent-light, #c4b5fd) !important;
 }
 
 /* ── All toggle styles removed (hybrid mode replaces toggle) ── */
@@ -916,10 +928,10 @@ body.admin-mode .admin-hub-wrapper {
 
 .admin-hub-trigger:hover,
 .admin-hub-wrapper.is-open .admin-hub-trigger {
-  background: #7b2cbf !important;
+  background: var(--preference-accent, #7c3aed) !important;
   color: #ffffff !important;
-  border-color: #7b2cbf !important;
-  box-shadow: 0 4px 14px rgba(123, 44, 191, 0.4) !important;
+  border-color: var(--preference-accent, #7c3aed) !important;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--preference-accent, #7c3aed) 40%, transparent) !important;
   transform: translateY(-1px) !important;
 }
 
@@ -927,9 +939,9 @@ body.admin-mode .admin-hub-wrapper {
 [data-theme="dark"] .admin-hub-wrapper.is-open .admin-hub-trigger,
 [data-theme="solid-dark"] .admin-hub-trigger:hover,
 [data-theme="solid-dark"] .admin-hub-wrapper.is-open .admin-hub-trigger {
-  background: #7b2cbf !important;
+  background: var(--preference-accent, #7c3aed) !important;
   color: #ffffff !important;
-  border-color: #7b2cbf !important;
+  border-color: var(--preference-accent, #7c3aed) !important;
 }
 
 .admin-badge-dot {
