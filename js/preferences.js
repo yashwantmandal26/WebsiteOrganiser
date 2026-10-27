@@ -171,7 +171,25 @@
             <p class="preference-note shortcut-hint">Click any key badge to record a new single key (e.g. F2, Delete, /) or combination (e.g. Ctrl+K, Alt+T). Press Esc while recording to cancel.</p>
         </div>
     </fieldset></details>
-    <div class="preferences-footer"><span id="preferences-status" role="status">Saved on this device</span><button type="button" id="preferences-reset" class="preference-button">Reset defaults</button></div>`;
+    <details class="preference-section" id="preference-about-section"><summary>About & Credits <span>Creator & website information</span></summary><fieldset><legend class="sr-only">About and Credits</legend>
+        <div class="preference-about-row">
+            <span class="preference-about-label">Credit of this website</span>
+            <span class="preference-about-value"><strong>Yashwant mandal</strong></span>
+        </div>
+        <div class="preference-about-row">
+            <span class="preference-about-label">Application</span>
+            <span class="preference-about-value">Website Organiser (v1.0.25)</span>
+        </div>
+        <div class="preference-about-row">
+            <span class="preference-about-label">Architecture</span>
+            <span class="preference-about-value">PWA • Modern Web Standards • Firebase</span>
+        </div>
+    </fieldset></details>
+    <div class="preferences-footer"><span id="preferences-status" role="status">Saved on this device</span><button type="button" id="preferences-reset" class="preference-button">Reset defaults</button></div>
+    <div class="preferences-credit-box">
+        <span class="preferences-credit-star">✨</span>
+        <span>Credit of this website: <strong>Yashwant mandal</strong></span>
+    </div>`;
 
     function normalize(saved) {
         const result = {...defaults};
@@ -503,7 +521,6 @@
         cycleAccent: 'Control',
         clearSearch: 'Delete',
         openSettings: 'Ctrl+,',
-        adminLogin: 'Ctrl+Alt+A',
         closeModals: 'Escape'
     };
 
@@ -513,13 +530,17 @@
         { id: 'cycleAccent', name: 'Cycle accent color', desc: 'Single tap to cycle through accent colors' },
         { id: 'clearSearch', name: 'Clear search query', desc: 'Clear search bar and restore all websites' },
         { id: 'openSettings', name: 'Open Settings modal', desc: 'Open Look, Sound & Shortcuts preferences' },
-        { id: 'adminLogin', name: 'Admin login modal', desc: 'Open administrator credentials modal' },
         { id: 'closeModals', name: 'Close modals / Escape', desc: 'Dismiss active dialogs, modals, and search suggestions' }
     ];
 
     let savedShortcuts = {};
     try { savedShortcuts = JSON.parse(localStorage.getItem('wo-shortcuts') || '{}'); } catch {}
+    if (savedShortcuts && savedShortcuts.adminLogin) {
+        delete savedShortcuts.adminLogin;
+        try { localStorage.setItem('wo-shortcuts', JSON.stringify(savedShortcuts)); } catch {}
+    }
     WO.shortcuts = { ...DEFAULT_SHORTCUTS, ...(savedShortcuts || {}) };
+    delete WO.shortcuts.adminLogin;
     WO.DEFAULT_SHORTCUTS = DEFAULT_SHORTCUTS;
     WO.SHORTCUT_METADATA = SHORTCUT_METADATA;
 
@@ -760,21 +781,7 @@
             openPreferences();
             return true;
         }
-        if (actionId === 'adminLogin') {
-            if (e) e.preventDefault();
-            const adminModal = document.getElementById('admin-modal');
-            const adminIdInput = document.getElementById('admin-id');
-            const adminPasswordInput = document.getElementById('admin-password');
-            const adminErrorMsg = document.getElementById('admin-error-msg');
-            if (!WO.adminLoggedIn && adminModal) {
-                if (adminIdInput) adminIdInput.value = '';
-                if (adminPasswordInput) adminPasswordInput.value = '';
-                if (adminErrorMsg) adminErrorMsg.style.display = 'none';
-                WO.toggleModal(adminModal, true);
-                if (adminIdInput) adminIdInput.focus();
-            }
-            return true;
-        }
+
         if (actionId === 'closeModals') {
             const activeModal = document.querySelector('.modal-container.visible');
             if (activeModal) {

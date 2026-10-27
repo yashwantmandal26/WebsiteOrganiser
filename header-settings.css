@@ -2741,3 +2741,67 @@ html[data-theme="solid-dark"] .fab {
     height: 24px !important;
   }
 }
+
+
+/* ── About & Credits Section in Settings ── */
+.preference-about-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 13px;
+}
+html[data-theme="light"] .preference-about-row {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+.preference-about-row:last-child {
+  border-bottom: none;
+}
+.preference-about-label {
+  color: var(--placeholder-color, #888);
+  font-size: 12.5px;
+}
+html[data-theme="light"] .preference-about-label {
+  color: #655977;
+}
+.preference-about-value {
+  color: var(--text-color, #f0f0f0);
+  font-weight: 700;
+  font-size: 13px;
+}
+html[data-theme="light"] .preference-about-value {
+  color: #1e162f;
+}
+.preference-about-value strong {
+  color: var(--preference-accent, #7b2cbf);
+}
+
+.preferences-credit-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--preference-accent, #7c3aed) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--preference-accent, #7c3aed) 20%, transparent);
+  font-size: 12px;
+  color: var(--placeholder-color, #999);
+  text-align: center;
+}
+html[data-theme="light"] .preferences-credit-box {
+  background: rgba(123, 44, 191, 0.05);
+  border-color: rgba(123, 44, 191, 0.15);
+  color: #6a5e7f;
+}
+.preferences-credit-box strong {
+  color: var(--preference-accent, #7c3aed);
+  font-weight: 750;
+}
+.preferences-credit-star {
+  font-size: 14px;
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--preference-accent, #7c3aed) 50%, transparent));
+}

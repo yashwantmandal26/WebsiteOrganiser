@@ -119,6 +119,14 @@ Administrative actions are protected to maintain organization integrity.
 
 ## 📋 Changelog
 
+### v1.0.25 (2026-10-28)
+- 👑 **Frequently Used Sites Podium (#1 Gold + Crown, #2 Silver, #3 Bronze)**: Metallic gradients with authentic luster, subtle drop shadow, and a crown perched over the #1 rank badge.
+- 🎨 **Floating Action Button (Add Group)**: Upgraded with ultra-premium 3D glassmorphism, curved glass reflection lens, multi-layer elevation, and SVG vector plus icon with smooth micro-interaction rotation.
+- 🖤 **Black Theme Cohesion**: Frequently Used Sites chips matched to header deep black (`rgba(10, 10, 14, 0.88)`) with refined glass border.
+- 🏷️ **Website Credit in Settings**: Added official creator credit to **Yashwant mandal** in Settings ("About & Credits" section and footer credit badge).
+- 🔒 **Keyboard Shortcuts Cleanup**: Removed `adminLogin` (`Ctrl+Alt+A`) from the customizable shortcuts table for improved security.
+- 📦 **Production Bundle**: Bundled and minified to v1.0.25 (bundle v1113).
+
 ### v1.0.24 (2026-10-28)
 - ⌨️ **Customizable Keyboard Shortcuts**: Added a dedicated Keyboard Shortcuts tab at the bottom of Settings. Users can customize any shortcut using single keys (e.g. `Delete`, `/`, `F2`, or single `Alt` / `Ctrl` tap) or key combinations (e.g. `Ctrl+K`, `Ctrl+,`, `Ctrl+Alt+A`), with conflict detection and reset options.
 - 📦 **Production Bundle**: Bundled and minified to v1.0.24 (bundle v1108).
