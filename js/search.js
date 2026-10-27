@@ -91,7 +91,7 @@
             try {
                 const url = targetUrl.startsWith('http') ? targetUrl : 'https://' + targetUrl;
                 const hostname = new URL(url).hostname.replace(/^www\./, '');
-                return `https://favicone.com/${hostname}?s=32`;
+                return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(hostname)}&sz=32`;
             } catch { return null; }
         }
 
@@ -104,7 +104,8 @@
                 const faviconUrl = r.targetUrl ? getFaviconUrl(r.targetUrl) : null;
                 const iconHtml = faviconUrl
                     ? `<img class="suggestion-favicon" src="${WO.escapeHtml(faviconUrl)}" alt="" loading="lazy"
-                           onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src='https://www.google.com/s2/favicons?domain=' + encodeURIComponent(new URL(this.src).pathname.slice(1)) + '&sz=32';}else{this.style.display='none';this.nextElementSibling.style.display='inline-block';}"
+                           onload="if(this.naturalWidth<=16){this.style.display='none';this.nextElementSibling.style.display='inline-block';}"
+                           onerror="this.style.display='none';this.nextElementSibling.style.display='inline-block'"
                        /><svg class="suggestion-icon suggestion-icon-fallback" style="display:none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`
                     : `<svg class="suggestion-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>`;
                 html += `<div class="suggestion-item keyword-suggestion-item" data-index="${i}" data-suggestion-mode="keywords" data-group-index="${r.groupIndex}" data-keyword-index="${r.keywordIndex}" data-target-url="${WO.escapeHtml(r.targetUrl || '')}">
