@@ -119,6 +119,11 @@ Administrative actions are protected to maintain organization integrity.
 
 ## 📋 Changelog
 
+### v1.0.23 (2026-10-28)
+- ⏰ **Clock Seconds by Default**: Clock seconds enabled by default across all themes and devices with automatic migration for existing users.
+- ⚡ **Symmetrical Frequently Used Sites**: Balanced pill capsules for rank and click count badges, optical baseline vertical centering, and uniform spacing.
+- 📦 **Production Bundle**: Upgraded production assets to v1.0.23.
+
 ### v1.0.20 (2026-09-24)
 - ⏰ **PC Cardless Clock**: Removed the white background pill card, border, and shadow from the PC desktop clock for a clean, borderless floating digital readout.
 - 📱 **Mobile Header Redesign**:

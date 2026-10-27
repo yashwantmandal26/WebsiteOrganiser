@@ -10,6 +10,7 @@
         hoverCooldown: 90,
         showClock: true,
         showSeconds: true,
+        secondsDefaulted: true,
         clockFormat: '12',
         glass: true,
         reducedMotion: false,
@@ -169,7 +170,11 @@
         const result = {...defaults};
         if (!saved || typeof saved !== 'object') return result;
         if (saved.accent === 'purple') saved.accent = 'violet';
-        if (saved.showSeconds === undefined) result.showSeconds = true;
+        const isExplicit = saved.secondsDefaulted === true;
+        if (!isExplicit) {
+            saved.showSeconds = true;
+            saved.secondsDefaulted = true;
+        }
         for (const key of Object.keys(defaults)) {
             if (choices[key]) { if (choices[key].includes(saved[key])) result[key] = saved[key]; }
             else if (ranges[key]) { if (Number.isFinite(saved[key])) result[key] = Math.max(ranges[key][0],Math.min(ranges[key][1],saved[key])); }
@@ -377,6 +382,9 @@
         const input = e.target;
         if (!Object.hasOwn(defaults, input.name)) return;
         WO.preferences[input.name] = input.type === 'checkbox' ? input.checked : input.type === 'range' ? Number(input.value) : input.value;
+        if (input.name === 'showSeconds') {
+            WO.preferences.secondsDefaulted = true;
+        }
         save();
         handleToneSoundPreview(input);
     });

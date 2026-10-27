@@ -84,8 +84,23 @@ header.premium-header::before { display:none; }
   user-select:none;
   transition:transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.22s ease, background 0.22s ease, border-color 0.22s ease !important;
 }
-.premium-header .clock-seconds,.premium-header .clock-seconds-sep,.premium-header .clock-ms { display:none !important; }
-html[data-show-seconds="true"] .clock-seconds,html[data-show-seconds="true"] .clock-seconds-sep { display:inline !important; }
+.premium-header .clock-seconds,
+.premium-header .clock-seconds-sep,
+.premium-header .clock-ms {
+  display: none !important;
+}
+html[data-show-seconds="true"] .clock-seconds,
+html[data-show-seconds="true"] .premium-header .clock-seconds {
+  display: inline-block !important;
+  width: 2ch !important;
+  text-align: center !important;
+}
+html[data-show-seconds="true"] .clock-seconds-sep,
+html[data-show-seconds="true"] .premium-header .clock-seconds-sep {
+  display: inline-block !important;
+  width: 0.55ch !important;
+  text-align: center !important;
+}
 html[data-show-clock="false"] .premium-header .live-clock { display:none !important; }
 
 @media (hover: hover) {
