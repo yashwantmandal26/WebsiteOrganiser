@@ -119,6 +119,10 @@ Administrative actions are protected to maintain organization integrity.
 
 ## 📋 Changelog
 
+### v1.0.24 (2026-10-28)
+- ⌨️ **Customizable Keyboard Shortcuts**: Added a dedicated Keyboard Shortcuts tab at the bottom of Settings. Users can customize any shortcut using single keys (e.g. `Delete`, `/`, `F2`, or single `Alt` / `Ctrl` tap) or key combinations (e.g. `Ctrl+K`, `Ctrl+,`, `Ctrl+Alt+A`), with conflict detection and reset options.
+- 📦 **Production Bundle**: Bundled and minified to v1.0.24 (bundle v1108).
+
 ### v1.0.23 (2026-10-28)
 - ⏰ **Clock Seconds by Default**: Clock seconds enabled by default across all themes and devices with automatic migration for existing users.
 - ⚡ **Symmetrical Frequently Used Sites**: Balanced pill capsules for rank and click count badges, optical baseline vertical centering, and uniform spacing.

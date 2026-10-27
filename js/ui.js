@@ -295,34 +295,7 @@
             });
         }
 
-        // ── Global Keyboard Shortcuts ─────────────────────────────────────────
-        document.addEventListener('keydown', (e) => {
-            const active = document.activeElement;
-            const inInput = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable);
-
-            // Alt → cycle theme (works everywhere)
-            if (e.key === 'Alt') {
-                e.preventDefault();
-                const t = document.documentElement.dataset.theme;
-                WO.setTheme(t === 'light' ? 'dark' : t === 'dark' ? 'solid-dark' : 'light');
-                return;
-            }
-
-            // Delete → reset search bar (only when NOT typing in an input)
-            if (e.key === 'Delete' && !inInput) {
-                e.preventDefault();
-                const si     = document.getElementById('google-search-input');
-                const clrBtn = document.getElementById('clear-search-btn');
-                if (!si) return;
-                si.value = '';
-                if (clrBtn) clrBtn.style.display = 'none';
-                WO.activeKeywordSearchQuery = '';
-                WO.renderGroups();
-                if (typeof WO.hideSuggestions === 'function') WO.hideSuggestions();
-                si.focus();
-                return;
-            }
-        });
+        // Global Keyboard Shortcuts are managed dynamically in js/preferences.js
 
 
 
@@ -381,17 +354,7 @@
             });
         }
 
-        // Global Keyboard Shortcut: Ctrl+Alt+A or Ctrl+Shift+A opens Admin Login
-        document.addEventListener('keydown', (e) => {
-            if ((e.ctrlKey || e.metaKey) && (e.shiftKey || e.altKey) && e.key.toLowerCase() === 'a') {
-                e.preventDefault();
-                if (!WO.adminLoggedIn && adminModal) {
-                    adminIdInput.value = ''; adminPasswordInput.value = '';
-                    adminErrorMsg.style.display = 'none';
-                    WO.toggleModal(adminModal, true); adminIdInput.focus();
-                }
-            }
-        });
+        // Admin login shortcut is managed dynamically in js/preferences.js
         
         // Live clock pointer cursor & tooltip
         const liveClock = document.getElementById('live-clock');

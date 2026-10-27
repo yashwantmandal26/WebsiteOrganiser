@@ -164,6 +164,13 @@
     <details class="preference-section"><summary>Header, Quick Bar & Clock <span>Weather, Frequently Used Sites & details</span></summary><fieldset><legend class="sr-only">Header and clock</legend>
         ${row('showWeather','Show weather widget','Subtle temperature & icon next to clock')}${row('showTopHits','Show Frequently Used Sites bar','Automatic 1-click access to most clicked websites')}${row('showClock','Show clock','Visible on wide screens')}${row('showSeconds','Show seconds')}${row('clockFormat','Time format')}${row('showTagline','Brand tagline')}
     </fieldset></details>
+    <details class="preference-section" id="preference-shortcuts-section"><summary>Keyboard shortcuts <span>Customize keys & combinations</span></summary><fieldset><legend class="sr-only">Keyboard shortcuts</legend>
+        <div id="shortcuts-list-container"></div>
+        <div class="shortcut-section-footer">
+            <button type="button" id="shortcuts-reset-all" class="preference-button shortcut-reset-all-btn">Reset all shortcuts</button>
+            <p class="preference-note shortcut-hint">Click any key badge to record a new single key (e.g. F2, Delete, /) or combination (e.g. Ctrl+K, Alt+T). Press Esc while recording to cancel.</p>
+        </div>
+    </fieldset></details>
     <div class="preferences-footer"><span id="preferences-status" role="status">Saved on this device</span><button type="button" id="preferences-reset" class="preference-button">Reset defaults</button></div>`;
 
     function normalize(saved) {
@@ -468,12 +475,6 @@
         const input = document.getElementById('google-search-input');
         if (input) { input.focus(); input.select(); }
     }
-    document.addEventListener('keydown', e => {
-        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k' && !dialog.open) {
-            e.preventDefault();
-            focusSearch();
-        }
-    });
 
     // ── Cycle Accent Color function ──
     WO.cycleAccentColor = function () {
@@ -495,46 +496,387 @@
         }
     };
 
-    // ── Single Click Ctrl key to cycle accent color ──
-    // Excludes: click-and-hold (> 350ms), repeated keys, mouse clicks with Ctrl, and Ctrl+key combos
-    let ctrlDownTime = 0;
-    let ctrlCombo = false;
+    // ── Customizable Keyboard Shortcuts Manager ──
+    const DEFAULT_SHORTCUTS = {
+        focusSearch: 'Ctrl+K',
+        cycleTheme: 'Alt',
+        cycleAccent: 'Control',
+        clearSearch: 'Delete',
+        openSettings: 'Ctrl+,',
+        adminLogin: 'Ctrl+Alt+A',
+        closeModals: 'Escape'
+    };
 
-    window.addEventListener('keydown', e => {
-        if (e.key === 'Control') {
-            if (e.repeat) {
-                ctrlCombo = true;
+    const SHORTCUT_METADATA = [
+        { id: 'focusSearch', name: 'Focus search bar', desc: 'Jump cursor to Google & bookmark search' },
+        { id: 'cycleTheme', name: 'Cycle theme', desc: 'Switch Dark, Black, and Light modes' },
+        { id: 'cycleAccent', name: 'Cycle accent color', desc: 'Single tap to cycle through accent colors' },
+        { id: 'clearSearch', name: 'Clear search query', desc: 'Clear search bar and restore all websites' },
+        { id: 'openSettings', name: 'Open Settings modal', desc: 'Open Look, Sound & Shortcuts preferences' },
+        { id: 'adminLogin', name: 'Admin login modal', desc: 'Open administrator credentials modal' },
+        { id: 'closeModals', name: 'Close modals / Escape', desc: 'Dismiss active dialogs, modals, and search suggestions' }
+    ];
+
+    let savedShortcuts = {};
+    try { savedShortcuts = JSON.parse(localStorage.getItem('wo-shortcuts') || '{}'); } catch {}
+    WO.shortcuts = { ...DEFAULT_SHORTCUTS, ...(savedShortcuts || {}) };
+    WO.DEFAULT_SHORTCUTS = DEFAULT_SHORTCUTS;
+    WO.SHORTCUT_METADATA = SHORTCUT_METADATA;
+
+    WO.saveShortcuts = function () {
+        try {
+            localStorage.setItem('wo-shortcuts', JSON.stringify(WO.shortcuts));
+        } catch {}
+        renderShortcutsList();
+    };
+
+    function formatShortcutBadge(str) {
+        if (!str) return '<span style="opacity:0.5;font-size:11px;">(None)</span>';
+        if (str === 'Control') return '<kbd>Ctrl</kbd> <span style="opacity:0.65;font-size:10px;margin-left:2px;">(tap)</span>';
+        if (str === 'Alt') return '<kbd>Alt</kbd> <span style="opacity:0.65;font-size:10px;margin-left:2px;">(tap)</span>';
+
+        const parts = str.split('+');
+        return parts.map(p => '<kbd>' + (p === 'Control' ? 'Ctrl' : WO.escapeHtml(p)) + '</kbd>').join(' <span style="opacity:0.5;font-size:10px;">+</span> ');
+    }
+
+    function renderShortcutsList() {
+        const container = document.getElementById('shortcuts-list-container');
+        if (!container) return;
+
+        let html = '<div class="preference-shortcut-list">';
+        for (const item of SHORTCUT_METADATA) {
+            const currentSc = WO.shortcuts[item.id] || '';
+            const defSc = DEFAULT_SHORTCUTS[item.id] || '';
+            const isCustom = currentSc !== defSc;
+            const displayHtml = formatShortcutBadge(currentSc);
+
+            html += `
+            <div class="preference-shortcut-row">
+                <div class="preference-shortcut-info">
+                    <span class="preference-shortcut-title">${WO.escapeHtml(item.name)}</span>
+                    <span class="preference-shortcut-desc">${WO.escapeHtml(item.desc)}</span>
+                </div>
+                <div class="preference-shortcut-control">
+                    <button type="button" class="shortcut-key-btn" data-shortcut-action="${item.id}" title="Click to record a new key or combo">
+                        ${displayHtml}
+                    </button>
+                    ${isCustom ? `<button type="button" class="shortcut-reset-single-btn" data-reset-action="${item.id}" title="Reset to default (${defSc})">↺</button>` : ''}
+                </div>
+            </div>`;
+        }
+        html += '</div>';
+        container.innerHTML = html;
+
+        container.querySelectorAll('.shortcut-key-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const actionId = btn.dataset.shortcutAction;
+                if (actionId) startRecordingShortcut(actionId, btn);
+            });
+        });
+
+        container.querySelectorAll('.shortcut-reset-single-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const actionId = btn.dataset.resetAction;
+                if (actionId) resetSingleShortcut(actionId);
+            });
+        });
+    }
+
+    function getEventComboString(e) {
+        if (['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) return '';
+
+        const parts = [];
+        if (e.ctrlKey) parts.push('Ctrl');
+        if (e.altKey) parts.push('Alt');
+        if (e.shiftKey) parts.push('Shift');
+        if (e.metaKey) parts.push('Meta');
+
+        let keyName = e.key;
+        if (keyName === ' ') keyName = 'Space';
+        else if (keyName === 'Escape') keyName = 'Escape';
+        else if (keyName === 'Delete') keyName = 'Delete';
+        else if (keyName.length === 1) keyName = keyName.toUpperCase();
+
+        parts.push(keyName);
+        return parts.join('+');
+    }
+
+    function startRecordingShortcut(actionId, btnElement) {
+        if (WO._isRecordingShortcut) return;
+        WO._isRecordingShortcut = true;
+        WO._recordingActionId = actionId;
+
+        btnElement.classList.add('is-recording');
+        btnElement.innerHTML = '<span class="recording-indicator">⏺</span> Press key or combo...';
+
+        let recordedModifiers = new Set();
+        let modifierDownTime = 0;
+        let nonModifierPressed = false;
+
+        function cleanup() {
+            window.removeEventListener('keydown', onKeyDown, true);
+            window.removeEventListener('keyup', onKeyUp, true);
+            window.removeEventListener('mousedown', onMouseDown, true);
+            WO._isRecordingShortcut = false;
+            WO._recordingActionId = null;
+            btnElement.classList.remove('is-recording');
+            renderShortcutsList();
+        }
+
+        function onKeyDown(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (e.key === 'Escape') {
+                cleanup();
+                if (typeof window.showToast === 'function') window.showToast('Recording cancelled', 1000);
                 return;
             }
-            ctrlDownTime = Date.now();
-            ctrlCombo = false;
+
+            const isMod = ['Control', 'Alt', 'Shift', 'Meta'].includes(e.key);
+            if (isMod) {
+                recordedModifiers.add(e.key === 'Control' ? 'Ctrl' : e.key);
+                modifierDownTime = Date.now();
+                btnElement.innerHTML = `<span class="recording-indicator">⏺</span> <kbd>${Array.from(recordedModifiers).join('</kbd> + <kbd>')}</kbd> + ...`;
+                return;
+            }
+
+            nonModifierPressed = true;
+            const combo = getEventComboString(e);
+            if (combo) {
+                saveNewShortcut(actionId, combo);
+                cleanup();
+            }
+        }
+
+        function onKeyUp(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const isMod = ['Control', 'Alt', 'Shift', 'Meta'].includes(e.key);
+            if (isMod && !nonModifierPressed) {
+                const elapsed = Date.now() - modifierDownTime;
+                if (elapsed < 1200) {
+                    const singleMod = e.key === 'Control' ? 'Control' : e.key;
+                    saveNewShortcut(actionId, singleMod);
+                    cleanup();
+                }
+            }
+        }
+
+        function onMouseDown(e) {
+            if (!btnElement.contains(e.target)) {
+                cleanup();
+            }
+        }
+
+        window.addEventListener('keydown', onKeyDown, true);
+        window.addEventListener('keyup', onKeyUp, true);
+        window.addEventListener('mousedown', onMouseDown, true);
+    }
+
+    function saveNewShortcut(actionId, newShortcut) {
+        if (!newShortcut) return;
+
+        let conflictAction = null;
+        for (const [id, sc] of Object.entries(WO.shortcuts)) {
+            if (id !== actionId && sc.toLowerCase() === newShortcut.toLowerCase()) {
+                conflictAction = id;
+                break;
+            }
+        }
+
+        WO.shortcuts[actionId] = newShortcut;
+        if (conflictAction) {
+            WO.shortcuts[conflictAction] = '';
+        }
+
+        WO.saveShortcuts();
+        if (typeof WO.playClickSound === 'function') WO.playClickSound();
+
+        const meta = SHORTCUT_METADATA.find(m => m.id === actionId);
+        const label = meta ? meta.name : actionId;
+        if (typeof window.showToast === 'function') {
+            const msg = conflictAction
+                ? `Shortcut set to ${newShortcut} (replaced from ${SHORTCUT_METADATA.find(m => m.id === conflictAction)?.name || conflictAction})`
+                : `Shortcut for ${label} set to ${newShortcut}`;
+            window.showToast(msg, 1800);
+        }
+    }
+
+    function resetSingleShortcut(actionId) {
+        WO.shortcuts[actionId] = DEFAULT_SHORTCUTS[actionId] || '';
+        WO.saveShortcuts();
+        if (typeof WO.playClickSound === 'function') WO.playClickSound();
+        const meta = SHORTCUT_METADATA.find(m => m.id === actionId);
+        if (typeof window.showToast === 'function') {
+            window.showToast(`Reset ${meta?.name || actionId} to default (${DEFAULT_SHORTCUTS[actionId]})`, 1400);
+        }
+    }
+
+    function resetAllShortcuts() {
+        WO.shortcuts = { ...DEFAULT_SHORTCUTS };
+        WO.saveShortcuts();
+        if (typeof WO.playClickSound === 'function') WO.playClickSound();
+        if (typeof window.showToast === 'function') {
+            window.showToast('All shortcuts restored to defaults', 1500);
+        }
+    }
+
+    function executeShortcutAction(actionId, e) {
+        if (actionId === 'focusSearch') {
+            if (e) e.preventDefault();
+            focusSearch();
+            return true;
+        }
+        if (actionId === 'cycleTheme') {
+            if (e) e.preventDefault();
+            const t = document.documentElement.dataset.theme;
+            WO.setTheme(t === 'light' ? 'dark' : t === 'dark' ? 'solid-dark' : 'light');
+            return true;
+        }
+        if (actionId === 'cycleAccent') {
+            if (e) e.preventDefault();
+            WO.cycleAccentColor();
+            return true;
+        }
+        if (actionId === 'clearSearch') {
+            if (e) e.preventDefault();
+            const si = document.getElementById('google-search-input');
+            const clrBtn = document.getElementById('clear-search-btn');
+            if (si) {
+                si.value = '';
+                if (clrBtn) clrBtn.style.display = 'none';
+                WO.activeKeywordSearchQuery = '';
+                WO.renderGroups();
+                if (typeof WO.hideSuggestions === 'function') WO.hideSuggestions();
+                si.focus();
+            }
+            return true;
+        }
+        if (actionId === 'openSettings') {
+            if (e) e.preventDefault();
+            openPreferences();
+            return true;
+        }
+        if (actionId === 'adminLogin') {
+            if (e) e.preventDefault();
+            const adminModal = document.getElementById('admin-modal');
+            const adminIdInput = document.getElementById('admin-id');
+            const adminPasswordInput = document.getElementById('admin-password');
+            const adminErrorMsg = document.getElementById('admin-error-msg');
+            if (!WO.adminLoggedIn && adminModal) {
+                if (adminIdInput) adminIdInput.value = '';
+                if (adminPasswordInput) adminPasswordInput.value = '';
+                if (adminErrorMsg) adminErrorMsg.style.display = 'none';
+                WO.toggleModal(adminModal, true);
+                if (adminIdInput) adminIdInput.focus();
+            }
+            return true;
+        }
+        if (actionId === 'closeModals') {
+            const activeModal = document.querySelector('.modal-container.visible');
+            if (activeModal) {
+                if (e) e.preventDefault();
+                WO.toggleModal(activeModal, false);
+                return true;
+            }
+            if (dialog && dialog.open) {
+                if (e) e.preventDefault();
+                closePreferences();
+                return true;
+            }
+            const hubWrapper = document.getElementById('admin-hub-wrapper');
+            if (hubWrapper && hubWrapper.classList.contains('is-open')) {
+                if (e) e.preventDefault();
+                hubWrapper.classList.remove('is-open');
+                const hubBtn = document.getElementById('admin-hub-btn');
+                if (hubBtn) hubBtn.setAttribute('aria-expanded', 'false');
+                return true;
+            }
+            const si = document.getElementById('google-search-input');
+            if (document.activeElement === si) {
+                if (e) e.preventDefault();
+                if (typeof WO.hideSuggestions === 'function') WO.hideSuggestions();
+                si.blur();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // ── Global Keyboard Shortcuts Listeners ──
+    let singleModifierDown = null;
+    let singleModifierTime = 0;
+    let singleModifierCombo = false;
+
+    window.addEventListener('keydown', e => {
+        if (WO._isRecordingShortcut) return;
+
+        if (e.key === 'Control' || e.key === 'Alt') {
+            if (!e.repeat) {
+                singleModifierDown = e.key;
+                singleModifierTime = Date.now();
+                singleModifierCombo = false;
+            }
             return;
         }
-        // Any other key pressed while Ctrl is down cancels single-click action
-        ctrlCombo = true;
-    }, { capture: true });
+        singleModifierCombo = true;
+
+        const active = document.activeElement;
+        const inInput = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable);
+
+        const combo = getEventComboString(e);
+        if (!combo) return;
+
+        for (const [actionId, shortcut] of Object.entries(WO.shortcuts)) {
+            if (!shortcut || shortcut.toLowerCase() !== combo.toLowerCase()) continue;
+
+            const hasModifiers = e.ctrlKey || e.altKey || e.metaKey;
+            if (inInput && !hasModifiers && shortcut !== 'Escape') {
+                continue;
+            }
+
+            executeShortcutAction(actionId, e);
+            break;
+        }
+    }, { capture: false });
 
     window.addEventListener('keyup', e => {
-        if (e.key === 'Control') {
-            const elapsed = Date.now() - ctrlDownTime;
-            const isSingleClick = ctrlDownTime > 0 && !ctrlCombo && elapsed < 350;
-            ctrlDownTime = 0;
-            ctrlCombo = false;
+        if (WO._isRecordingShortcut) return;
+        if ((e.key === 'Control' || e.key === 'Alt') && singleModifierDown === e.key) {
+            const elapsed = Date.now() - singleModifierTime;
+            const isSingleTap = !singleModifierCombo && elapsed > 0 && elapsed < 350;
+            singleModifierDown = null;
+            singleModifierCombo = false;
 
-            if (isSingleClick) {
-                WO.cycleAccentColor();
+            if (isSingleTap) {
+                for (const [actionId, shortcut] of Object.entries(WO.shortcuts)) {
+                    if (shortcut === e.key || (e.key === 'Control' && shortcut === 'Ctrl')) {
+                        executeShortcutAction(actionId, e);
+                        break;
+                    }
+                }
             }
         }
     }, { capture: true });
 
     window.addEventListener('mousedown', () => {
-        if (ctrlDownTime > 0) ctrlCombo = true;
+        singleModifierCombo = true;
     }, { capture: true });
 
     window.addEventListener('blur', () => {
-        ctrlDownTime = 0;
-        ctrlCombo = true;
+        singleModifierDown = null;
+        singleModifierCombo = true;
     });
+
+    // Render shortcuts list on initial load
+    renderShortcutsList();
+    const resetAllBtn = document.getElementById('shortcuts-reset-all');
+    if (resetAllBtn) {
+        resetAllBtn.addEventListener('click', resetAllShortcuts);
+    }
 
     apply();
 })(window.WO);
