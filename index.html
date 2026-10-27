@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="dark" data-show-seconds="true">
 
 <head>
   <script>
@@ -7,8 +7,11 @@
       try {
         var t = localStorage.getItem('wo-theme');
         document.documentElement.dataset.theme = (t === 'dark' || t === 'light' || t === 'solid-dark') ? t : 'dark';
+        var p = JSON.parse(localStorage.getItem('wo-preferences') || '{}');
+        document.documentElement.dataset.showSeconds = p.showSeconds !== false ? 'true' : 'false';
       } catch (e) {
         document.documentElement.dataset.theme = 'dark';
+        document.documentElement.dataset.showSeconds = 'true';
       }
     })();
   </script>
@@ -41,7 +44,7 @@
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js">
-  <link rel="stylesheet" href="bundle.min.css?v=1103">
+  <link rel="stylesheet" href="bundle.min.css?v=1104">
 
   <link rel="manifest" href="manifest.json">
 
@@ -484,7 +487,7 @@
     })();
   </script>
   <!-- Application Bundle -->
-  <script defer src="bundle.min.js?v=1103"></script>
+  <script defer src="bundle.min.js?v=1104"></script>
 
   <div id="toast-container"></div>
   <!-- Global keyword tooltip portal — lives at body level to avoid contain:paint clipping -->

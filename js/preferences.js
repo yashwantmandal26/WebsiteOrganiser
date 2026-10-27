@@ -9,7 +9,7 @@
         clickVolume: 100,
         hoverCooldown: 90,
         showClock: true,
-        showSeconds: false,
+        showSeconds: true,
         clockFormat: '12',
         glass: true,
         reducedMotion: false,
@@ -55,16 +55,16 @@
         abstract: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1920&q=80'
     };
     const accents = {
-        violet:  ['#7c3aed', '#c4b5fd'],
-        indigo:  ['#4f46e5', '#a5b4fc'],
-        blue:    ['#2563eb', '#93c5fd'],
-        green:   ['#16a34a', '#86efac'],
-        yellow:  ['#d97706', '#fde047'],
-        orange:  ['#ea580c', '#fdba74'],
-        red:     ['#dc2626', '#fca5a5'],
-        purple:  ['#7c3aed', '#c4b5fd'],
-        pink:    ['#d23e90', '#ff9dcb'],
-        teal:    ['#087e80', '#6fe0d4']
+        violet:  ['#7c3aed', '#c4b5fd', '#a855f7'],
+        indigo:  ['#4f46e5', '#a5b4fc', '#6366f1'],
+        blue:    ['#2563eb', '#93c5fd', '#3b82f6'],
+        green:   ['#16a34a', '#86efac', '#22c55e'],
+        yellow:  ['#d97706', '#fde047', '#f59e0b'],
+        orange:  ['#ea580c', '#fdba74', '#f97316'],
+        red:     ['#dc2626', '#fca5a5', '#ef4444'],
+        purple:  ['#7c3aed', '#c4b5fd', '#a855f7'],
+        pink:    ['#d23e90', '#ff9dcb', '#ec4899'],
+        teal:    ['#087e80', '#6fe0d4', '#14b8a6']
     };
     const form = document.getElementById('preferences-form');
     const dialog = document.getElementById('preferences-dialog');
@@ -169,6 +169,7 @@
         const result = {...defaults};
         if (!saved || typeof saved !== 'object') return result;
         if (saved.accent === 'purple') saved.accent = 'violet';
+        if (saved.showSeconds === undefined) result.showSeconds = true;
         for (const key of Object.keys(defaults)) {
             if (choices[key]) { if (choices[key].includes(saved[key])) result[key] = saved[key]; }
             else if (ranges[key]) { if (Number.isFinite(saved[key])) result[key] = Math.max(ranges[key][0],Math.min(ranges[key][1],saved[key])); }
@@ -211,6 +212,7 @@
         const curAccent = accents[p.accent] || accents.violet;
         root.style.setProperty('--preference-accent', curAccent[0]);
         root.style.setProperty('--preference-accent-light', curAccent[1]);
+        root.style.setProperty('--preference-accent-vivid', curAccent[2] || curAccent[0]);
         root.style.setProperty('--accent-color', curAccent[0]);
         root.style.setProperty('--fab-bg', curAccent[0]);
         root.style.setProperty('--fab-hover-bg', curAccent[1]);
@@ -463,6 +465,67 @@
             e.preventDefault();
             focusSearch();
         }
+    });
+
+    // ── Cycle Accent Color function ──
+    WO.cycleAccentColor = function () {
+        const order = choices.accent;
+        const cur = (WO.preferences && WO.preferences.accent) || 'violet';
+        const idx = order.indexOf(cur);
+        const nextAccent = order[(idx + 1) % order.length];
+        if (!WO.preferences) WO.preferences = {};
+        WO.preferences.accent = nextAccent;
+        save();
+        const accentSelect = document.getElementById('pref-accent');
+        if (accentSelect) {
+            accentSelect.value = nextAccent;
+            accentSelect.style.color = accents[nextAccent] ? accents[nextAccent][0] : '';
+        }
+        if (typeof window.showToast === 'function') {
+            const label = names[nextAccent] || nextAccent;
+            window.showToast('🎨 Accent: ' + label, 1200);
+        }
+    };
+
+    // ── Single Click Ctrl key to cycle accent color ──
+    // Excludes: click-and-hold (> 350ms), repeated keys, mouse clicks with Ctrl, and Ctrl+key combos
+    let ctrlDownTime = 0;
+    let ctrlCombo = false;
+
+    window.addEventListener('keydown', e => {
+        if (e.key === 'Control') {
+            if (e.repeat) {
+                ctrlCombo = true;
+                return;
+            }
+            ctrlDownTime = Date.now();
+            ctrlCombo = false;
+            return;
+        }
+        // Any other key pressed while Ctrl is down cancels single-click action
+        ctrlCombo = true;
+    }, { capture: true });
+
+    window.addEventListener('keyup', e => {
+        if (e.key === 'Control') {
+            const elapsed = Date.now() - ctrlDownTime;
+            const isSingleClick = ctrlDownTime > 0 && !ctrlCombo && elapsed < 350;
+            ctrlDownTime = 0;
+            ctrlCombo = false;
+
+            if (isSingleClick) {
+                WO.cycleAccentColor();
+            }
+        }
+    }, { capture: true });
+
+    window.addEventListener('mousedown', () => {
+        if (ctrlDownTime > 0) ctrlCombo = true;
+    }, { capture: true });
+
+    window.addEventListener('blur', () => {
+        ctrlDownTime = 0;
+        ctrlCombo = true;
     });
 
     apply();
