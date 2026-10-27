@@ -724,7 +724,7 @@
                 <span class="top-hit-rank">#${displayRank}</span>
                 <span class="top-hit-icon">${WO.getFaviconOrEmoji(item.keyword)}</span>
                 <span class="top-hit-name">${WO.escapeHtml(item.displayText)}</span>
-                <span class="top-hit-count">${item.clickCount}</span>
+                <span class="top-hit-count" title="${item.clickCount} clicks">${item.clickCount}</span>
             `;
 
             chip.addEventListener('click', (e) => {
