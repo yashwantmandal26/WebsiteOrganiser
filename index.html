@@ -45,7 +45,7 @@
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js">
-  <link rel="stylesheet" href="bundle.min.css?v=1110">
+  <link rel="stylesheet" href="bundle.min.css?v=1111">
 
   <link rel="manifest" href="manifest.json">
 
@@ -233,7 +233,14 @@
     </div>
   </main>
 
-  <button id="add-fab" class="fab" type="button" aria-label="Add website or group"><span class="fab-plus-icon">+</span></button>
+  <button id="add-fab" class="fab" type="button" aria-label="Add website or group" title="Add Group">
+    <span class="fab-plus-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+    </span>
+  </button>
 
   <div id="bulk-toolbar" class="bulk-toolbar" hidden>
     <strong><span id="bulk-selection-count">0</span> selected</strong>
@@ -488,7 +495,7 @@
     })();
   </script>
   <!-- Application Bundle -->
-  <script defer src="bundle.min.js?v=1110"></script>
+  <script defer src="bundle.min.js?v=1111"></script>
 
   <div id="toast-container"></div>
   <!-- Global keyword tooltip portal — lives at body level to avoid contain:paint clipping -->

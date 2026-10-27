@@ -2570,3 +2570,170 @@ html[data-theme="light"] .shortcut-section-footer {
     justify-content: space-between;
   }
 }
+
+
+/* ── Floating Action Button (FAB / Add Group): Ultra-Premium 3D Glass Lens ── */
+.fab,
+#add-fab {
+  position: fixed !important;
+  bottom: 30px !important;
+  right: 30px !important;
+  width: 58px !important;
+  height: 58px !important;
+  border-radius: 50% !important;
+  z-index: 900 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.38) !important;
+  background: linear-gradient(145deg,
+    color-mix(in srgb, var(--preference-accent, #7c3aed) 70%, #ffffff) 0%,
+    var(--preference-accent, #7c3aed) 42%,
+    color-mix(in srgb, var(--preference-accent, #7c3aed) 75%, #000000) 100%
+  ) !important;
+  color: #ffffff !important;
+  box-shadow:
+    0 12px 28px -4px color-mix(in srgb, var(--preference-accent, #7c3aed) 55%, transparent),
+    0 4px 12px color-mix(in srgb, var(--preference-accent, #7c3aed) 35%, transparent),
+    inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -2.5px 5px 0 rgba(0, 0, 0, 0.3) !important;
+  cursor: pointer !important;
+  outline: none !important;
+  overflow: hidden !important;
+  touch-action: manipulation !important;
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
+              border-color 0.25s ease,
+              filter 0.25s ease !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+/* Glass Specular Highlight Lens (Dome Sheen) */
+.fab::before,
+#add-fab::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 1.5px !important;
+  left: 14% !important;
+  right: 14% !important;
+  height: 46% !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.48) 0%, rgba(255, 255, 255, 0.04) 100%) !important;
+  border-radius: 999px 999px 50% 50% !important;
+  pointer-events: none !important;
+  z-index: 1 !important;
+}
+
+/* FAB Plus Icon & Micro-Interactions */
+.fab .fab-plus-icon,
+#add-fab .fab-plus-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative !important;
+  z-index: 2 !important;
+  width: 26px !important;
+  height: 26px !important;
+  color: #ffffff !important;
+  pointer-events: none !important;
+  filter: drop-shadow(0 1.5px 3px rgba(0, 0, 0, 0.35)) !important;
+  transition: transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  line-height: 1 !important;
+}
+
+.fab .fab-plus-icon svg,
+#add-fab .fab-plus-icon svg {
+  display: block !important;
+  width: 26px !important;
+  height: 26px !important;
+  pointer-events: none !important;
+}
+
+/* Hover Elevation, Outer Aura Ring & Icon Rotation */
+@media (hover: hover) {
+  .fab:hover,
+  #add-fab:hover {
+    transform: translateY(-4px) scale(1.08) !important;
+    border-color: rgba(255, 255, 255, 0.65) !important;
+    box-shadow:
+      0 18px 40px -4px color-mix(in srgb, var(--preference-accent, #7c3aed) 70%, transparent),
+      0 6px 18px color-mix(in srgb, var(--preference-accent-light, #c4b5fd) 50%, transparent),
+      0 0 0 4px color-mix(in srgb, var(--preference-accent, #7c3aed) 25%, transparent),
+      inset 0 2px 2px 0 rgba(255, 255, 255, 0.75),
+      inset 0 -2.5px 6px 0 rgba(0, 0, 0, 0.35) !important;
+    filter: brightness(1.06) saturate(1.1) !important;
+  }
+  .fab:hover .fab-plus-icon,
+  #add-fab:hover .fab-plus-icon {
+    transform: rotate(90deg) scale(1.1) !important;
+  }
+}
+
+/* Active Press / Tap Haptic Feel */
+.fab:active,
+#add-fab:active {
+  transform: translateY(2px) scale(0.94) !important;
+  box-shadow:
+    0 6px 16px -2px color-mix(in srgb, var(--preference-accent, #7c3aed) 50%, transparent),
+    inset 0 2px 4px 0 rgba(0, 0, 0, 0.4) !important;
+  transition: transform 0.1s ease, box-shadow 0.1s ease !important;
+}
+.fab:active .fab-plus-icon,
+#add-fab:active .fab-plus-icon {
+  transform: rotate(45deg) scale(0.92) !important;
+}
+
+/* Light Theme: Crisp High-Luminance Glass Rim */
+html[data-theme="light"] #add-fab,
+html[data-theme="light"] .fab {
+  border-color: rgba(255, 255, 255, 0.65) !important;
+  box-shadow:
+    0 10px 25px -4px color-mix(in srgb, var(--preference-accent, #7c3aed) 40%, transparent),
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.75),
+    inset 0 -2px 4px 0 rgba(0, 0, 0, 0.18) !important;
+}
+
+/* Dark Theme: Deep Ambient Glow */
+html[data-theme="dark"] #add-fab,
+html[data-theme="dark"] .fab {
+  border-color: rgba(255, 255, 255, 0.32) !important;
+  box-shadow:
+    0 12px 30px -4px rgba(0, 0, 0, 0.65),
+    0 0 24px color-mix(in srgb, var(--preference-accent, #7c3aed) 40%, transparent),
+    inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -2.5px 5px 0 rgba(0, 0, 0, 0.35) !important;
+}
+
+/* Solid-Dark / Black Theme: Ultra-Contrast Neon Jewel */
+html[data-theme="solid-dark"] #add-fab,
+html[data-theme="solid-dark"] .fab {
+  border-color: rgba(255, 255, 255, 0.38) !important;
+  box-shadow:
+    0 14px 34px -4px rgba(0, 0, 0, 0.9),
+    0 0 30px color-mix(in srgb, var(--preference-accent, #7c3aed) 50%, transparent),
+    inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -2.5px 5px 0 rgba(0, 0, 0, 0.45) !important;
+}
+
+/* Mobile & Touch Responsive Scaling */
+@media (max-width: 768px) {
+  .fab,
+  #add-fab {
+    width: 54px !important;
+    height: 54px !important;
+    bottom: max(18px, env(safe-area-inset-bottom, 18px)) !important;
+    right: max(16px, env(safe-area-inset-right, 16px)) !important;
+  }
+  .fab .fab-plus-icon,
+  #add-fab .fab-plus-icon {
+    width: 24px !important;
+    height: 24px !important;
+  }
+  .fab .fab-plus-icon svg,
+  #add-fab .fab-plus-icon svg {
+    width: 24px !important;
+    height: 24px !important;
+  }
+}
