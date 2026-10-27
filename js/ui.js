@@ -53,20 +53,22 @@
     const soundProfiles = { soft: [400, .05, 80], bell: [880, .24, 18], pop: [620, .08, 45], crystal: [1568, .2, 23], wood: [220, .065, 65], digital: [1200, .06, 70] };
     const soundClips = new Map();
     let lastHover = 0;
-    WO.playPreferenceSound = (kind, preview = false) => {
+    WO.playPreferenceSound = (kind, preview = false, toneOverride = null) => {
         const p = WO.preferences || {};
         if (!preview && p[kind + 'Sound'] === false) return false;
         if (kind === 'hover' && !preview && performance.now() - lastHover < (p.hoverCooldown ?? 90)) return false;
         if (kind === 'hover') lastHover = performance.now();
-        const tone = p[kind + 'Tone'] || (kind === 'hover' ? 'soft' : 'digital');
+        const tone = toneOverride || p[kind + 'Tone'] || (kind === 'hover' ? 'soft' : 'digital');
         const profile = soundProfiles[tone] || soundProfiles.soft;
         const key = kind + tone;
         let clip = soundClips.get(key);
         if (!clip) { const uri = _buildWav(...profile); if (!uri) return false; clip = new Audio(uri); soundClips.set(key, clip); }
         // Stop the preceding tone when users switch rapidly between previews.
         for (const audio of soundClips.values()) { audio.pause(); audio.currentTime = 0; }
-        clip.volume = (p.volume ?? 55) / 100 * (p[kind + 'Volume'] ?? (kind === 'hover' ? 15 : 100)) / 100;
-        if (!clip.volume) return false;
+        const rawVol = (p.volume ?? 55) / 100 * (p[kind + 'Volume'] ?? (kind === 'hover' ? 15 : 100)) / 100;
+        const finalVol = preview ? Math.max(0.28, rawVol) : rawVol;
+        if (!finalVol && !preview) return false;
+        clip.volume = Math.max(0.05, Math.min(1, finalVol));
         clip.play().catch(() => tryUnlockAudio());
         return true;
     };

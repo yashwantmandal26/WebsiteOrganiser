@@ -109,15 +109,23 @@
     };
     function row(key, label, description = '') {
         let control;
-        if (choices[key]) control = `<select name="${key}" id="pref-${key}">${choices[key].map(value=>{
-            let text = key === 'tileCorners' && value === 'soft' ? 'Soft corners' : (names[value] || value);
-            let extra = '';
-            if (key === 'accent' && accents[value]) {
-                extra = ` style="color: ${accents[value][0]}; font-weight: 750;"`;
-                text = `● ${text}`;
+        if (choices[key]) {
+            const selectHtml = `<select name="${key}" id="pref-${key}">${choices[key].map(value=>{
+                let text = key === 'tileCorners' && value === 'soft' ? 'Soft corners' : (names[value] || value);
+                let extra = '';
+                if (key === 'accent' && accents[value]) {
+                    extra = ` style="color: ${accents[value][0]}; font-weight: 750;"`;
+                    text = `● ${text}`;
+                }
+                return `<option value="${value}"${extra}>${text}</option>`;
+            }).join('')}</select>`;
+            if (key === 'clickTone' || key === 'hoverTone') {
+                const soundKind = key === 'clickTone' ? 'click' : 'hover';
+                control = `<div class="preference-select-preview-wrap">${selectHtml}<button type="button" class="preference-tone-replay-btn sound-preview" data-sound="${soundKind}" title="Replay ${soundKind} tone" aria-label="Replay ${soundKind} tone">▶ Play</button></div>`;
+            } else {
+                control = selectHtml;
             }
-            return `<option value="${value}"${extra}>${text}</option>`;
-        }).join('')}</select>`;
+        }
         else if (ranges[key]) control = `<div class="preference-range"><input id="pref-${key}" name="${key}" type="range" min="${ranges[key][0]}" max="${ranges[key][1]}" step="${key === 'hoverCooldown' ? 10 : 1}"><output for="pref-${key}" data-output="${key}"></output></div>`;
         else control = `<input id="pref-${key}" name="${key}" type="checkbox" role="switch">`;
         return `<label class="preference-row" for="pref-${key}"><span>${label}${description ? `<small>${description}</small>` : ''}</span>${control}</label>`;
@@ -127,9 +135,7 @@
     </fieldset></details>
     <details class="preference-section"><summary>Sound studio <span>Tones, volume & feedback</span></summary><fieldset><legend class="sr-only">Sound studio</legend>
         ${row('hoverSound','Hover sounds','Play a tone when you explore website tiles')}${row('hoverTone','Hover tone')}${row('hoverVolume','Hover volume')}
-        <button type="button" class="preference-button sound-preview" data-sound="hover">▶ Preview hover tone</button>
         ${row('clickSound','Click sounds','Feedback when you open a website')}${row('clickTone','Click tone')}${row('clickVolume','Click volume')}
-        <button type="button" class="preference-button sound-preview" data-sound="click">▶ Preview click tone</button>
         ${row('volume','Master volume','Scales both hover and click volume')}${row('hoverCooldown','Hover interval','Minimum time between tones while moving quickly')}
         <p class="preference-note">Previews play even when a sound toggle is off. Volume controls always apply.</p>
     </fieldset></details>
@@ -353,11 +359,28 @@
     }
 
     form.addEventListener('submit', e=>e.preventDefault());
+    function handleToneSoundPreview(input) {
+        if (!input || !input.name) return;
+        if (input.name === 'clickTone' || input.name === 'hoverTone') {
+            const kind = input.name === 'clickTone' ? 'click' : 'hover';
+            if (typeof WO.playPreferenceSound === 'function') {
+                WO.playPreferenceSound(kind, true, input.value);
+            }
+            const statusEl = document.getElementById('preferences-status');
+            if (statusEl) statusEl.textContent = 'Previewing ' + (names[input.value] || input.value) + ' ' + kind + ' tone';
+        }
+    }
+
     form.addEventListener('input', e => {
         const input = e.target;
         if (!Object.hasOwn(defaults, input.name)) return;
         WO.preferences[input.name] = input.type === 'checkbox' ? input.checked : input.type === 'range' ? Number(input.value) : input.value;
         save();
+        handleToneSoundPreview(input);
+    });
+
+    form.addEventListener('change', e => {
+        handleToneSoundPreview(e.target);
     });
 
     // Custom Wallpaper URL input binding
@@ -415,9 +438,14 @@
         save();
     });
 
-    form.querySelectorAll('[data-sound]').forEach(button => button.addEventListener('click', () => {
-        const played = WO.playPreferenceSound(button.dataset.sound, true);
-        document.getElementById('preferences-status').textContent = played ? 'Previewing ' + button.dataset.sound + ' tone' : 'Increase master and tone volume to preview';
+    form.querySelectorAll('[data-sound]').forEach(button => button.addEventListener('click', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        const soundKind = button.dataset.sound;
+        const currentTone = soundKind === 'click' ? form.elements.clickTone?.value : form.elements.hoverTone?.value;
+        const played = typeof WO.playPreferenceSound === 'function' && WO.playPreferenceSound(soundKind, true, currentTone);
+        const statusEl = document.getElementById('preferences-status');
+        if (statusEl) statusEl.textContent = played ? 'Previewing ' + (names[currentTone] || currentTone || soundKind) + ' tone' : 'Increase master and tone volume to preview';
     }));
 
     window.addEventListener('storage', e => {

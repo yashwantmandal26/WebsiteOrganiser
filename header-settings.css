@@ -2249,3 +2249,69 @@ html[data-theme="solid-dark"] .weather-input-group input {
 [data-theme="light"] #pref-accent option[value="yellow"] { color: #d97706 !important; }
 [data-theme="light"] #pref-accent option[value="orange"] { color: #ea580c !important; }
 [data-theme="light"] #pref-accent option[value="red"]    { color: #dc2626 !important; }
+
+/* ── Tone Options Select & Preview Replay Button ── */
+.preference-select-preview-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 58%;
+}
+.preference-select-preview-wrap select {
+  width: auto;
+  min-width: 105px;
+  max-width: 135px;
+}
+.preference-tone-replay-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 33px;
+  padding: 0 10px;
+  border-radius: 8px;
+  font-size: 11.5px;
+  font-weight: 750;
+  cursor: pointer;
+  background: color-mix(in srgb, var(--preference-accent, #7c3aed) 16%, transparent);
+  border: 1.2px solid color-mix(in srgb, var(--preference-accent, #7c3aed) 38%, transparent);
+  color: var(--preference-accent, #7c3aed);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  flex-shrink: 0;
+  user-select: none;
+}
+.preference-tone-replay-btn:hover {
+  background: var(--preference-accent, #7c3aed);
+  border-color: var(--preference-accent, #7c3aed);
+  color: #ffffff;
+  transform: translateY(-1.5px) scale(1.03);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--preference-accent, #7c3aed) 35%, transparent);
+}
+.preference-tone-replay-btn:active {
+  transform: translateY(0) scale(0.96);
+}
+
+[data-theme="light"] .preference-tone-replay-btn {
+  background: linear-gradient(150deg, #ffffff 0%, color-mix(in srgb, var(--preference-accent, #7c3aed) 8%, #ffffff) 100%) !important;
+  border-color: color-mix(in srgb, var(--preference-accent, #7c3aed) 40%, rgba(0, 0, 0, 0.12)) !important;
+  color: var(--preference-accent, #7c3aed) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05) !important;
+}
+[data-theme="light"] .preference-tone-replay-btn:hover {
+  background: var(--preference-accent, #7c3aed) !important;
+  border-color: var(--preference-accent, #7c3aed) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--preference-accent, #7c3aed) 35%, transparent) !important;
+}
+
+[data-theme="solid-dark"] .preference-tone-replay-btn {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+}
+[data-theme="solid-dark"] .preference-tone-replay-btn:hover {
+  background: var(--preference-accent, #9333ea) !important;
+  border-color: var(--preference-accent, #9333ea) !important;
+  color: #ffffff !important;
+}
