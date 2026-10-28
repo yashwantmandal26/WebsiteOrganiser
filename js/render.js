@@ -626,17 +626,16 @@
 
         section.addEventListener('wheel', (e) => {
             if (scrollEl.scrollWidth > scrollEl.clientWidth) {
-                if (Math.abs(e.deltaY) >= Math.abs(e.deltaX) && e.deltaY !== 0) {
-                    const atStart = scrollEl.scrollLeft <= 0 && e.deltaY < 0;
-                    const atEnd = (scrollEl.scrollLeft + scrollEl.clientWidth >= scrollEl.scrollWidth - 2) && e.deltaY > 0;
-                    if (!atStart && !atEnd) {
-                        e.preventDefault();
-                        scrollEl.scrollBy({
-                            left: e.deltaY * 2.8,
-                            behavior: 'auto'
-                        });
-                        _updateTopHitsScrollMask(scrollEl);
-                    }
+                // When mouse cursor is over Frequently Used Sites, always consume the wheel event
+                // and scroll horizontally across cards between rank #1 and #10 without bleeding into page scroll.
+                e.preventDefault();
+                const delta = Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+                if (delta !== 0) {
+                    scrollEl.scrollBy({
+                        left: delta * 2.5,
+                        behavior: 'auto'
+                    });
+                    _updateTopHitsScrollMask(scrollEl);
                 }
             }
         }, { passive: false });

@@ -119,6 +119,11 @@ Administrative actions are protected to maintain organization integrity.
 
 ## 📋 Changelog
 
+### v1.0.26 (2026-10-28)
+- 🎯 **Frequently Used Sites Logo Polish**: Removed square border and container background around website logos/favicons in chips for a borderless, seamless floating logo appearance.
+- 🛑 **Bounded Horizontal Mouse Wheel Scroll**: Scrolling the physical mouse wheel over the Frequently Used Sites tab navigates exclusively horizontally between rank #1 and #10, stopping at the boundaries without bleeding into vertical page scroll. Moving the mouse off the tab restores standard page scrolling.
+- 📦 **Production Bundle**: Bundled and minified to v1.0.26 (bundle v1114).
+
 ### v1.0.25 (2026-10-28)
 - 👑 **Frequently Used Sites Podium (#1 Gold + Crown, #2 Silver, #3 Bronze)**: Metallic gradients with authentic luster, subtle drop shadow, and a crown perched over the #1 rank badge.
 - 🎨 **Floating Action Button (Add Group)**: Upgraded with ultra-premium 3D glassmorphism, curved glass reflection lens, multi-layer elevation, and SVG vector plus icon with smooth micro-interaction rotation.

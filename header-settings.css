@@ -1650,6 +1650,9 @@ html[data-wallpaper-active="true"][data-theme="solid-dark"] .group-card-header {
   margin: 12px auto 16px;
   padding: 0 16px;
   box-sizing: border-box;
+  overscroll-behavior: contain !important;
+  overscroll-behavior-x: contain !important;
+  overscroll-behavior-y: contain !important;
 }
 
 .top-hits-header {
@@ -1688,6 +1691,9 @@ html[data-wallpaper-active="true"] .top-hits-title {
 }
 
 .top-hits-scroll {
+  overscroll-behavior: contain !important;
+  overscroll-behavior-x: contain !important;
+  overscroll-behavior-y: contain !important;
   display: flex !important;
   flex-direction: row !important;
   align-items: center !important;
@@ -1898,31 +1904,48 @@ html:not([data-theme="light"]) .top-hit-chip:nth-child(3) .top-hit-rank {
   border: 1px solid rgba(245, 183, 141, 0.6) !important;
 }
 
-/* ── Favicon / Letter Icon ── */
-.top-hit-icon {
-  width: 20px;
-  height: 20px;
-  min-width: 20px;
-  min-height: 20px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 5px;
-  overflow: hidden;
-  flex-shrink: 0;
-  position: relative;
+/* ── Favicon / Letter Icon (No square background/borders around logos) ── */
+.top-hit-icon,
+.top-hit-chip .top-hit-icon {
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+  flex-shrink: 0 !important;
+  position: relative !important;
 }
 .top-hit-icon img,
-.top-hit-icon .keyword-favicon {
-  width: 100% !important;
-  height: 100% !important;
-  max-width: 100% !important;
-  max-height: 100% !important;
+.top-hit-icon .keyword-favicon,
+.top-hit-chip .top-hit-icon img,
+.top-hit-chip .top-hit-icon .keyword-favicon,
+html[data-theme="light"] .top-hit-chip .top-hit-icon .keyword-favicon,
+html[data-theme="dark"] .top-hit-chip .top-hit-icon .keyword-favicon,
+html[data-theme="solid-dark"] .top-hit-chip .top-hit-icon .keyword-favicon,
+html:not(#fake) .top-hit-chip .top-hit-icon .keyword-favicon {
+  width: 20px !important;
+  height: 20px !important;
+  max-width: 20px !important;
+  max-height: 20px !important;
   object-fit: contain !important;
-  display: block;
+  display: block !important;
   margin: 0 !important;
   padding: 0 !important;
-  border-radius: 4px !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  outline: none !important;
+  filter: none !important;
 }
 .top-hit-icon img.favicon-failed,
 .top-hit-icon .keyword-favicon.favicon-failed,
@@ -1934,24 +1957,32 @@ img.keyword-favicon.favicon-failed,
   height: 0 !important;
 }
 .top-hit-icon .keyword-fallback-container {
-  width: 100%;
-  height: 100%;
-  border-radius: 5px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0;
-  padding: 0;
+  width: 100% !important;
+  height: 100% !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 .top-hit-icon .keyword-letter {
-  font-size: 12px !important;
+  font-size: 13px !important;
   font-weight: 800 !important;
-  line-height: 1.1 !important;
+  line-height: 1 !important;
   display: inline-flex !important;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
 }
 
 /* ── Site Label ── */
@@ -2004,12 +2035,27 @@ html:not([data-theme="light"]) .top-hit-count {
     height: 30px !important;
     gap: 6px !important;
   }
-  .top-hit-icon {
+  .top-hit-icon,
+  .top-hit-chip .top-hit-icon {
     width: 17px !important;
     height: 17px !important;
     min-width: 17px !important;
     min-height: 17px !important;
-    border-radius: 4px;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+  .top-hit-icon img,
+  .top-hit-icon .keyword-favicon,
+  .top-hit-chip .top-hit-icon img,
+  .top-hit-chip .top-hit-icon .keyword-favicon {
+    width: 17px !important;
+    height: 17px !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
   }
   .top-hit-icon .keyword-letter {
     font-size: 10.5px !important;
