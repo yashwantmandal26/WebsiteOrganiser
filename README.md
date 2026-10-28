@@ -119,6 +119,14 @@ Administrative actions are protected to maintain organization integrity.
 
 ## 📋 Changelog
 
+### v1.0.30 (2026-10-28)
+- 🔘 **Unified Circular Action Button Design**:
+  - Redesigned the Floating **Add Group** (+) button to precisely match the header circular action buttons (Theme Toggle & Settings).
+  - Replaced legacy high-gloss 3D lens highlight with sleek dark acrylic disc finish, subtle purple-tinted rim border, and ambient shadow.
+  - Aligned icon stroke thickness and micro-interactions (smooth 90° rotation on hover, tactile press depression).
+  - Fully responsive across light, dark, and solid-dark themes.
+- 📦 **Production Bundle**: Re-compiled minified assets and updated service worker cache to v1.0.30.
+
 ### v1.0.29 (2026-10-28)
 - 🛡️ **Comprehensive Zero-Defect Security Hardening**:
   - **Firestore Rules**: Master groups modification, soft-deletion status, and audit logs locked down to authenticated Admins (`isAdmin()`).

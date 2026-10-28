@@ -6517,10 +6517,10 @@ html {
   }
 
   .fab {
-    width: 58px !important;
-    height: 58px !important;
-    right: max(14px, env(safe-area-inset-right, 0px)) !important;
-    bottom: max(14px, env(safe-area-inset-bottom, 0px)) !important;
+    width: 44px !important;
+    height: 44px !important;
+    right: max(16px, env(safe-area-inset-right, 16px)) !important;
+    bottom: max(18px, env(safe-area-inset-bottom, 18px)) !important;
   }
   #toast-container {
     width: calc(100vw - 24px);

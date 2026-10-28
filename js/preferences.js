@@ -178,7 +178,7 @@
         </div>
         <div class="preference-about-row">
             <span class="preference-about-label">Application</span>
-            <span class="preference-about-value">Website Organiser (v1.0.29)</span>
+            <span class="preference-about-value">Website Organiser (v1.0.30)</span>
         </div>
         <div class="preference-about-row">
             <span class="preference-about-label">Architecture</span>

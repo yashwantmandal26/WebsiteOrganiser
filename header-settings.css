@@ -2693,169 +2693,205 @@ html[data-theme="light"] .shortcut-section-footer {
 }
 
 
-/* ── Floating Action Button (FAB / Add Group): Ultra-Premium 3D Glass Lens ── */
+/* ── Floating Action Button (FAB / Add Group): Styled Identically to Header Circular Action Buttons ── */
 .fab,
 #add-fab {
   position: fixed !important;
   bottom: 30px !important;
   right: 30px !important;
-  width: 58px !important;
-  height: 58px !important;
+  width: 44px !important;
+  height: 44px !important;
+  min-width: 44px !important;
+  min-height: 44px !important;
   border-radius: 50% !important;
   z-index: 900 !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
+  display: grid !important;
+  place-items: center !important;
   padding: 0 !important;
   margin: 0 !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.38) !important;
-  background: linear-gradient(145deg,
-    color-mix(in srgb, var(--preference-accent, #7c3aed) 70%, #ffffff) 0%,
-    var(--preference-accent, #7c3aed) 42%,
-    color-mix(in srgb, var(--preference-accent, #7c3aed) 75%, #000000) 100%
-  ) !important;
-  color: #ffffff !important;
-  box-shadow:
-    0 12px 28px -4px color-mix(in srgb, var(--preference-accent, #7c3aed) 55%, transparent),
-    0 4px 12px color-mix(in srgb, var(--preference-accent, #7c3aed) 35%, transparent),
-    inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.55),
-    inset 0 -2.5px 5px 0 rgba(0, 0, 0, 0.3) !important;
+  line-height: 0 !important;
+  box-sizing: border-box !important;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--preference-accent, #7b2cbf) 12%, rgba(38,35,52,1)) 0%, color-mix(in srgb, var(--preference-accent, #7b2cbf) 6%, rgba(18,16,28,1)) 100%) !important;
+  border: 1.5px solid color-mix(in srgb, var(--preference-accent, #b388ff) 28%, rgba(255,255,255,0.12)) !important;
+  color: #e9e2f8 !important;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.60), 0 2px 6px rgba(0, 0, 0, 0.35), inset 0 1.5px 0 rgba(255, 255, 255, 0.20), inset 0 -1px 0 rgba(0, 0, 0, 0.5) !important;
   cursor: pointer !important;
   outline: none !important;
-  overflow: hidden !important;
   touch-action: manipulation !important;
-  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
-              box-shadow 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
-              border-color 0.25s ease,
-              filter 0.25s ease !important;
   -webkit-tap-highlight-color: transparent !important;
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.22s ease,
+              background 0.25s ease,
+              border-color 0.25s ease,
+              color 0.25s ease !important;
 }
 
-/* Glass Specular Highlight Lens (Dome Sheen) */
+/* Remove 3D glass lens specular highlight */
 .fab::before,
-#add-fab::before {
-  content: '' !important;
-  position: absolute !important;
-  top: 1.5px !important;
-  left: 14% !important;
-  right: 14% !important;
-  height: 46% !important;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.48) 0%, rgba(255, 255, 255, 0.04) 100%) !important;
-  border-radius: 999px 999px 50% 50% !important;
-  pointer-events: none !important;
-  z-index: 1 !important;
+#add-fab::before,
+.fab::after,
+#add-fab::after {
+  display: none !important;
+  content: none !important;
 }
 
-/* FAB Plus Icon & Micro-Interactions */
+/* Default / Dark Theme & Wallpaper Active: Group-Card circular action styling */
+.fab,
+#add-fab,
+html[data-theme="dark"] #add-fab,
+html[data-theme="dark"] .fab,
+html:not([data-theme="light"]):not([data-theme="solid-dark"]) #add-fab,
+html:not([data-theme="light"]):not([data-theme="solid-dark"]) .fab {
+  background: linear-gradient(160deg, color-mix(in srgb, var(--preference-accent, #7b2cbf) 12%, rgba(38,35,52,1)) 0%, color-mix(in srgb, var(--preference-accent, #7b2cbf) 6%, rgba(18,16,28,1)) 100%) !important;
+  border: 1.5px solid color-mix(in srgb, var(--preference-accent, #b388ff) 28%, rgba(255,255,255,0.12)) !important;
+  color: #e9e2f8 !important;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.60), 0 2px 6px rgba(0, 0, 0, 0.35), inset 0 1.5px 0 rgba(255, 255, 255, 0.20), inset 0 -1px 0 rgba(0, 0, 0, 0.5) !important;
+}
+
+@media (hover: hover) {
+  .fab:hover,
+  #add-fab:hover,
+  html[data-theme="dark"] #add-fab:hover,
+  html[data-theme="dark"] .fab:hover,
+  html:not([data-theme="light"]):not([data-theme="solid-dark"]) #add-fab:hover,
+  html:not([data-theme="light"]):not([data-theme="solid-dark"]) .fab:hover {
+    transform: translateY(-2.5px) scale(1.04) !important;
+    background: color-mix(in srgb, var(--preference-accent, #7b2cbf) 18%, rgba(12,10,20,1)) !important;
+    border-color: color-mix(in srgb, var(--preference-accent, #b388ff) 80%, white) !important;
+    color: #ca9aff !important;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.70), 0 0 20px color-mix(in srgb, var(--preference-accent, #7b2cbf) 50%, transparent), inset 0 2px 0 rgba(255, 255, 255, 0.25), inset 0 -1px 0 rgba(0, 0, 0, 0.5) !important;
+    filter: none !important;
+  }
+}
+
+.fab:active,
+#add-fab:active,
+html[data-theme="dark"] #add-fab:active,
+html[data-theme="dark"] .fab:active,
+html:not([data-theme="light"]):not([data-theme="solid-dark"]) #add-fab:active,
+html:not([data-theme="light"]):not([data-theme="solid-dark"]) .fab:active {
+  transform: translateY(1px) scale(0.97) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Light Theme: Clean pearl finish */
+html[data-theme="light"] #add-fab,
+html[data-theme="light"] .fab {
+  background: linear-gradient(150deg, #ffffff 0%, #f4f0fa 100%) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.95) !important;
+  color: #4a3862 !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.04), inset 0 1.5px 0 rgba(255, 255, 255, 1), inset 0 -1px 0 rgba(0, 0, 0, 0.04) !important;
+}
+
+@media (hover: hover) {
+  html[data-theme="light"] #add-fab:hover,
+  html[data-theme="light"] .fab:hover {
+    transform: translateY(-2.5px) scale(1.04) !important;
+    background: linear-gradient(150deg, #ffffff 0%, #ece5f8 100%) !important;
+    border-color: color-mix(in srgb, var(--preference-accent, #7b2cbf) 65%, white) !important;
+    color: var(--preference-accent, #7b2cbf) !important;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.16), 0 0 18px color-mix(in srgb, var(--preference-accent, #7b2cbf) 35%, transparent), inset 0 2px 0 #ffffff, inset 0 -1px 0 rgba(0, 0, 0, 0.04) !important;
+    filter: none !important;
+  }
+}
+
+html[data-theme="light"] #add-fab:active,
+html[data-theme="light"] .fab:active {
+  transform: translateY(1px) scale(0.97) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12), inset 0 1.5px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Solid-Dark / Deep Black Theme */
+html[data-theme="solid-dark"] #add-fab,
+html[data-theme="solid-dark"] .fab,
+html[data-wallpaper-active="true"][data-theme="solid-dark"] #add-fab,
+html[data-wallpaper-active="true"][data-theme="solid-dark"] .fab {
+  background: linear-gradient(160deg, #25252e 0%, #15151c 100%) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.12) !important;
+  color: #f3f1f7 !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.65), 0 2px 6px rgba(0, 0, 0, 0.40), inset 0 1.5px 0 rgba(255, 255, 255, 0.14), inset 0 -1px 0 rgba(0, 0, 0, 0.5) !important;
+}
+
+@media (hover: hover) {
+  html[data-theme="solid-dark"] #add-fab:hover,
+  html[data-theme="solid-dark"] .fab:hover,
+  html[data-wallpaper-active="true"][data-theme="solid-dark"] #add-fab:hover,
+  html[data-wallpaper-active="true"][data-theme="solid-dark"] .fab:hover {
+    transform: translateY(-2.5px) scale(1.04) !important;
+    border-color: #b026ff !important;
+    color: #ffffff !important;
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.75), 0 0 18px rgba(176, 38, 255, 0.35), inset 0 2px 0 rgba(255, 255, 255, 0.20), inset 0 -1px 0 rgba(0, 0, 0, 0.5) !important;
+    filter: none !important;
+  }
+}
+
+html[data-theme="solid-dark"] #add-fab:active,
+html[data-theme="solid-dark"] .fab:active,
+html[data-wallpaper-active="true"][data-theme="solid-dark"] #add-fab:active,
+html[data-wallpaper-active="true"][data-theme="solid-dark"] .fab:active {
+  transform: translateY(1px) scale(0.97) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6), inset 0 2px 4px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* FAB Plus Icon */
 .fab .fab-plus-icon,
 #add-fab .fab-plus-icon {
-  display: inline-flex !important;
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 24px !important;
+  height: 24px !important;
+  display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  position: relative !important;
-  z-index: 2 !important;
-  width: 26px !important;
-  height: 26px !important;
-  color: #ffffff !important;
+  color: inherit !important;
   pointer-events: none !important;
-  filter: drop-shadow(0 1.5px 3px rgba(0, 0, 0, 0.35)) !important;
-  transition: transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-  line-height: 1 !important;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.18)) !important;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.25s ease !important;
+  line-height: 0 !important;
 }
 
 .fab .fab-plus-icon svg,
 #add-fab .fab-plus-icon svg {
   display: block !important;
-  width: 26px !important;
-  height: 26px !important;
+  width: 24px !important;
+  height: 24px !important;
+  stroke: currentColor !important;
+  stroke-width: 2 !important;
   pointer-events: none !important;
 }
 
-/* Hover Elevation, Outer Aura Ring & Icon Rotation */
 @media (hover: hover) {
-  .fab:hover,
-  #add-fab:hover {
-    transform: translateY(-4px) scale(1.08) !important;
-    border-color: rgba(255, 255, 255, 0.65) !important;
-    box-shadow:
-      0 18px 40px -4px color-mix(in srgb, var(--preference-accent, #7c3aed) 70%, transparent),
-      0 6px 18px color-mix(in srgb, var(--preference-accent-light, #c4b5fd) 50%, transparent),
-      0 0 0 4px color-mix(in srgb, var(--preference-accent, #7c3aed) 25%, transparent),
-      inset 0 2px 2px 0 rgba(255, 255, 255, 0.75),
-      inset 0 -2.5px 6px 0 rgba(0, 0, 0, 0.35) !important;
-    filter: brightness(1.06) saturate(1.1) !important;
-  }
   .fab:hover .fab-plus-icon,
   #add-fab:hover .fab-plus-icon {
-    transform: rotate(90deg) scale(1.1) !important;
+    transform: translate(-50%, -50%) rotate(90deg) !important;
   }
 }
 
-/* Active Press / Tap Haptic Feel */
-.fab:active,
-#add-fab:active {
-  transform: translateY(2px) scale(0.94) !important;
-  box-shadow:
-    0 6px 16px -2px color-mix(in srgb, var(--preference-accent, #7c3aed) 50%, transparent),
-    inset 0 2px 4px 0 rgba(0, 0, 0, 0.4) !important;
-  transition: transform 0.1s ease, box-shadow 0.1s ease !important;
-}
 .fab:active .fab-plus-icon,
 #add-fab:active .fab-plus-icon {
-  transform: rotate(45deg) scale(0.92) !important;
-}
-
-/* Light Theme: Crisp High-Luminance Glass Rim */
-html[data-theme="light"] #add-fab,
-html[data-theme="light"] .fab {
-  border-color: rgba(255, 255, 255, 0.65) !important;
-  box-shadow:
-    0 10px 25px -4px color-mix(in srgb, var(--preference-accent, #7c3aed) 40%, transparent),
-    0 4px 12px rgba(0, 0, 0, 0.1),
-    inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.75),
-    inset 0 -2px 4px 0 rgba(0, 0, 0, 0.18) !important;
-}
-
-/* Dark Theme: Deep Ambient Glow */
-html[data-theme="dark"] #add-fab,
-html[data-theme="dark"] .fab {
-  border-color: rgba(255, 255, 255, 0.32) !important;
-  box-shadow:
-    0 12px 30px -4px rgba(0, 0, 0, 0.65),
-    0 0 24px color-mix(in srgb, var(--preference-accent, #7c3aed) 40%, transparent),
-    inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.55),
-    inset 0 -2.5px 5px 0 rgba(0, 0, 0, 0.35) !important;
-}
-
-/* Solid-Dark / Black Theme: Ultra-Contrast Neon Jewel */
-html[data-theme="solid-dark"] #add-fab,
-html[data-theme="solid-dark"] .fab {
-  border-color: rgba(255, 255, 255, 0.38) !important;
-  box-shadow:
-    0 14px 34px -4px rgba(0, 0, 0, 0.9),
-    0 0 30px color-mix(in srgb, var(--preference-accent, #7c3aed) 50%, transparent),
-    inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.6),
-    inset 0 -2.5px 5px 0 rgba(0, 0, 0, 0.45) !important;
+  transform: translate(-50%, -50%) scale(0.92) !important;
 }
 
 /* Mobile & Touch Responsive Scaling */
 @media (max-width: 768px) {
   .fab,
   #add-fab {
-    width: 54px !important;
-    height: 54px !important;
+    width: 44px !important;
+    height: 44px !important;
     bottom: max(18px, env(safe-area-inset-bottom, 18px)) !important;
     right: max(16px, env(safe-area-inset-right, 16px)) !important;
   }
   .fab .fab-plus-icon,
   #add-fab .fab-plus-icon {
-    width: 24px !important;
-    height: 24px !important;
+    width: 22px !important;
+    height: 22px !important;
   }
   .fab .fab-plus-icon svg,
   #add-fab .fab-plus-icon svg {
-    width: 24px !important;
-    height: 24px !important;
+    width: 22px !important;
+    height: 22px !important;
   }
 }
 
