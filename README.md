@@ -119,6 +119,10 @@ Administrative actions are protected to maintain organization integrity.
 
 ## 📋 Changelog
 
+### v1.0.27 (2026-10-28)
+- 🎯 **Favicon Fallback Letter Fix**: Resolved double-icon display in Frequently Used Sites chips by hiding the letter fallback container whenever the website favicon loads successfully. The letter fallback is now strictly displayed only when the favicon fails to load or is unavailable.
+- 📦 **Production Bundle**: Bundled and minified to v1.0.27 (bundle v1115).
+
 ### v1.0.26 (2026-10-28)
 - 🎯 **Frequently Used Sites Logo Polish**: Removed square border and container background around website logos/favicons in chips for a borderless, seamless floating logo appearance.
 - 🛑 **Bounded Horizontal Mouse Wheel Scroll**: Scrolling the physical mouse wheel over the Frequently Used Sites tab navigates exclusively horizontally between rank #1 and #10, stopping at the boundaries without bleeding into vertical page scroll. Moving the mouse off the tab restores standard page scrolling.

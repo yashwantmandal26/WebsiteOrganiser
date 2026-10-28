@@ -1956,7 +1956,8 @@ img.keyword-favicon.favicon-failed,
   width: 0 !important;
   height: 0 !important;
 }
-.top-hit-icon .keyword-fallback-container {
+.top-hit-icon .keyword-fallback-container,
+.top-hit-chip .top-hit-icon .keyword-fallback-container {
   width: 100% !important;
   height: 100% !important;
   border: none !important;
@@ -1964,11 +1965,20 @@ img.keyword-favicon.favicon-failed,
   box-shadow: none !important;
   background: transparent !important;
   background-color: transparent !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
+  align-items: center;
+  justify-content: center;
   margin: 0 !important;
   padding: 0 !important;
+}
+/* Hide fallback letter container completely when favicon image is loaded */
+.top-hit-icon img.keyword-favicon:not(.favicon-failed) ~ .keyword-fallback-container,
+.top-hit-chip .top-hit-icon img.keyword-favicon:not(.favicon-failed) ~ .keyword-fallback-container {
+  display: none !important;
+}
+/* Only display fallback letter container when favicon fails */
+.top-hit-icon img.keyword-favicon.favicon-failed ~ .keyword-fallback-container,
+.top-hit-chip .top-hit-icon img.keyword-favicon.favicon-failed ~ .keyword-fallback-container {
+  display: flex !important;
 }
 .top-hit-icon .keyword-letter {
   font-size: 13px !important;
