@@ -239,6 +239,10 @@
                 }
             }
 
+            if (/^(javascript|data|vbscript|file):/i.test(kw.trim())) {
+                alert('Invalid link: dangerous URL scheme detected.');
+                return;
+            }
             if (WO.containsBlockedContent(kw)) { alert('Content blocked.'); return; }
 
             const addedAt = Date.now();
@@ -344,8 +348,17 @@
         }
         const oldKeyword  = WO.groups[WO.renameTargetGroupIndex].keywords[WO.renameTargetKeywordIndex];
 
-        // Anyone can rename website names & links now.
-        // Full device and location audit trace is recorded and visible to Admin.
+        // Security check: Only authenticated Admin can rename website name or link. Normal users can only comment.
+        if (newKeyword !== oldKeyword && !WO.adminLoggedIn) {
+            alert('Admin access required to rename website name or link.');
+            WO.toggleModal(renameModal, false);
+            return;
+        }
+
+        if (/^(javascript|data|vbscript|file):/i.test(newKeyword.trim())) {
+            alert('Invalid link: dangerous URL scheme detected.');
+            return;
+        }
 
         if (WO.containsBlockedContent(newKeyword)) { window.showToast('⛔ Inappropriate content', 3000); return; }
 
@@ -429,6 +442,10 @@
     };
 
     WO.deleteKeyword = async function (groupIndex, keywordIndex) {
+        if (!WO.adminLoggedIn) {
+            alert('Admin access required to delete websites.');
+            return;
+        }
         if (!WO.groups[groupIndex] || !WO.groups[groupIndex].keywords[keywordIndex]) { window.showToast('⚠️ Data changed. Try again.', 3000); return; }
         const kw = WO.groups[groupIndex].keywords[keywordIndex];
         const group = WO.groups[groupIndex];
@@ -454,22 +471,7 @@
             groupIndex: groupIndex
         };
 
-        if (!WO.adminLoggedIn) {
-            if (!confirm('Delete this keyword?')) return;
-            await WO.animateKeywordOut(groupIndex, kw);
-            await WO.saveKeywordDeletedStatus(kw, true, ek);
-            WO.renderGroups();
 
-            if (typeof WO.logActivity === 'function') {
-                WO.logActivity('DELETE_KEYWORD', {
-                    targetName: kw,
-                    groupName: group.name,
-                    groupIndex: groupIndex,
-                    payload: deletePayload
-                });
-            }
-            return;
-        }
 
         if (!confirm(isSoftDeleted ? 'Move this keyword to Trash?' : 'Move this keyword to Trash?')) return;
         
@@ -713,7 +715,13 @@
                             }
                         });
                         if (imported.globalClickCounts)   Object.assign(WO.globalClickCounts, imported.globalClickCounts);
-                        if (imported.keywordDescriptions) Object.assign(WO.keywordDescriptions, imported.keywordDescriptions);
+                        if (imported.keywordDescriptions && typeof imported.keywordDescriptions === 'object') {
+                            for (const [k, v] of Object.entries(imported.keywordDescriptions)) {
+                                if (k !== '__proto__' && k !== 'constructor' && k !== 'prototype') {
+                                    WO.keywordDescriptions[k] = v;
+                                }
+                            }
+                        }
                         if (imported.keywordAddedAt)      Object.assign(WO.keywordAddedAt, imported.keywordAddedAt);
                         if (imported.keywordDeletedStatus) Object.assign(WO.keywordDeletedStatus, imported.keywordDeletedStatus);
                     }
@@ -760,6 +768,7 @@
         if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
         const out = {};
         Object.entries(value).slice(0, 10000).forEach(([key, item]) => {
+            if (key === '__proto__' || key === 'constructor' || key === 'prototype') return;
             if (typeof key === 'string' && key.length <= 300 && validator(item)) out[key] = item;
         });
         return out;

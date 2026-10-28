@@ -13,6 +13,26 @@
 
 (function (WO) {
 
+    // ── Fallback Search Engines (Device-Only Custom Fallback) ─────────────
+    const SEARCH_ENGINES = {
+        google:     { name: 'Google',        url: q => `https://www.google.com/search?q=${encodeURIComponent(q)}` },
+        youtube:    { name: 'YouTube',       url: q => `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}` },
+        duckduckgo: { name: 'DuckDuckGo',   url: q => `https://duckduckgo.com/?q=${encodeURIComponent(q)}` },
+        perplexity: { name: 'Perplexity AI', url: q => `https://www.perplexity.ai/search?q=${encodeURIComponent(q)}` },
+        chatgpt:    { name: 'ChatGPT',       url: q => `https://chatgpt.com/?q=${encodeURIComponent(q)}` },
+        bing:       { name: 'Microsoft Bing', url: q => `https://www.bing.com/search?q=${encodeURIComponent(q)}` },
+        github:     { name: 'GitHub',        url: q => `https://github.com/search?q=${encodeURIComponent(q)}` }
+    };
+    WO.SEARCH_ENGINES = SEARCH_ENGINES;
+
+    function getSearchFallbackEngine() {
+        if (WO.preferences && WO.preferences.customSearchFallback && WO.preferences.searchEngine) {
+            return SEARCH_ENGINES[WO.preferences.searchEngine] || SEARCH_ENGINES.google;
+        }
+        return SEARCH_ENGINES.google;
+    }
+    WO.getSearchFallbackEngine = getSearchFallbackEngine;
+
     WO.initSearch = function () {
         const searchInput       = document.getElementById('google-search-input');
         const searchSubmitBtn   = document.getElementById('search-submit-btn');
@@ -20,6 +40,25 @@
         const searchSuggestions = document.getElementById('search-suggestions');
 
         if (!searchInput) return;
+
+        const _searchBarWrapper = searchInput.closest('.search-bar-wrapper') || searchInput.parentElement;
+
+        // Auto-portal to body so backdrop-filter can blur root content across all browser engines
+        if (searchSuggestions && searchSuggestions.parentElement !== document.body) {
+            document.body.appendChild(searchSuggestions);
+        }
+
+        function updateSuggestionsPosition() {
+            if (!searchSuggestions) return;
+            const wrapper = _searchBarWrapper || document.querySelector('.search-bar-wrapper');
+            if (!wrapper) return;
+            const rect = wrapper.getBoundingClientRect();
+            searchSuggestions.style.top = Math.round(rect.bottom + 8) + 'px';
+            searchSuggestions.style.left = Math.round(rect.left) + 'px';
+            searchSuggestions.style.width = Math.round(rect.width) + 'px';
+        }
+        window.addEventListener('resize', updateSuggestionsPosition, { passive: true });
+        window.addEventListener('scroll', updateSuggestionsPosition, { passive: true });
 
         // ── History Helpers ───────────────────────────────────────────────────
         let _historyCache = null;
@@ -116,6 +155,7 @@
                     </div>
                 </div>`;
             });
+            updateSuggestionsPosition();
             searchSuggestions.innerHTML = html;
             searchSuggestions.style.display = 'block';
         }
@@ -133,6 +173,7 @@
                 html += `<div class="suggestion-item" data-index="${i}" data-query="${WO.escapeHtml(s)}" data-suggestion-mode="google">${icon}<span class="suggestion-text">${WO.escapeHtml(s)}</span>${delBtn}</div>`;
             });
             html += `<div class="suggestion-item suggestion-clear-all" data-action="clear-history" data-suggestion-mode="google"><svg class="suggestion-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg><span class="suggestion-text">Clear all history</span></div>`;
+            updateSuggestionsPosition();
             searchSuggestions.innerHTML = html;
             searchSuggestions.style.display = 'block';
         }
@@ -191,13 +232,32 @@
             });
         }
 
-        // ── Google Search ─────────────────────────────────────────────────────
+        // ── Search Placeholder & Fallback Setup ─────────────────────────────
+
+        function updateSearchPlaceholder() {
+            if (!searchInput) return;
+            const engine = getSearchFallbackEngine();
+            if (WO.preferences && WO.preferences.customSearchFallback && engine.name !== 'Google') {
+                searchInput.placeholder = `Search websites or fallback to ${engine.name}...`;
+            } else {
+                searchInput.placeholder = 'Search websites, games, tools...';
+            }
+        }
+        document.addEventListener('wo-preferences-changed', updateSearchPlaceholder);
+        updateSearchPlaceholder();
+
+        // ── Google / Custom Engine Fallback Search ────────────────────────────
         function performGoogleSearch(query, inNewTab = false) {
             if (!query || !query.trim()) return;
             const tq = query.trim();
             const direct = WO.getDirectWebsiteUrl(tq);
-            if (direct) { WO.openURLWithBrowser(direct, inNewTab); }
-            else { saveHistory(tq); WO.openURLWithBrowser(`https://www.google.com/search?q=${encodeURIComponent(tq)}`, inNewTab); }
+            if (direct) {
+                WO.openURLWithBrowser(direct, inNewTab);
+            } else {
+                saveHistory(tq);
+                const engine = getSearchFallbackEngine();
+                WO.openURLWithBrowser(engine.url(tq), inNewTab);
+            }
             searchInput.value = '';
             searchInput.blur();
             hideSuggestions();
@@ -348,8 +408,6 @@
         if (searchSubmitBtn) searchSubmitBtn.addEventListener('click', () => submitFromBar(false));
 
         // ── Delegated suggestion events ───────────────────────────────────────
-        const _searchBarWrapper = searchInput.closest('.search-bar-wrapper') || searchInput.parentElement;
-
         searchSuggestions.addEventListener('mousedown', function(e) {
             // Prevent input blur so click event can fire before suggestions are hidden
             e.preventDefault();
@@ -399,12 +457,17 @@
             _searchContainer.addEventListener('mouseleave', scheduleHide);
             _searchContainer.addEventListener('mouseenter', cancelScheduledHide);
         }
+        if (searchSuggestions) {
+            searchSuggestions.addEventListener('mouseenter', cancelScheduledHide);
+            searchSuggestions.addEventListener('mouseleave', scheduleHide);
+        }
 
         // Also hide on input blur when mouse is outside the container
         searchInput.addEventListener('blur', () => {
             _mouseLeaveTimer = setTimeout(() => {
                 // If focus went somewhere outside the search area, hide suggestions
-                if (!_searchContainer || !_searchContainer.contains(document.activeElement)) {
+                if ((!_searchContainer || !_searchContainer.contains(document.activeElement)) &&
+                    (!searchSuggestions || !searchSuggestions.contains(document.activeElement))) {
                     hideSuggestions();
                 }
             }, 200);

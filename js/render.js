@@ -110,6 +110,19 @@
                 if (e.isSoftDeleted && !WO.adminLoggedIn) return false;
                 return !isKeywordSearchActive || WO.matchesKeywordSearch(e.searchText, searchTokens);
             });
+            // Apply device-only custom website bookmark order if enabled
+            const localKwOrder = (WO.preferences && WO.preferences.enableCardReorder && WO.localKeywordOrder) ? WO.localKeywordOrder[group.name] : null;
+            if (localKwOrder && Array.isArray(localKwOrder) && localKwOrder.length && !isKeywordSearchActive) {
+                previewKeywords.sort((a, b) => {
+                    const ia = localKwOrder.indexOf(a.bookmarkId);
+                    const ib = localKwOrder.indexOf(b.bookmarkId);
+                    if (ia !== -1 && ib !== -1) return ia - ib;
+                    if (ia !== -1) return -1;
+                    if (ib !== -1) return 1;
+                    return 0;
+                });
+            }
+
             return { ...group, _originalIndex: originalIndex, _previewKeywords: previewKeywords };
         }).filter(g => !isKeywordSearchActive || g._previewKeywords.length > 0);
 
@@ -199,6 +212,17 @@
                     h3.addEventListener('touchend',   () => clearTimeout(lpt));
                     h3.addEventListener('touchmove',  () => clearTimeout(lpt));
                 }
+
+                // If user enabled Card Reordering, prepend a subtle drag handle
+                if (WO.preferences && WO.preferences.enableCardReorder) {
+                    const dragHandle = document.createElement('span');
+                    dragHandle.className = 'group-card-drag-handle';
+                    dragHandle.setAttribute('aria-hidden', 'true');
+                    dragHandle.title = 'Drag to reorder card on this device';
+                    dragHandle.textContent = '⋮⋮';
+                    header.appendChild(dragHandle);
+                }
+
                 header.appendChild(h3);
 
                 // ── Actions ──
@@ -208,6 +232,26 @@
                 if (theme === 'solid-dark')  addBtnBg = '#25252e';
                 else if (theme === 'dark')   addBtnBg = WO.darkenColor(groupColor, 0.45);
                 else                         addBtnBg = '#ffffff';
+
+                // If user enabled Custom Card Colors, show device-only color customize button
+                if (WO.preferences && WO.preferences.customCardColors) {
+                    const colorBtn = document.createElement('button');
+                    colorBtn.type = 'button';
+                    colorBtn.className = 'icon-btn icon-btn--card-color';
+                    colorBtn.title = `Customize accent color for ${group.name} (device-only)`;
+                    colorBtn.setAttribute('aria-label', `Customize accent color for ${group.name}`);
+                    colorBtn.style.cssText = `cursor:pointer;z-index:10;pointer-events:auto;user-select:none;font-size:13px;background:${addBtnBg} !important;`;
+                    colorBtn.innerHTML = '🎨';
+                    colorBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        if (typeof WO.openCardColorPicker === 'function') {
+                            WO.openCardColorPicker(group.name, colorBtn, groupColor);
+                        }
+                        return false;
+                    };
+                    actions.appendChild(colorBtn);
+                }
 
                 // Create add-keyword button programmatically — avoids innerHTML+querySelector antipattern
                 const addBtn = document.createElement('button');
@@ -292,7 +336,7 @@
                 }
 
                 groupCard.appendChild(previewGrid);
-                groupCard.draggable = !document.body.classList.contains('is-touch');
+                groupCard.draggable = Boolean(WO.preferences && WO.preferences.enableCardReorder && !document.body.classList.contains('is-touch'));
 
                 // Create a wrapper to isolate layout shifts during animation
                 const cardWrapper = document.createElement('div');
@@ -666,6 +710,29 @@
             return;
         }
 
+        const activeTimeframe = WO.topHitsTimeframe || localStorage.getItem('wo_tophits_timeframe') || 'all';
+        WO.topHitsTimeframe = activeTimeframe;
+
+        const toggleEl = document.getElementById('top-hits-timeframe-toggle');
+        if (toggleEl) {
+            toggleEl.querySelectorAll('.top-hits-timeframe-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.timeframe === activeTimeframe);
+            });
+            if (!toggleEl.dataset.bound) {
+                toggleEl.addEventListener('click', (e) => {
+                    const btn = e.target.closest('.top-hits-timeframe-btn');
+                    if (!btn) return;
+                    const tf = btn.dataset.timeframe;
+                    if (!tf || tf === WO.topHitsTimeframe) return;
+                    WO.topHitsTimeframe = tf;
+                    try { localStorage.setItem('wo_tophits_timeframe', tf); } catch {}
+                    if (typeof WO.playPreferenceSound === 'function') WO.playPreferenceSound('click');
+                    WO.renderTopHits();
+                });
+                toggleEl.dataset.bound = 'true';
+            }
+        }
+
         const hits = [];
         if (Array.isArray(WO.groups)) {
             WO.groups.forEach((group, gi) => {
@@ -674,7 +741,9 @@
                     if (!keyword) return;
                     const isSoftDeleted = WO.getBookmarkMetadata(WO.keywordDeletedStatus, gi, ki, keyword, false) === true;
                     if (isSoftDeleted && !WO.adminLoggedIn) return;
-                    const clickCount = WO.getBookmarkClickCount(gi, ki, keyword);
+                    const clickCount = typeof WO.getBookmarkTimeframeClicks === 'function'
+                        ? WO.getBookmarkTimeframeClicks(gi, ki, keyword, activeTimeframe)
+                        : WO.getBookmarkClickCount(gi, ki, keyword);
                     if (clickCount > 0) {
                         const { displayText, targetUrl } = WO.parseKeyword(keyword);
                         hits.push({
@@ -717,7 +786,8 @@
             chip.href = WO.resolveDynamicURL(item.targetUrl) || '#';
             chip.target = '_blank';
             chip.rel = 'noopener';
-            chip.title = `${item.displayText} (${item.clickCount} clicks)`;
+            const timeframeLabel = activeTimeframe === 'week' ? 'clicks this week' : (activeTimeframe === 'month' ? 'clicks this month' : 'all-time clicks');
+            chip.title = `${item.displayText} (${item.clickCount} ${timeframeLabel})`;
 
             chip.innerHTML = `
                 <span class="top-hit-rank">#${displayRank}</span>
@@ -785,6 +855,121 @@
         scrollEl.appendChild(fragment);
         _initTopHitsWheel();
         requestAnimationFrame(() => _updateTopHitsScrollMask(scrollEl));
+    };
+
+    // ─── Device-Only Card Color Picker Popover ──────────────────────────────────
+    WO.openCardColorPicker = function (groupName, anchorEl, currentColor) {
+        const existing = document.getElementById('card-color-picker-popover');
+        if (existing) {
+            existing.remove();
+            if (existing._targetGroup === groupName) return;
+        }
+
+        const popover = document.createElement('div');
+        popover.id = 'card-color-picker-popover';
+        popover.className = 'card-color-popover';
+        popover._targetGroup = groupName;
+
+        const swatches = [
+            '#FFE642', '#47B5FF', '#FF5C67', '#A3FF3B',
+            '#BD6BFF', '#FF9E42', '#3BFFFF', '#FF57B8',
+            '#3DFF94', '#FFC43B', '#7A7AFF', '#FA5CFA',
+            '#00F0FF', '#39FF14', '#FF0055', '#7600EC'
+        ];
+
+        const swatchesHtml = swatches.map(hex => `
+            <button type="button" class="color-swatch-btn${hex.toLowerCase() === (currentColor || '').toLowerCase() ? ' active' : ''}"
+                data-color="${hex}" style="background:${hex};" title="${hex}" aria-label="${hex}"></button>
+        `).join('');
+
+        popover.innerHTML = `
+            <div class="card-color-popover-header">
+                <span class="card-color-popover-title">🎨 Accent: ${WO.escapeHtml(groupName)}</span>
+                <button type="button" class="card-color-popover-close" aria-label="Close">&times;</button>
+            </div>
+            <div class="card-color-swatches">${swatchesHtml}</div>
+            <div class="card-color-custom-row">
+                <label class="card-color-input-label">
+                    <span>Custom:</span>
+                    <input type="color" class="card-color-input" value="${currentColor && currentColor.startsWith('#') && currentColor.length === 7 ? currentColor : '#7c3aed'}">
+                </label>
+                <button type="button" class="card-color-reset-btn" title="Reset this card to default">↺ Default</button>
+            </div>
+            <div class="card-color-popover-note">Device-only • Doesn't affect other users</div>
+        `;
+
+        document.body.appendChild(popover);
+
+        const rect = anchorEl.getBoundingClientRect();
+        const popRect = popover.getBoundingClientRect();
+        let top = rect.bottom + 6;
+        let left = rect.left - (popRect.width - rect.width);
+        if (left < 10) left = 10;
+        if (left + popRect.width > window.innerWidth - 10) {
+            left = window.innerWidth - popRect.width - 10;
+        }
+        if (top + popRect.height > window.innerHeight - 10) {
+            top = Math.max(10, rect.top - popRect.height - 6);
+        }
+        popover.style.top = Math.round(top) + 'px';
+        popover.style.left = Math.round(left) + 'px';
+
+        function applyColor(hex) {
+            if (!WO.preferences) WO.preferences = {};
+            if (!WO.preferences.userGroupColors) WO.preferences.userGroupColors = {};
+            WO.preferences.userGroupColors[groupName] = hex;
+            try { localStorage.setItem('wo-preferences', JSON.stringify(WO.preferences)); } catch {}
+            document.dispatchEvent(new Event('wo-preferences-changed'));
+            if (typeof WO.renderGroups === 'function') WO.renderGroups();
+            cleanup();
+        }
+
+        function resetColor() {
+            if (WO.preferences && WO.preferences.userGroupColors && WO.preferences.userGroupColors[groupName]) {
+                delete WO.preferences.userGroupColors[groupName];
+                try { localStorage.setItem('wo-preferences', JSON.stringify(WO.preferences)); } catch {}
+                document.dispatchEvent(new Event('wo-preferences-changed'));
+                if (typeof WO.renderGroups === 'function') WO.renderGroups();
+            }
+            cleanup();
+        }
+
+        popover.querySelectorAll('.color-swatch-btn').forEach(btn => {
+            btn.onclick = (e) => { e.stopPropagation(); applyColor(btn.dataset.color); };
+        });
+
+        const colorInput = popover.querySelector('.card-color-input');
+        if (colorInput) {
+            colorInput.onchange = () => applyColor(colorInput.value);
+        }
+
+        const resetBtn = popover.querySelector('.card-color-reset-btn');
+        if (resetBtn) {
+            resetBtn.onclick = (e) => { e.stopPropagation(); resetColor(); };
+        }
+
+        const closeBtn = popover.querySelector('.card-color-popover-close');
+        if (closeBtn) {
+            closeBtn.onclick = (e) => { e.stopPropagation(); cleanup(); };
+        }
+
+        function onDocClick(e) {
+            if (!popover.contains(e.target) && e.target !== anchorEl) {
+                cleanup();
+            }
+        }
+        function onKeyDown(e) {
+            if (e.key === 'Escape') cleanup();
+        }
+        function cleanup() {
+            popover.remove();
+            document.removeEventListener('click', onDocClick);
+            document.removeEventListener('keydown', onKeyDown);
+        }
+        setTimeout(() => {
+            document.addEventListener('click', onDocClick);
+            document.addEventListener('keydown', onKeyDown);
+        }, 10);
     };
 
 })(window.WO);

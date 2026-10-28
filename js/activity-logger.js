@@ -506,8 +506,8 @@
     WO.fetchActivityLogs = async function () {
         let logs = [];
 
-        // Try Firestore first
-        if (window.firebaseModular && window.db) {
+        // Try Firestore first (restricted to authenticated admins for privacy)
+        if (WO.adminLoggedIn && window.firebaseModular && window.db) {
             try {
                 const colRef = window.firebaseModular.collection(window.db, 'activityLogs');
                 const snap = await window.firebaseModular.getDocs(colRef);
@@ -539,6 +539,10 @@
     // ─── 6. Undo / Restore Engine ─────────────────────────────────────────────
     WO.restoreLoggedActivity = async function (logId) {
         if (!logId) return;
+        if (!WO.adminLoggedIn) {
+            alert('Admin access required to restore activities.');
+            return;
+        }
         const logs = await WO.fetchActivityLogs();
         const log = logs.find(l => l.id === logId);
         if (!log) {
@@ -860,8 +864,8 @@
 
             // Maps link button
             let mapBtnHtml = '';
-            if (log.mapsUrl) {
-                mapBtnHtml = `<a href="${WO.escapeHtml(log.mapsUrl)}" target="_blank" rel="noopener" class="audit-map-btn" title="Open exact location in Google Maps">🗺️ Trace on Google Maps</a>`;
+            if (log.mapsUrl && /^https:\/\/(www\.)?(google\.com\/maps|maps\.google\.com)\//i.test(log.mapsUrl)) {
+                mapBtnHtml = `<a href="${WO.escapeHtml(log.mapsUrl)}" target="_blank" rel="noopener noreferrer" class="audit-map-btn" title="Open exact location in Google Maps">🗺️ Trace on Google Maps</a>`;
             }
 
             // Undo Button (only for deletions)
@@ -870,7 +874,7 @@
                 if (log.restored) {
                     undoBtnHtml = '<span class="audit-restored-tag">✓ Restored</span>';
                 } else {
-                    undoBtnHtml = `<button type="button" class="audit-restore-btn" onclick="window.WO.restoreLoggedActivity('${log.id}')">↺ Undo & Restore</button>`;
+                    undoBtnHtml = `<button type="button" class="audit-restore-btn" data-action="restore" data-log-id="${WO.escapeHtml(log.id || '')}">↺ Undo & Restore</button>`;
                 }
             }
 
@@ -900,7 +904,7 @@
 
             // Construct DOM with summary header and expandable nested drawer
             item.innerHTML = `
-                <div class="audit-summary-row" onclick="window.WO.toggleAuditItem('${log.id}')">
+                <div class="audit-summary-row" data-action="toggle" data-log-id="${WO.escapeHtml(log.id || '')}">
                     <div class="audit-left-col">
                         <span class="audit-rank-badge">#${rank}</span>
                         <span class="audit-action-chip ${chipClass}">${icon} ${actionLabel}</span>
@@ -955,7 +959,7 @@
                     </div>
 
                     <div class="audit-drawer-footer">
-                        <span class="audit-log-id">Audit Ref ID: ${log.id}</span>
+                        <span class="audit-log-id">Audit Ref ID: ${WO.escapeHtml(log.id || '')}</span>
                         ${undoBtnHtml}
                     </div>
                 </div>
@@ -963,6 +967,25 @@
 
             frag.appendChild(item);
         });
+
+        if (!container._hasAuditListeners) {
+            container._hasAuditListeners = true;
+            container.addEventListener('click', (e) => {
+                const restoreBtn = e.target.closest('.audit-restore-btn');
+                if (restoreBtn) {
+                    e.stopPropagation();
+                    const logId = restoreBtn.dataset.logId;
+                    if (logId) window.WO.restoreLoggedActivity(logId);
+                    return;
+                }
+                const summaryRow = e.target.closest('.audit-summary-row');
+                if (summaryRow) {
+                    const logId = summaryRow.dataset.logId;
+                    if (logId) window.WO.toggleAuditItem(logId);
+                    return;
+                }
+            });
+        }
 
         container.appendChild(frag);
     };

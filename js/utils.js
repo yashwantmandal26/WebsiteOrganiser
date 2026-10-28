@@ -49,31 +49,37 @@
 
     // ─── URL / Keyword Parsing ────────────────────────────────────────────────
     WO.normaliseKeywordUrl = function (keyword) {
-        let c = keyword.trim();
+        let c = String(keyword || '').trim();
+        if (/^(javascript|data|vbscript|file):/i.test(c)) return '';
         if (!/^https?:\/\//i.test(c)) c = 'https://' + c;
         return c;
     };
 
     WO.parseKeyword = function (keyword) {
-        const trimmed = keyword.trim();
+        const trimmed = String(keyword || '').trim();
         let displayText = trimmed;
         let targetUrl   = `https://www.google.com/search?q=${encodeURIComponent(trimmed)}`;
         let isUrl       = false;
+        if (/^(javascript|data|vbscript|file):/i.test(trimmed)) {
+            return { displayText: WO.escapeHtml(trimmed), targetUrl: '#', isUrl: false };
+        }
         try {
             const normalised = WO.normaliseKeywordUrl(trimmed);
-            const parsed = new URL(normalised);
-            if (parsed.hostname && parsed.hostname.includes('.')) {
-                isUrl = true;
-                const host = parsed.hostname.replace(/^www\./, '');
-                const mapped = WO.DOMAIN_DISPLAY_MAP[parsed.hostname] || WO.DOMAIN_DISPLAY_MAP[host];
-                if (mapped) {
-                    displayText = mapped;
-                } else {
-                    const parts = host.split('.');
-                    const main  = parts.length ? parts[0] : host;
-                    displayText = main.charAt(0).toUpperCase() + main.slice(1);
+            if (normalised) {
+                const parsed = new URL(normalised);
+                if (parsed.hostname && parsed.hostname.includes('.') && /^https?:$/i.test(parsed.protocol)) {
+                    isUrl = true;
+                    const host = parsed.hostname.replace(/^www\./, '');
+                    const mapped = WO.DOMAIN_DISPLAY_MAP[parsed.hostname] || WO.DOMAIN_DISPLAY_MAP[host];
+                    if (mapped) {
+                        displayText = mapped;
+                    } else {
+                        const parts = host.split('.');
+                        const main  = parts.length ? parts[0] : host;
+                        displayText = main.charAt(0).toUpperCase() + main.slice(1);
+                    }
+                    targetUrl = parsed.href;
                 }
-                targetUrl = parsed.href;
             }
         } catch {}
         return { displayText, targetUrl, isUrl };
@@ -96,28 +102,45 @@
         const group = (nameOrGroup && typeof nameOrGroup === 'object') ? nameOrGroup : null;
         const name  = group ? group.name : nameOrGroup;
 
+        // 1. Device-only custom group color override (if enabled)
+        if (WO.preferences && WO.preferences.customCardColors && WO.preferences.userGroupColors) {
+            const customHex = WO.preferences.userGroupColors[name];
+            if (customHex && typeof customHex === 'string') {
+                return customHex;
+            }
+        }
+
+        // 2. Device-only custom palette preset (if enabled)
+        let palette = WO.GROUP_COLORS;
+        if (WO.preferences && WO.preferences.customCardColors && WO.CARD_PALETTES) {
+            const chosen = WO.CARD_PALETTES[WO.preferences.cardColorPalette];
+            if (chosen && chosen.length) {
+                palette = chosen;
+            }
+        }
+
         // If the admin set a custom colour, use it directly (no palette slot consumed)
         if (group && group.color) return group.color;
 
         let startIdx;
         if (typeof preferredIndex === 'number' && !isNaN(preferredIndex) && preferredIndex >= 0) {
-            startIdx = preferredIndex % WO.GROUP_COLORS.length;
+            startIdx = preferredIndex % palette.length;
         } else if (group && typeof group._originalIndex === 'number' && group._originalIndex >= 0) {
-            startIdx = group._originalIndex % WO.GROUP_COLORS.length;
+            startIdx = group._originalIndex % palette.length;
         } else {
-            startIdx = WO.hashGroupName(name || '') % WO.GROUP_COLORS.length;
+            startIdx = WO.hashGroupName(name || '') % palette.length;
         }
 
-        if (!usedColors) return WO.GROUP_COLORS[startIdx];
+        if (!usedColors) return palette[startIdx];
 
         let idx = startIdx;
         let tries = 0;
-        while (usedColors.has(idx) && tries < WO.GROUP_COLORS.length) {
-            idx = (idx + 1) % WO.GROUP_COLORS.length;
+        while (usedColors.has(idx) && tries < palette.length) {
+            idx = (idx + 1) % palette.length;
             tries++;
         }
         usedColors.add(idx);
-        return WO.GROUP_COLORS[idx];
+        return palette[idx];
     };
 
     WO.darkenColor = function (color, amount = 0.4) {
@@ -190,16 +213,33 @@
     };
 
     WO.highlightSearchHtml = function (text, query) {
-        const safe = WO.escapeHtml(text);
-        const nq   = WO.normalizeSearchQuery(query);
-        if (!nq) return safe;
+        const nq = WO.normalizeSearchQuery(query);
+        if (!nq) return WO.escapeHtml(text);
         const tokens = Array.from(new Set(nq.split(/\s+/).filter(Boolean)));
-        if (!tokens.length) return safe;
-        let out = safe;
-        tokens.map(t => WO.escapeRegex(t)).sort((a, b) => b.length - a.length).forEach(t => {
-            out = out.replace(new RegExp(`(${t})`, 'ig'), '<span class="keyword-search-highlight">$1</span>');
-        });
-        return out;
+        if (!tokens.length) return WO.escapeHtml(text);
+
+        // Sort tokens by descending length so longer matches take precedence
+        const sortedTokens = tokens.map(t => WO.escapeRegex(t)).sort((a, b) => b.length - a.length);
+        const pattern = new RegExp(`(${sortedTokens.join('|')})`, 'ig');
+
+        // Single-pass scanner: split raw text into matches & non-matches, safely escape both
+        let lastIndex = 0;
+        let result = '';
+        let match;
+
+        while ((match = pattern.exec(text)) !== null) {
+            if (match.index > lastIndex) {
+                result += WO.escapeHtml(text.slice(lastIndex, match.index));
+            }
+            result += `<span class="keyword-search-highlight">${WO.escapeHtml(match[0])}</span>`;
+            lastIndex = pattern.lastIndex;
+        }
+
+        if (lastIndex < text.length) {
+            result += WO.escapeHtml(text.slice(lastIndex));
+        }
+
+        return result;
     };
 
     WO.buildSearchSnippet = function (text, query, maxLength = 110) {

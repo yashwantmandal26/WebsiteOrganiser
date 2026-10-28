@@ -172,13 +172,13 @@
         </div>
     </fieldset></details>
     <details class="preference-section" id="preference-about-section"><summary>About & Credits <span>Creator & website information</span></summary><fieldset><legend class="sr-only">About and Credits</legend>
-        <div class="preference-about-row">
+        <div class="preference-about-row" style="flex-wrap:wrap;gap:8px;">
             <span class="preference-about-label">Credit of this website</span>
-            <span class="preference-about-value"><strong>Yashwant mandal</strong></span>
+            <span class="preference-about-value" style="font-size:12px;font-weight:600;text-align:right;flex:1;min-width:210px;line-height:1.4;">Designed & built by <strong>Yashwant Mandal</strong> for seamless daily web navigation.✌️</span>
         </div>
         <div class="preference-about-row">
             <span class="preference-about-label">Application</span>
-            <span class="preference-about-value">Website Organiser (v1.0.25)</span>
+            <span class="preference-about-value">Website Organiser (v1.0.29)</span>
         </div>
         <div class="preference-about-row">
             <span class="preference-about-label">Architecture</span>
@@ -187,8 +187,7 @@
     </fieldset></details>
     <div class="preferences-footer"><span id="preferences-status" role="status">Saved on this device</span><button type="button" id="preferences-reset" class="preference-button">Reset defaults</button></div>
     <div class="preferences-credit-box">
-        <span class="preferences-credit-star">✨</span>
-        <span>Credit of this website: <strong>Yashwant mandal</strong></span>
+        <span>Designed & built by <strong>Yashwant Mandal</strong> for seamless daily web navigation.✌️</span>
     </div>`;
 
     function normalize(saved) {

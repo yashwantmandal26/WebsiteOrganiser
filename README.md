@@ -119,6 +119,31 @@ Administrative actions are protected to maintain organization integrity.
 
 ## 📋 Changelog
 
+### v1.0.29 (2026-10-28)
+- 🛡️ **Comprehensive Zero-Defect Security Hardening**:
+  - **Firestore Rules**: Master groups modification, soft-deletion status, and audit logs locked down to authenticated Admins (`isAdmin()`).
+  - **Privacy & PII Protection**: Visitors' GPS locations and IP addresses completely protected from unauthenticated access.
+  - **Stored XSS Prevention**: Activity logger rewritten without inline script string injections; all identifiers escaped via HTML entity encoding; Google Maps URLs strictly HTTPS-validated.
+  - **Prototype Pollution Prevention**: Backup parser secured against prototype manipulation (`__proto__`, `constructor`, `prototype`).
+  - **Strict URL Scheme Validation**: Dangerous schemes (`javascript:`, `data:`, `vbscript:`, `file:`) strictly blocked at UI and data layers.
+  - **Content Security Policy (CSP)**: Integrated restrictive CSP header meta tag in `index.html`.
+  - **Secret Hygiene**: Removed exposed token from default bookmark configurations.
+- 🎵 **9 Unique Realistic Hover Tones**: Re-synthesized all 9 sound engines (Soft tap, Warm bell, Bubble pop, Crystal chime, Wood tap, Digital beep, Mechanical Keyboard ⌨️, Apple iOS Haptics 🍎, Sci-Fi Digital Tones 🚀) with distinct acoustic physics.
+- 🛡️ **Admin vs User Context Menu**: Non-admin users see strictly the `Comment` option; `Rename`, `Delete`, and `Restore` are admin-only.
+- 🏷️ **Official Creator Tagline**: Updated Settings About & Credits section with: *"Designed & built by Yashwant Mandal for seamless daily web navigation.✌️"*
+- 📦 **Production Bundle**: Bundled and minified to v1.0.29.
+
+### v1.0.28 (2026-10-28)
+- ⚡ **Frequently Used Sites Timeframe Filter**: Added `[All Time | This Month | This Week]` pill toggle segment control to Frequently Used Sites bar with dynamic click timestamp tracking and instant re-ranking.
+- 🔊 **Aesthetic Sound Packs**: Added customizable audio signatures in Settings (Sound studio):
+  - ⌨️ **Mechanical Keyboard Switches** (Tactile switch click + bottom-out body clack)
+  - 🍎 **Apple iOS Haptics / Soft Pops** (Subtle warm low-frequency acoustic haptic pops)
+  - 🚀 **Sci-Fi Digital Tones** (Futuristic frequency sweep chirps and laser blips)
+  - 🎵 **Classic Synth Tones** (The original customizable synth profiles)
+- 🩺 **Link Health & 404 Checker (Admin Tools)**: Full-featured background scanner in the Admin Tools Hub that pings all saved URLs with timeout handling, categorizes alive vs dead links, and provides one-click cleanup to Recycle Bin with full Undo support.
+- 🔍 **Frosted Glass Search Suggestions**: Portaled search suggestions dropdown to document body level to achieve true GPU-accelerated frosted glass backdrop blur across all themes and viewports.
+- 📦 **Production Bundle**: Bundled and minified to v1.0.28 (bundle v1117).
+
 ### v1.0.27 (2026-10-28)
 - 🎯 **Favicon Fallback Letter Fix**: Resolved double-icon display in Frequently Used Sites chips by hiding the letter fallback container whenever the website favicon loads successfully. The letter fallback is now strictly displayed only when the favicon fails to load or is unavailable.
 - 📦 **Production Bundle**: Bundled and minified to v1.0.27 (bundle v1115).

@@ -4,59 +4,54 @@ service cloud.firestore {
     // Shared data collection for WebsiteOrganiser
 
     function isAdmin() {
-      return request.auth != null && request.auth.token.email in ['dashbot2001@gmail.com'];
+      return request.auth != null && request.auth.token.email in ['dashbot2001@gmail.com', 'yashwantmandal26@gmail.com'];
     }
 
-    // groups: Anyone can read.
-    // Full write/modify access (including delete, rename, or shrinking groups) is reserved for authenticated admins.
-    // Public non-admin contributions can add data but cannot delete, shrink, or wipe existing groups.
+    // groups: Anyone can read. Only authenticated admins can modify, add, or delete groups and master bookmarks.
     match /sharedData/groups {
       allow read: if true;
-      allow write: if isAdmin() || (
-        request.resource.data.keys().hasAll(['data', 'updatedAt'])
-        && request.resource.data.data is list
-        && (resource == null || request.resource.data.data.size() >= resource.data.data.size())
-      );
+      allow write: if isAdmin();
     }
 
-    // clickCounts: anyone can read/write (click tracking is open)
+    // clickCounts: anyone can read/write (click tracking is open for usage ranking)
     match /sharedData/clickCounts {
       allow read: if true;
       allow write: if true;
     }
 
-    // keywordDescriptions: anyone can read/write (comments/descriptions are open)
+    // keywordDescriptions: anyone can read/write comments
     match /sharedData/keywordDescriptions {
       allow read: if true;
       allow write: if true;
     }
 
-    // keywordAddedAt: anyone can read/write (timestamp tracking is open)
+    // keywordAddedAt: timestamp tracking is managed by admin
     match /sharedData/keywordAddedAt {
       allow read: if true;
-      allow write: if true;
+      allow write: if isAdmin();
     }
 
-    // keywordDeletedStatus: anyone can read/write (soft deletes)
+    // keywordDeletedStatus: soft deletes and restores are strictly restricted to authenticated admins
     match /sharedData/keywordDeletedStatus {
       allow read: if true;
-      allow write: if true;
+      allow write: if isAdmin();
     }
 
-    // activityLogs: anyone can read/write logs (audit logging is open)
+    // activityLogs: audit logs contain sensitive GPS & IP data; strictly restricted to authenticated admins
     match /sharedData/activityLogs {
-      allow read: if true;
-      allow write: if true;
+      allow read: if isAdmin();
+      allow write: if isAdmin();
     }
 
     match /activityLogs/{logId} {
-      allow read: if true;
-      allow write: if true;
+      allow read: if isAdmin();
+      allow write: if request.resource.data.keys().hasAll(['action', 'timestamp']);
     }
 
-    // Default read access for other docs in sharedData
+    // Default fallback
     match /sharedData/{document=**} {
       allow read: if true;
+      allow write: if isAdmin();
     }
   }
 }

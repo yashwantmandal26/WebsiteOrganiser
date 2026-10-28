@@ -19,6 +19,7 @@
   <meta charset="UTF-8">
   <meta name="viewport"
     content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https:; media-src 'self' data:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://api.bigdatacloud.net https://freeipapi.com https://ipapi.co https://api.open-meteo.com; frame-src 'self' https://*.firebaseapp.com; object-src 'none'; base-uri 'self';">
   <title>WebsiteOrganiser</title>
 
   <!-- PWA Meta Tags -->
@@ -45,7 +46,7 @@
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js">
-  <link rel="stylesheet" href="bundle.min.css?v=1115">
+  <link rel="stylesheet" href="bundle.min.css?v=1131">
 
   <link rel="manifest" href="manifest.json">
 
@@ -127,6 +128,13 @@
                     <span class="menu-item-desc">Select & manage multiple links</span>
                   </div>
                 </button>
+                <button type="button" id="link-health-btn" class="admin-menu-item" role="menuitem">
+                  <span class="menu-item-icon">🩺</span>
+                  <div class="menu-item-text">
+                    <span class="menu-item-title">Link Health / 404 Check</span>
+                    <span class="menu-item-desc">Scan broken & dead URLs across groups</span>
+                  </div>
+                </button>
               </div>
               <div class="admin-hub-divider"></div>
               <div class="admin-hub-group">
@@ -182,10 +190,7 @@
           </button>
         </div>
 
-        <!-- Suggestions Dropdown -->
-        <div id="search-suggestions" class="search-suggestions" style="display: none;">
-          <!-- Dynamically populated -->
-        </div>
+
       </div>
     </div>
   </header>
@@ -208,8 +213,7 @@
       </fieldset>
       <div class="preferences-footer"><span id="preferences-status" role="status">Saved on this device</span><button type="button" id="preferences-reset" class="preference-button">Reset defaults</button></div>
       <div class="preferences-credit-box">
-        <span class="preferences-credit-star">✨</span>
-        <span>Credit of this website: <strong>Yashwant mandal</strong></span>
+        <span>Designed & built by <strong>Yashwant Mandal</strong> for seamless daily web navigation.✌️</span>
       </div>
     </form>
   </dialog>
@@ -225,6 +229,11 @@
       <div class="top-hits-header">
         <div class="top-hits-title-wrap">
           <span class="top-hits-title">Frequently Used Sites ⚡</span>
+        </div>
+        <div class="top-hits-timeframe-toggle" id="top-hits-timeframe-toggle" role="group" aria-label="Frequently used timeframe">
+          <button type="button" class="top-hits-timeframe-btn active" data-timeframe="all" title="All-time clicks">All Time</button>
+          <button type="button" class="top-hits-timeframe-btn" data-timeframe="month" title="Clicks this month">This Month</button>
+          <button type="button" class="top-hits-timeframe-btn" data-timeframe="week" title="Clicks this week">This Week</button>
         </div>
       </div>
       <div class="top-hits-scroll" id="top-hits-scroll">
@@ -417,6 +426,64 @@
     </div>
   </div>
 
+  <!-- Link Health & 404 Check Modal -->
+  <div id="link-health-modal" class="modal-container">
+    <div class="modal-content link-health-modal-content">
+      <div class="link-health-modal-header">
+        <div class="link-health-title-box">
+          <h2 class="link-health-modal-title">🩺 Website Link Health & 404 Checker</h2>
+          <span class="link-health-modal-sub">Scan saved links to detect broken URLs, dead domains and timeouts</span>
+        </div>
+        <button type="button" id="link-health-close-btn" class="btn btn-secondary" style="padding:4px 12px;font-size:0.85rem;">✕ Close</button>
+      </div>
+
+      <!-- Stats Row -->
+      <div class="link-health-stats-row">
+        <div class="link-health-stat-chip">
+          <span class="stat-num" id="lh-total-count">0</span>
+          <span class="stat-name">Total Links</span>
+        </div>
+        <div class="link-health-stat-chip chip-alive">
+          <span class="stat-num" id="lh-alive-count">0</span>
+          <span class="stat-name">✅ Alive</span>
+        </div>
+        <div class="link-health-stat-chip chip-dead">
+          <span class="stat-num" id="lh-dead-count">0</span>
+          <span class="stat-name">❌ Dead / Error</span>
+        </div>
+        <div class="link-health-stat-chip chip-timeout">
+          <span class="stat-num" id="lh-timeout-count">0</span>
+          <span class="stat-name">⚠️ Timeout (>6s)</span>
+        </div>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="link-health-progress-wrap" id="lh-progress-wrap" style="display:none;">
+        <div class="link-health-progress-bar" id="lh-progress-bar" style="width:0%;"></div>
+      </div>
+      <div class="link-health-status-msg" id="lh-status-msg">Click "Start Health Scan" to verify all website URLs.</div>
+
+      <!-- Action buttons & Filters -->
+      <div class="link-health-actions-bar">
+        <div class="link-health-btn-group">
+          <button type="button" id="lh-start-btn" class="btn holo-btn" style="background:var(--preference-accent,#7c3aed);color:#fff;">▶ Start Health Scan</button>
+          <button type="button" id="lh-stop-btn" class="btn btn-secondary" style="display:none;">⏹ Stop Scan</button>
+          <button type="button" id="lh-clean-all-btn" class="btn btn-danger" style="display:none;">🗑️ Move All Dead Links to Trash</button>
+        </div>
+        <div class="link-health-filter-chips">
+          <button type="button" class="lh-filter-btn active" data-filter="all">All (<span id="lh-tab-all">0</span>)</button>
+          <button type="button" class="lh-filter-btn" data-filter="dead">❌ Dead Only (<span id="lh-tab-dead">0</span>)</button>
+          <button type="button" class="lh-filter-btn" data-filter="alive">✅ Alive (<span id="lh-tab-alive">0</span>)</button>
+        </div>
+      </div>
+
+      <!-- Results List -->
+      <div class="link-health-list" id="lh-results-list">
+        <div class="link-health-empty-msg">No scan executed yet. Click "Start Health Scan" to inspect all links.</div>
+      </div>
+    </div>
+  </div>
+
   <!-- Weather Details & Location Modal -->
   <div id="weather-modal" class="modal-container">
     <div class="modal-content weather-modal-content">
@@ -499,11 +566,13 @@
     })();
   </script>
   <!-- Application Bundle -->
-  <script defer src="bundle.min.js?v=1115"></script>
+  <script defer src="bundle.min.js?v=1131"></script>
 
   <div id="toast-container"></div>
   <!-- Global keyword tooltip portal — lives at body level to avoid contain:paint clipping -->
   <div id="kw-tooltip" aria-hidden="true" role="tooltip"></div>
+  <!-- Global search suggestions portal — lives at body level to enable true frosted-glass backdrop blur across parent stacking contexts -->
+  <div id="search-suggestions" class="search-suggestions" style="display: none;"></div>
 </body>
 
 </html>

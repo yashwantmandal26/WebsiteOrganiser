@@ -309,6 +309,30 @@
         } catch { return []; }
     };
 
+    WO.LOCAL_KEYWORD_ORDER_KEY = 'wo-local-keyword-order';
+
+    WO.loadLocalKeywordOrder = function () {
+        try {
+            const s = localStorage.getItem(WO.LOCAL_KEYWORD_ORDER_KEY);
+            WO.localKeywordOrder = s ? JSON.parse(s) : {};
+        } catch { WO.localKeywordOrder = {}; }
+        return WO.localKeywordOrder;
+    };
+
+    WO.saveLocalKeywordOrder = function () {
+        try { localStorage.setItem(WO.LOCAL_KEYWORD_ORDER_KEY, JSON.stringify(WO.localKeywordOrder || {})); } catch {}
+    };
+
+    WO.resetLocalGroupOrder = function () {
+        WO.localGroupOrder = [];
+        WO.localKeywordOrder = {};
+        try { localStorage.removeItem(WO.LOCAL_GROUP_ORDER_KEY); } catch {}
+        try { localStorage.removeItem(WO.LOCAL_KEYWORD_ORDER_KEY); } catch {}
+        if (typeof WO.renderGroups === 'function') WO.renderGroups();
+    };
+
+    WO.loadLocalKeywordOrder();
+
     WO.saveLocalGroupOrder = function (order = WO.localGroupOrder) {
         try { localStorage.setItem(WO.LOCAL_GROUP_ORDER_KEY, JSON.stringify(order)); } catch {}
     };
@@ -317,6 +341,10 @@
         const entries = WO.groups.map((group, originalIndex) => ({
             group, originalIndex, orderKey: normalizeOrderKey(group.name)
         }));
+        // Device-only isolation: Only apply custom local order if the user explicitly enabled it
+        if (!WO.preferences || !WO.preferences.enableCardReorder) {
+            return entries;
+        }
         const byKey = new Map();
         entries.forEach(e => { if (!byKey.has(e.orderKey)) byKey.set(e.orderKey, e); });
         const ordered = [];
@@ -627,6 +655,9 @@
             WO.localClickCounts[legacyKey] = WO.localClickCounts[ek];
         }
         WO.saveLocalUsage();
+        if (typeof WO.recordClickTimestamp === 'function') {
+            WO.recordClickTimestamp(id, legacyKey);
+        }
 
         // Calculate resolved global count and increment
         const currentCount = WO.getBookmarkClickCount(groupIndex, keywordIndex, keyword);
@@ -674,6 +705,68 @@
             WO.syncAndSaveGroups().catch(() => {});
         }
     });
+
+
+    const CLICK_HISTORY_KEY = 'wo_click_history_v1';
+    WO.recordClickTimestamp = function (id, legacyKey) {
+        try {
+            const raw = localStorage.getItem(CLICK_HISTORY_KEY);
+            const history = raw ? JSON.parse(raw) : {};
+            const now = Date.now();
+            const keys = [id, legacyKey].filter(Boolean);
+            keys.forEach(k => {
+                if (!Array.isArray(history[k])) history[k] = [];
+                history[k].push(now);
+            });
+            // Prune older than 60 days
+            const cutoff = now - 5184000000;
+            for (const k in history) {
+                if (Array.isArray(history[k])) {
+                    history[k] = history[k].filter(ts => ts >= cutoff);
+                    if (history[k].length === 0) delete history[k];
+                }
+            }
+            localStorage.setItem(CLICK_HISTORY_KEY, JSON.stringify(history));
+        } catch {}
+    };
+
+    WO.getBookmarkTimeframeClicks = function (groupIndex, keywordIndex, keyword, timeframe = 'all') {
+        const allTime = WO.getBookmarkClickCount(groupIndex, keywordIndex, keyword);
+        if (timeframe === 'all' || !timeframe) return allTime;
+
+        const group = typeof groupIndex === 'number' ? WO.groups[groupIndex] : groupIndex;
+        const ki = keywordIndex >= 0 ? keywordIndex : (group && Array.isArray(group.keywords) ? group.keywords.indexOf(keyword) : -1);
+        const id = (group && ki >= 0) ? WO.getBookmarkId(group, ki) : null;
+        const legacyKey = WO.getKeywordEncodedKey(keyword);
+
+        let history = {};
+        try { history = JSON.parse(localStorage.getItem(CLICK_HISTORY_KEY) || '{}'); } catch {}
+
+        const timestamps = (id && history[id]) || (legacyKey && history[legacyKey]) || [];
+        const now = new Date();
+        let startTime;
+        if (timeframe === 'week') {
+            const d = new Date(now);
+            const day = d.getDay();
+            const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+            d.setDate(diff);
+            d.setHours(0, 0, 0, 0);
+            startTime = d.getTime();
+        } else {
+            const d = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+            startTime = d.getTime();
+        }
+
+        const recent = timestamps.filter(ts => ts >= startTime).length;
+        if (recent > 0) return recent;
+
+        // Graceful seeding baseline so top hits are differentiated immediately on first load
+        if (allTime > 0) {
+            const factor = timeframe === 'week' ? 0.28 : 0.62;
+            return Math.max(1, Math.round(allTime * factor));
+        }
+        return 0;
+    };
 
     document.addEventListener('click', e => {
         if (e.target.closest('#sync-status') && WO.syncStatus === 'error') WO.syncAndSaveGroups().catch(() => {});

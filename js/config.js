@@ -46,7 +46,7 @@ WO.DEFAULT_GROUPS = [
             "VEGAMOVIES",
             "ExtraMovies",
             "UHDMovies",
-            "https://hicine.info/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjQ3NzM5MTYsImlhdCI6MTc2NDY4NzUxNiwidXNlciI6InZlcmlmaWVkX3ByZW1pdW1fYWNjZXNzIiwidmVyaWZpZWQiOnRydWUsInZlcmlmaWNhdGlvbl90aW1lIjoiMjAyNS0xMi0wMlQxNDo1ODozNi43MDRaIiwidmVyaWZpY2F0aW9uX2NvbXBsZXRlIjp0cnVlfQ.u-iqQFyZ-_b2GJ8yuIF6nWQjkM5-hzgB_qpyuEqIvuM&from=hicine&verified=true&verification_complete=true",
+            "https://hicine.info/",
             "movies4u",
             "https://mkvcinemas.ad/",
             "https://moviesrush.net/",
@@ -262,7 +262,7 @@ WO.DEFAULT_CLICK_COUNTS = {
     "https%3A%2F%2Ftbcpl%2Elol%2F": 2,
     "https%3A%2F%2Fapp%2Epixverse%2Eai%2Fhome": 2,
     "https%3A%2F%2Fpostinbox%2Eorg%2F": 1,
-    "https%3A%2F%2Fhicine%2Einfo%2F%3Ftoken%3DeyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9%2EeyJleHAiOjE3NjQ3NzM5MTYsImlhdCI6MTc2NDY4NzUxNiwidXNlciI6InZlcmlmaWVkX3ByZW1pdW1fYWNjZXNzIiwidmVyaWZpZWQiOnRydWUsInZlcmlmaWNhdGlvbl90aW1lIjoiMjAyNS0xMi0wMlQxNDo1ODozNi43MDRaIiwidmVyaWZpY2F0aW9uX2NvbXBsZXRlIjp0cnVlfQ%2Eu-iqQFyZ-_b2GJ8yuIF6nWQjkM5-hzgB_qpyuEqIvuM%26from%3Dhicine%26verified%3Dtrue%26verification_complete%3Dtrue": 8,
+    "https%3A%2F%2Fhicine%2Einfo%2F": 8,
     "https%3A%2F%2F4khdhub%2Efans%2F": 7,
     "https%3A%2F%2Fwww%2Eguerrillamail%2Ecom%2F": 1,
     "https%3A%2F%2Fmoviesgum%2Ecom%2F": 5,
@@ -323,7 +323,7 @@ WO.DEFAULT_KEYWORD_DESCRIPTIONS = {
     "https%3A%2F%2Fgroq%2Ecom%2F": "free tier Ai llm",
     "https%3A%2F%2Fyenime%2Enet%2F": "Anime collection",
     "https%3A%2F%2Fchromewebstore%2Egoogle%2Ecom%2F": "install useful chromium Extensions",
-    "https%3A%2F%2Fhicine%2Einfo%2F%3Ftoken%3DeyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9%2EeyJleHAiOjE3NjQ3NzM5MTYsImlhdCI6MTc2NDY4NzUxNiwidXNlciI6InZlcmlmaWVkX3ByZW1pdW1fYWNjZXNzIiwidmVyaWZpZWQiOnRydWUsInZlcmlmaWNhdGlvbl90aW1lIjoiMjAyNS0xMi0wMlQxNDo1ODozNi43MDRaIiwidmVyaWZpY2F0aW9uX2NvbXBsZXRlIjp0cnVlfQ%2Eu-iqQFyZ-_b2GJ8yuIF6nWQjkM5-hzgB_qpyuEqIvuM%26from%3Dhicine%26verified%3Dtrue%26verification_complete%3Dtrue": "THE BESST",
+    "https%3A%2F%2Fhicine%2Einfo%2F": "THE BESST",
     "https%3A%2F%2Fplay%2Etyperacer%2Ecom%2F": "compete with friends typing Game",
     "https%3A%2F%2Fadescargar%2Enet%2F": "Any cracked modded apps to download",
     "https%3A%2F%2Fwww%2Eflikhub%2Enet%2F": "English",
@@ -419,6 +419,31 @@ WO.GROUP_COLORS = [
     '#6B82FF', // 22. Cobalt Blue        (231°)
     '#FF6152'  // 23. Ruby Scarlet       (5°)
 ];
+
+// ─── Card Color Palettes (Device-Only Custom Accent Palettes) ─────────────────
+WO.CARD_PALETTES = {
+    default: WO.GROUP_COLORS,
+    vivid: [
+        '#FF0055', '#00E5FF', '#FFE600', '#00FF66',
+        '#AA00FF', '#FF6600', '#0066FF', '#FF00AA',
+        '#00FFAA', '#FFB700', '#7700FF', '#00FF33'
+    ],
+    neon: [
+        '#00F0FF', '#FF0077', '#39FF14', '#FFE600',
+        '#BF00FF', '#FF3131', '#0FF0FC', '#FF5E00',
+        '#7B00FF', '#00FFB2', '#FF00E6', '#CCFF00'
+    ],
+    pastel: [
+        '#A8DADC', '#FFB4A2', '#B5E48C', '#E2ECE9',
+        '#CDB4DB', '#FFC8DD', '#BDE0FE', '#A2D2FF',
+        '#FDE2E4', '#D8E2DC', '#FFE5D9', '#D0F4DE'
+    ],
+    cyberpunk: [
+        '#FFE600', '#FF0055', '#00F0FF', '#7600EC',
+        '#00FF66', '#FF9900', '#D600FF', '#00FFFF',
+        '#FF3366', '#33CCFF', '#99FF33', '#FF0033'
+    ]
+};
 
 // ─── Keyword Gradient Palette (40 gradients for letter icons) ────────────────
 WO.KEYWORD_GRADIENTS = [

@@ -927,29 +927,25 @@ header h1 {
 
 /* Search Suggestions Dropdown: Frosted Glass Blur across all themes */
 .search-suggestions {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
-  right: 0;
-  width: 100%;
+  position: fixed;
   box-sizing: border-box;
-  background: rgba(18, 16, 28, 0.72) !important;
+  background: rgba(18, 16, 28, 0.70) !important;
   backdrop-filter: blur(28px) saturate(190%) !important;
   -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.13) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
   border-radius: 16px;
   max-height: 400px;
   overflow-y: auto;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
-  z-index: 1000;
+  z-index: 10000;
   animation: slideDown var(--transition-normal);
 }
 
 [data-theme="solid-dark"] .search-suggestions,
 html[data-theme="solid-dark"] .search-suggestions {
-  background: rgba(14, 14, 18, 0.78) !important;
+  background: rgba(10, 10, 14, 0.80) !important;
   backdrop-filter: blur(28px) saturate(190%) !important;
   -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
   border: 1px solid rgba(255, 255, 255, 0.16) !important;
@@ -958,7 +954,7 @@ html[data-theme="solid-dark"] .search-suggestions {
 
 [data-theme="light"] .search-suggestions,
 html[data-theme="light"] .search-suggestions {
-  background: rgba(255, 255, 255, 0.82) !important;
+  background: rgba(255, 255, 255, 0.78) !important;
   backdrop-filter: blur(28px) saturate(190%) !important;
   -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
   border: 1px solid rgba(255, 255, 255, 0.85) !important;
@@ -972,13 +968,9 @@ html[data-theme="light"] .search-suggestions {
   }
 
   .search-suggestions {
-    position: absolute;
-    top: calc(100% + 6px);
-    left: -4px;
-    right: -4px;
-    width: calc(100% + 8px);
+    position: fixed;
     max-height: 55vh;
-    z-index: 1000;
+    z-index: 10000;
     border-radius: 14px;
   }
 
@@ -3096,17 +3088,19 @@ body.is-zooming .search-suggestions {
   font-weight: 600;
   color: var(--text-color);
   letter-spacing: -0.01em;
-  line-height: 1.2;
+  line-height: 1.18;
   text-align: center;
   margin-top: 2px;
   width: 100%;
   
-  /* Restrict to single line with two dots by default */
-  white-space: nowrap;
+  /* Modern 2-line clamping for optimal readability without truncation */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis; /* fallback */
-  text-overflow: '..'; /* modern browsers support custom string */
-  display: block;
+  white-space: normal;
+  word-break: break-word;
+  max-height: 2.36em;
 }
 
 /* On hover, show the full text on a single line (it will bleed horizontally) */
@@ -5372,51 +5366,50 @@ textarea {
 
   /* Keyword grid - 4 columns on mobile for smaller cards */
   .group-card .keyword-grid-preview {
-    grid-template-columns: repeat(4, 1fr) !important;
-    gap: 5px !important; /* Tighter gap for 4 columns on small screens */
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 6px !important;
   }
 
   .group-card .keyword-grid-preview-item {
-    padding: 5px 0 6px !important; /* Tight padding for compact mobile layout */
-    min-height: 62px !important;
-    max-height: 90px !important;
+    padding: 6px 3px 5px !important;
+    min-height: 74px !important;
+    max-height: none !important;
     height: auto !important;
-    border-radius: 14px !important;
-    background: linear-gradient(150deg, #F8F9FA 0%, #f0f0f0 100%) !important;
+    border-radius: 12px !important;
   }
 
   .group-card .keyword-grid-preview-item .keyword-grid-icon {
-    width: 36px !important;
-    height: 36px !important;
-    background: rgba(0, 0, 0, 0.04) !important;
+    width: 40px !important;
+    height: 40px !important;
     border-radius: 10px !important;
     padding: 2px !important;
   }
 
   .group-card .keyword-grid-preview-item .keyword-grid-icon img.keyword-favicon {
-    width: 32px !important;
-    height: 32px !important;
+    width: 36px !important;
+    height: 36px !important;
     border-radius: 8px !important;
   }
 
   .group-card .keyword-grid-preview-item .keyword-grid-icon .keyword-letter {
-    font-size: 38px !important; /* Decreased from default size for better fit */
+    font-size: 32px !important;
   }
 
   .group-card .keyword-grid-text {
-    font-size: 0.65rem !important;
-    min-height: 12px !important;
-    font-weight: 500 !important;
-    line-height: 1.1 !important;
-    margin-top: 4px !important;
+    font-size: 0.70rem !important;
+    min-height: 14px !important;
+    font-weight: 600 !important;
+    line-height: 1.15 !important;
+    margin-top: 3px !important;
     text-align: center !important;
     
-    /* Single line with ellipsis/two-dots for group cards too */
-    white-space: nowrap !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
     overflow: hidden !important;
-    text-overflow: ellipsis !important; /* fallback */
-    text-overflow: '..' !important;
-    display: block !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    max-height: 2.3em !important;
   }
   
   /* List view adjustments */
@@ -5974,51 +5967,132 @@ body {
   }
 }
 
-@media (min-width: 601px) and (max-width: 1024px) {
-  body {
-    padding-top: 170px !important;
-  }
-
-  .header-row {
-    display: grid;
-    grid-template-columns: auto auto;
-    grid-template-rows: auto auto auto;
-    justify-content: center;
-    align-items: center;
-    row-gap: 10px;
-    column-gap: 12px;
-    padding: 10px 20px 12px;
-    min-height: unset;
-  }
-
-  .header-controls {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    width: 100%;
-  }
-
-  .header-right {
-    width: auto !important;
-    justify-content: flex-start !important;
-  }
-
-  .search-bar-container { width: 100%; max-width: 100%; }
-
-  .search-bar-wrapper {
-    max-width: 100%;
-  }
-
+/* ─── Tablets Portrait (601px to 840px) ─────────────────────────────────── */
+@media (min-width: 601px) and (max-width: 840px) {
   .groups-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
-    padding: 12px 16px 18px;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+    padding: 10px 14px 20px !important;
   }
 
   .group-card {
-    width: 100%;
+    width: 100% !important;
+    padding: 12px 10px 14px !important;
+    border-radius: 16px !important;
+  }
+
+  .group-card-header {
+    margin-bottom: 10px !important;
+    padding-bottom: 8px !important;
+  }
+
+  .group-card-header h3 {
+    font-size: clamp(0.94rem, 2.3vw, 1.15rem) !important;
+    letter-spacing: -0.01em !important;
+  }
+
+  /* 3 tile columns on portrait tablets gives each tile ~95-115px width */
+  .group-card .keyword-grid-preview {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    margin-top: 8px !important;
+  }
+
+  .group-card .keyword-grid-preview-item {
+    min-height: 82px !important;
+    max-height: none !important;
+    padding: 7px 4px 6px !important;
+    border-radius: 13px !important;
+  }
+
+  .group-card .keyword-grid-preview-item .keyword-grid-icon {
+    width: 44px !important;
+    height: 44px !important;
+    margin: 0 auto !important;
+  }
+
+  .group-card .keyword-grid-preview-item .keyword-grid-icon img.keyword-favicon {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 9px !important;
+  }
+
+  .group-card .keyword-grid-preview-item .keyword-grid-icon .keyword-letter {
+    font-size: 34px !important;
+  }
+
+  .group-card .keyword-grid-text {
+    font-size: 0.74rem !important;
+    font-weight: 600 !important;
+    line-height: 1.18 !important;
+    margin-top: 3px !important;
+    text-align: center !important;
+    
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    max-height: 2.36em !important;
+  }
+
+  .group-expand-chip {
+    padding: 6px 14px 6px 12px !important;
+    font-size: 0.82rem !important;
+  }
+}
+
+/* ─── Tablets Landscape (841px to 1150px) ─────────────────────────────────── */
+@media (min-width: 841px) and (max-width: 1150px) {
+  .groups-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 16px !important;
+    padding: 14px 20px 24px !important;
+  }
+
+  .group-card {
+    width: 100% !important;
+    padding: 14px 12px 16px !important;
+    border-radius: 18px !important;
+  }
+
+  .group-card-header h3 {
+    font-size: 1.15rem !important;
+  }
+
+  /* 4 tile columns in wide 2-column cards gives ~105-125px per tile */
+  .group-card .keyword-grid-preview {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 9px !important;
+  }
+
+  .group-card .keyword-grid-preview-item {
+    min-height: 86px !important;
+    padding: 8px 5px 6px !important;
+  }
+
+  .group-card .keyword-grid-preview-item .keyword-grid-icon {
+    width: 46px !important;
+    height: 46px !important;
+  }
+
+  .group-card .keyword-grid-preview-item .keyword-grid-icon img.keyword-favicon {
+    width: 42px !important;
+    height: 42px !important;
+  }
+
+  .group-card .keyword-grid-text {
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    line-height: 1.18 !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    max-height: 2.36em !important;
   }
 }
 
@@ -6361,31 +6435,60 @@ html {
   .search-bar-wrapper { min-height: 42px !important; border-radius: 14px !important; }
   .google-search-input { min-height: 42px !important; padding: 9px 6px !important; }
 
-  main.container { padding: 8px !important; }
-  .groups-grid { gap: 12px !important; padding: 0 !important; }
-  .group-card { padding: 12px 10px !important; }
+  main.container {
+    padding: 8px !important;
+    padding-bottom: calc(84px + env(safe-area-inset-bottom, 16px)) !important;
+  }
+  .groups-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+    padding: 0 0 16px !important;
+  }
+  .group-card {
+    padding: 12px 10px 14px !important;
+    border-radius: 16px !important;
+  }
+  .group-card-header h3 {
+    font-size: clamp(1.05rem, 4.4vw, 1.25rem) !important;
+  }
+  /* Modern smartphones: 1 full-width card with 4 columns gives ~80-92px per tile */
   .group-card .keyword-grid-preview {
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    gap: 8px !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 6px !important;
   }
   .group-card .keyword-grid-preview-item {
-    min-height: 88px !important;
+    min-height: 76px !important;
     max-height: none !important;
-    padding: 8px 4px 7px !important;
+    padding: 6px 3px 5px !important;
+    border-radius: 12px !important;
   }
   .group-card .keyword-grid-preview-item .keyword-grid-icon {
-    width: 48px !important;
-    height: 48px !important;
+    width: 42px !important;
+    height: 42px !important;
     margin-left: auto !important;
     margin-right: auto !important;
   }
   .group-card .keyword-grid-preview-item .keyword-grid-icon img.keyword-favicon {
-    width: 44px !important;
-    height: 44px !important;
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 8px !important;
+  }
+  .group-card .keyword-grid-preview-item .keyword-grid-icon .keyword-letter {
+    font-size: 32px !important;
   }
   .group-card .keyword-grid-text {
-    font-size: .75rem !important;
-    font-weight: 650 !important;
+    font-size: 0.72rem !important;
+    font-weight: 600 !important;
+    line-height: 1.15 !important;
+    margin-top: 3px !important;
+    text-align: center !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    max-height: 2.3em !important;
   }
 
   .bulk-toolbar {
@@ -6446,4 +6549,46 @@ html {
   visibility: hidden !important;
   width: 0 !important;
   height: 0 !important;
+}
+
+
+/* ─── Global Touch & FAB Enhancements ───────────────────────────────────────── */
+main.container {
+  padding-bottom: calc(84px + env(safe-area-inset-bottom, 16px)) !important;
+}
+
+@media (max-width: 359px) {
+  .group-card .keyword-grid-preview {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 5px !important;
+  }
+  .group-card .keyword-grid-preview-item .keyword-grid-icon {
+    width: 38px !important;
+    height: 38px !important;
+  }
+  .group-card .keyword-grid-preview-item .keyword-grid-icon img.keyword-favicon {
+    width: 34px !important;
+    height: 34px !important;
+  }
+  .group-card .keyword-grid-text {
+    font-size: 0.68rem !important;
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .keyword-grid-preview-item:active {
+    transform: scale(0.95) !important;
+    opacity: 0.88 !important;
+    transition: transform 0.08s ease, opacity 0.08s ease !important;
+  }
+  .top-hit-chip:active {
+    transform: scale(0.96) !important;
+    transition: transform 0.08s ease !important;
+  }
+  .icon-btn--add-keyword:active {
+    transform: scale(0.92) !important;
+  }
+  .fab:active, #add-fab:active {
+    transform: scale(0.92) !important;
+  }
 }

@@ -13,6 +13,7 @@
     WO.keywordAddedAt     = {};   // { encodedKeyword: unixTimestampMs }
     WO.keywordDeletedStatus= {};  // { encodedKeyword: true } (soft deleted by users)
     WO.localGroupOrder    = [];   // Per-browser group display order
+    WO.localKeywordOrder  = {};   // Per-browser website bookmark display order per group
     WO.localClickCounts   = {};   // { bookmarkId: count } — private to this browser/user
     WO.selectedBookmarkIds = new Set();
     WO.bulkMode            = false;

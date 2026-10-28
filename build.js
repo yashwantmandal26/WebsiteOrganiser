@@ -121,6 +121,7 @@ async function build() {
         'js/ui.js',
         'js/preferences.js',
         'js/search.js',
+        'js/link-health.js',
         'js/app.js'
     ];
 

@@ -49,8 +49,154 @@
         } catch {}
     };
 
-    // Reuse generated clips; changing a tone never starts a network request.
-    const soundProfiles = { soft: [400, .05, 80], bell: [880, .24, 18], pop: [620, .08, 45], crystal: [1568, .2, 23], wood: [220, .065, 65], digital: [1200, .06, 70] };
+    // ── Sound Synthesizers for Sound Packs (Mechanical, Apple Haptics, Sci-Fi, Classic) ──
+    const _buildCustomWav = (generator, dur) => {
+        try {
+            const sr = 22050, n = Math.floor(sr * dur), buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
+            const ws = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+            ws(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); ws(8, 'WAVE'); ws(12, 'fmt ');
+            v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+            v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+            ws(36, 'data'); v.setUint32(40, n * 2, true);
+            for (let i = 0; i < n; i++) {
+                const t = i / sr;
+                const sample = generator(t, dur);
+                v.setInt16(44 + i * 2, Math.max(-32768, Math.min(32767, Math.floor(sample * 28000))), true);
+            }
+            const bytes = new Uint8Array(buf); let bin = '';
+            for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+            return 'data:audio/wav;base64,' + btoa(bin);
+        } catch { return null; }
+    };
+
+    // Distinct tone sound synthesizers (every tone has its own unique audio signature)
+    const toneSoundGenerators = {
+        soft: {
+            hover: () => _buildCustomWav((t, dur) => {
+                const f = 220 - (t / dur) * 80;
+                const env = Math.sin(Math.PI * Math.min(1, t / dur)) * Math.exp(-t * 70);
+                return env * Math.sin(2 * Math.PI * f * t) * 0.7;
+            }, 0.038),
+            click: () => _buildCustomWav((t, dur) => {
+                const f = 250 - (t / dur) * 100;
+                const env = Math.sin(Math.PI * Math.min(1, t / dur)) * Math.exp(-t * 50);
+                return env * Math.sin(2 * Math.PI * f * t) * 0.85;
+            }, 0.055)
+        },
+        bell: {
+            hover: () => _buildCustomWav((t) => {
+                const env = Math.exp(-t * 18);
+                const harm1 = Math.sin(2 * Math.PI * 659.25 * t) * 0.5;
+                const harm2 = Math.sin(2 * Math.PI * 1318.5 * t) * 0.25;
+                const harm3 = Math.sin(2 * Math.PI * 1568.0 * t) * 0.18;
+                const shimmer = Math.sin(2 * Math.PI * 662.0 * t) * 0.12;
+                return env * (harm1 + harm2 + harm3 + shimmer);
+            }, 0.18),
+            click: () => _buildCustomWav((t) => {
+                const env = Math.exp(-t * 12);
+                const harm1 = Math.sin(2 * Math.PI * 659.25 * t) * 0.52;
+                const harm2 = Math.sin(2 * Math.PI * 1318.5 * t) * 0.28;
+                const harm3 = Math.sin(2 * Math.PI * 1975.5 * t) * 0.15;
+                return env * (harm1 + harm2 + harm3);
+            }, 0.28)
+        },
+        pop: {
+            hover: () => _buildCustomWav((t, dur) => {
+                const f = 340 * Math.pow(3.8, t / dur);
+                const env = Math.sin(Math.PI * Math.min(1, (t / dur) * 1.5)) * Math.exp(-t * 55);
+                return env * Math.sin(2 * Math.PI * f * t) * 0.85;
+            }, 0.045),
+            click: () => _buildCustomWav((t, dur) => {
+                const f = 380 * Math.pow(4.2, t / dur);
+                const env = Math.sin(Math.PI * Math.min(1, (t / dur) * 1.5)) * Math.exp(-t * 40);
+                return env * Math.sin(2 * Math.PI * f * t) * 0.95;
+            }, 0.065)
+        },
+        crystal: {
+            hover: () => _buildCustomWav((t) => {
+                const env = Math.exp(-t * 22);
+                const shimmer = 1 + 0.15 * Math.sin(2 * Math.PI * 18 * t);
+                const h1 = Math.sin(2 * Math.PI * 2093 * t) * 0.55;
+                const h2 = Math.sin(2 * Math.PI * 3136 * t) * 0.3;
+                const h3 = Math.sin(2 * Math.PI * 4186 * t) * 0.15;
+                return env * shimmer * (h1 + h2 + h3);
+            }, 0.14),
+            click: () => _buildCustomWav((t) => {
+                const env = Math.exp(-t * 16);
+                const shimmer = 1 + 0.2 * Math.sin(2 * Math.PI * 16 * t);
+                const h1 = Math.sin(2 * Math.PI * 2093 * t) * 0.5;
+                const h2 = Math.sin(2 * Math.PI * 3136 * t) * 0.35;
+                const h3 = Math.sin(2 * Math.PI * 4186 * t) * 0.15;
+                return env * shimmer * (h1 + h2 + h3);
+            }, 0.22)
+        },
+        wood: {
+            hover: () => _buildCustomWav((t) => {
+                const click = Math.exp(-t * 260) * Math.sin(2 * Math.PI * 850 * t) * 0.6;
+                const body = Math.exp(-t * 85) * (Math.sin(2 * Math.PI * 380 * t) * 0.55 + Math.sin(2 * Math.PI * 570 * t) * 0.25);
+                return click + body;
+            }, 0.045),
+            click: () => _buildCustomWav((t) => {
+                const click = Math.exp(-t * 220) * Math.sin(2 * Math.PI * 920 * t) * 0.7;
+                const body = Math.exp(-t * 65) * (Math.sin(2 * Math.PI * 360 * t) * 0.6 + Math.sin(2 * Math.PI * 540 * t) * 0.3);
+                return click + body;
+            }, 0.065)
+        },
+        digital: {
+            hover: () => _buildCustomWav((t) => {
+                const env = Math.exp(-t * 80);
+                const f = 1046.5;
+                const sq = Math.sin(2 * Math.PI * f * t) + (1/3) * Math.sin(6 * Math.PI * f * t) + (1/5) * Math.sin(10 * Math.PI * f * t);
+                return env * sq * 0.5;
+            }, 0.035),
+            click: () => _buildCustomWav((t) => {
+                const env = Math.exp(-t * 55);
+                const f = 1174.6;
+                const sq = Math.sin(2 * Math.PI * f * t) + (1/3) * Math.sin(6 * Math.PI * f * t) + (1/5) * Math.sin(10 * Math.PI * f * t);
+                return env * sq * 0.6;
+            }, 0.055)
+        },
+        mechanical: {
+            hover: () => _buildCustomWav((t) => {
+                const snap = Math.exp(-t * 280) * Math.sin(2 * Math.PI * 2900 * t) * 0.5;
+                const clack = Math.exp(-t * 90) * Math.sin(2 * Math.PI * 460 * t) * 0.5;
+                return snap + clack;
+            }, 0.03),
+            click: () => _buildCustomWav((t) => {
+                const snap = Math.exp(-t * 240) * Math.sin(2 * Math.PI * 2700 * t) * 0.6;
+                const clack = Math.exp(-t * 65) * Math.sin(2 * Math.PI * 440 * t) * 0.55;
+                const spring = Math.exp(-t * 40) * Math.sin(2 * Math.PI * 1650 * t) * 0.15;
+                return snap + clack + spring;
+            }, 0.05)
+        },
+        apple_haptic: {
+            hover: () => _buildCustomWav((t, dur) => {
+                const env = Math.pow(Math.sin(Math.PI * Math.min(1, t / dur)), 2);
+                const f = 145 - (t / dur) * 25;
+                return env * Math.sin(2 * Math.PI * f * t) * 0.95;
+            }, 0.022),
+            click: () => _buildCustomWav((t, dur) => {
+                const env = Math.pow(Math.sin(Math.PI * Math.min(1, t / dur)), 2);
+                const f = 155 - (t / dur) * 35;
+                return env * Math.sin(2 * Math.PI * f * t);
+            }, 0.034)
+        },
+        scifi: {
+            hover: () => _buildCustomWav((t, dur) => {
+                const f = 750 + 950 * Math.exp(-t * 75);
+                const env = Math.exp(-t * 65);
+                const mod = 0.4 * Math.sin(2 * Math.PI * 340 * t);
+                return env * Math.sin(2 * Math.PI * f * t + mod) * 0.75;
+            }, 0.038),
+            click: () => _buildCustomWav((t, dur) => {
+                const f = 600 + 1300 * Math.exp(-t * 50);
+                const env = Math.exp(-t * 45);
+                const mod = 0.5 * Math.sin(2 * Math.PI * 400 * t);
+                return env * Math.sin(2 * Math.PI * f * t + mod) * 0.85;
+            }, 0.058)
+        }
+    };
+
     const soundClips = new Map();
     let lastHover = 0;
     WO.playPreferenceSound = (kind, preview = false, toneOverride = null) => {
@@ -58,15 +204,24 @@
         if (!preview && p[kind + 'Sound'] === false) return false;
         if (kind === 'hover' && !preview && performance.now() - lastHover < (p.hoverCooldown ?? 90)) return false;
         if (kind === 'hover') lastHover = performance.now();
+
         const tone = toneOverride || p[kind + 'Tone'] || (kind === 'hover' ? 'soft' : 'digital');
-        const profile = soundProfiles[tone] || soundProfiles.soft;
-        const key = kind + tone;
+        const key = kind + '_' + tone;
+
         let clip = soundClips.get(key);
-        if (!clip) { const uri = _buildWav(...profile); if (!uri) return false; clip = new Audio(uri); soundClips.set(key, clip); }
-        // Stop the preceding tone when users switch rapidly between previews.
+        if (!clip) {
+            const gen = toneSoundGenerators[tone] || toneSoundGenerators.soft;
+            const fn = gen[kind] || gen.hover || gen.click;
+            const uri = fn ? fn() : null;
+            if (!uri) return false;
+            clip = new Audio(uri);
+            soundClips.set(key, clip);
+        }
+
+        // Stop preceding audio clip
         for (const audio of soundClips.values()) { audio.pause(); audio.currentTime = 0; }
         const rawVol = (p.volume ?? 55) / 100 * (p[kind + 'Volume'] ?? (kind === 'hover' ? 15 : 100)) / 100;
-        const finalVol = preview ? Math.max(0.28, rawVol) : rawVol;
+        const finalVol = preview ? Math.max(0.35, rawVol) : rawVol;
         if (!finalVol && !preview) return false;
         clip.volume = Math.max(0.05, Math.min(1, finalVol));
         clip.play().catch(() => tryUnlockAudio());
@@ -242,9 +397,16 @@
 
     WO.openURLWithBrowser = function (url, inNewTab = false) {
         const finalUrl = WO.resolveDynamicURL(url);
+        if (!finalUrl || typeof finalUrl !== 'string') return;
+        const trimmed = finalUrl.trim();
+        // Security check: strictly block dangerous pseudo-schemes like javascript:, data:, vbscript:
+        if (!/^https?:\/\//i.test(trimmed)) {
+            console.warn('Blocked unsafe URL scheme:', trimmed);
+            return;
+        }
         const isPC = !('ontouchstart' in window) && !navigator.maxTouchPoints && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-        if (inNewTab || isPC) { const w = window.open(finalUrl, '_blank', 'noopener'); if (w) { try { w.opener = null; } catch {} } }
-        else { window.location.href = finalUrl; }
+        if (inNewTab || isPC) { const w = window.open(trimmed, '_blank', 'noopener'); if (w) { try { w.opener = null; } catch {} } }
+        else { window.location.href = trimmed; }
     };
 
     // ─── Initialization ───────────────────────────────────────────────────────
@@ -513,28 +675,29 @@
             updatePadding();
         }
 
-        // Context Menu
+        // Context Menu (Theme-Adaptive with 100% reliable inline SVGs)
         let contextMenu = null;
         function createContextMenu() {
             if (contextMenu) return contextMenu;
             contextMenu = document.createElement('div');
             contextMenu.className = 'context-menu';
-            contextMenu.style.cssText = 'position:fixed;background:#232323;border:1px solid #444;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.35);padding:8px 0;z-index:10000;display:none;min-width:150px;';
 
-            const mkItem = (cls, html, color) => {
+            const mkItem = (cls, html, colorClass) => {
                 const el = document.createElement('div');
-                el.className = `context-menu-item ${cls}`;
+                el.className = `context-menu-item ${cls} ${colorClass}`;
                 el.innerHTML = html;
-                el.style.cssText = `padding:10px 16px;cursor:pointer;transition:background 0.2s;color:${color};font-weight:500;display:flex;align-items:center;`;
-                el.addEventListener('mouseenter', () => el.style.background = '#2d2d2d');
-                el.addEventListener('mouseleave', () => el.style.background = 'transparent');
                 return el;
             };
 
-            contextMenu.appendChild(mkItem('edit-comment-option', '<img src="media/comment.png" style="width:20px;height:20px;margin-right:10px;vertical-align:middle;">Edit Comment', '#4a90e2'));
-            contextMenu.appendChild(mkItem('rename-option', '<img src="media/rename.png" style="width:20px;height:20px;margin-right:10px;vertical-align:middle;">Rename', '#7b2cbf'));
-            contextMenu.appendChild(mkItem('restore-option', '<svg viewBox="0 0 24 24" width="20" height="20" style="margin-right:10px;vertical-align:middle;" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>Restore', '#4CAF50'));
-            contextMenu.appendChild(mkItem('delete-option', '<img src="media/delete.png" style="width:20px;height:20px;margin-right:10px;vertical-align:middle;"><span class="delete-text">Delete</span>', '#ff4d4f'));
+            const commentSvg = '<svg viewBox="0 0 24 24" width="18" height="18" class="context-menu-icon" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
+            const renameSvg  = '<svg viewBox="0 0 24 24" width="18" height="18" class="context-menu-icon" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>';
+            const restoreSvg = '<svg viewBox="0 0 24 24" width="18" height="18" class="context-menu-icon" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>';
+            const deleteSvg  = '<svg viewBox="0 0 24 24" width="18" height="18" class="context-menu-icon" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>';
+
+            contextMenu.appendChild(mkItem('edit-comment-option', `${commentSvg}<span>Comment</span>`, 'item-comment'));
+            contextMenu.appendChild(mkItem('rename-option', `${renameSvg}<span>Rename</span>`, 'item-rename'));
+            contextMenu.appendChild(mkItem('restore-option', `${restoreSvg}<span>Restore</span>`, 'item-restore'));
+            contextMenu.appendChild(mkItem('delete-option', `${deleteSvg}<span class="delete-text">Delete</span>`, 'item-delete'));
             document.body.appendChild(contextMenu);
             return contextMenu;
         }
@@ -550,38 +713,55 @@
             if (sy < 10) sy = 10;
             menu.style.left = sx + 'px'; menu.style.top = sy + 'px';
 
-            const editEl   = menu.querySelector('.edit-comment-option');
-            const renameEl = menu.querySelector('.rename-option');
+            const editEl    = menu.querySelector('.edit-comment-option');
+            const renameEl  = menu.querySelector('.rename-option');
             const restoreEl = menu.querySelector('.restore-option');
-            const deleteEl = menu.querySelector('.delete-option');
-            const deleteText = deleteEl.querySelector('.delete-text');
+            const deleteEl  = menu.querySelector('.delete-option');
+            const deleteText = deleteEl ? deleteEl.querySelector('.delete-text') : null;
 
-            const ek = WO.getBookmarkMetadataKey(groupIndex, keywordIndex, keyword);
-            const isSoftDeleted = WO.keywordDeletedStatus && WO.keywordDeletedStatus[ek] === true;
+            const ek = (typeof WO.getBookmarkMetadataKey === 'function')
+                ? WO.getBookmarkMetadataKey(groupIndex, keywordIndex, keyword)
+                : ((typeof WO.getBookmarkId === 'function') ? WO.getBookmarkId(groupIndex, keywordIndex) : keyword);
+            const isSoftDeleted = Boolean(WO.keywordDeletedStatus && WO.keywordDeletedStatus[ek] === true);
 
-            if (isSoftDeleted) {
-                editEl.style.display = WO.adminLoggedIn ? 'block' : 'none';
-                renameEl.style.display = WO.adminLoggedIn ? 'block' : 'none';
-                if (WO.adminLoggedIn) {
-                    restoreEl.style.display = 'block';
-                    restoreEl.onclick = () => { hideContextMenu(); WO.restoreKeyword(groupIndex, keywordIndex); };
-                    deleteEl.style.display = 'block';
-                    deleteText.textContent = 'Delete Permanently';
+            // Comment option is ALWAYS available for both normal users and admins
+            if (editEl) {
+                editEl.classList.remove('is-hidden');
+                editEl.onclick = () => { hideContextMenu(); WO.renameKeyword(groupIndex, keywordIndex, keyword, true); };
+            }
+
+            if (WO.adminLoggedIn) {
+                // Admin gets full control: Comment, Rename, Delete, and Restore (if soft-deleted)
+                if (renameEl) {
+                    renameEl.classList.remove('is-hidden');
+                    renameEl.onclick = () => { hideContextMenu(); WO.renameKeyword(groupIndex, keywordIndex, keyword, false); };
+                }
+                if (isSoftDeleted) {
+                    if (restoreEl) {
+                        restoreEl.classList.remove('is-hidden');
+                        restoreEl.onclick = () => { hideContextMenu(); WO.restoreKeyword(groupIndex, keywordIndex); };
+                    }
+                    if (deleteEl) {
+                        deleteEl.classList.remove('is-hidden');
+                        if (deleteText) deleteText.textContent = 'Perm Delete';
+                        deleteEl.onclick = () => { hideContextMenu(); WO.deleteKeyword(groupIndex, keywordIndex); };
+                    }
                 } else {
-                    restoreEl.style.display = 'none';
-                    deleteEl.style.display = 'none';
+                    if (restoreEl) {
+                        restoreEl.classList.add('is-hidden');
+                    }
+                    if (deleteEl) {
+                        deleteEl.classList.remove('is-hidden');
+                        if (deleteText) deleteText.textContent = 'Delete';
+                        deleteEl.onclick = () => { hideContextMenu(); WO.deleteKeyword(groupIndex, keywordIndex); };
+                    }
                 }
             } else {
-                editEl.style.display = 'block';
-                renameEl.style.display = 'block';
-                restoreEl.style.display = 'none';
-                deleteEl.style.display = 'block';
-                deleteText.textContent = 'Delete';
+                // Normal User: ONLY Comment is visible. Rename, Restore, and Delete are strictly hidden.
+                if (renameEl)  renameEl.classList.add('is-hidden');
+                if (restoreEl) restoreEl.classList.add('is-hidden');
+                if (deleteEl)  deleteEl.classList.add('is-hidden');
             }
-            
-            editEl.onclick = () => { hideContextMenu(); WO.renameKeyword(groupIndex, keywordIndex, keyword, true); };
-            renameEl.onclick = () => { hideContextMenu(); WO.renameKeyword(groupIndex, keywordIndex, keyword, false); };
-            deleteEl.onclick = () => { hideContextMenu(); WO.deleteKeyword(groupIndex, keywordIndex); };
         }
 
         function hideContextMenu() { if (contextMenu) contextMenu.style.display = 'none'; }
@@ -677,8 +857,9 @@
             // Do not call preventDefault() so browser natively opens the <a> link in background
         }, true);
 
-        // Group Drag & Drop
+        // Group Drag & Drop (Device-Only Custom Card Reordering)
         groupsContainer.addEventListener('dragstart', e => {
+            if (!WO.preferences || !WO.preferences.enableCardReorder) return;
             const card = e.target.closest('.group-card');
             const kwItem = e.target.closest('.keyword-grid-preview-item, li[data-keyword-index]');
             if (!card || kwItem) return;
@@ -687,14 +868,19 @@
             card.classList.add('dragging');
         });
         groupsContainer.addEventListener('dragover', e => {
+            if (!WO.preferences || !WO.preferences.enableCardReorder) return;
             e.preventDefault();
             const target = e.target.closest('.group-card');
             if (target && WO.draggedItemIndex !== null && !document.body.classList.contains('is-touch')) {
                 if (parseInt(target.dataset.groupIndex) !== WO.draggedItemIndex) target.classList.add('drag-over');
             }
         });
-        groupsContainer.addEventListener('dragleave', e => { const t = e.target.closest('.group-card'); if (t) t.classList.remove('drag-over'); });
+        groupsContainer.addEventListener('dragleave', e => {
+            const t = e.target.closest('.group-card');
+            if (t) t.classList.remove('drag-over');
+        });
         groupsContainer.addEventListener('drop', e => {
+            if (!WO.preferences || !WO.preferences.enableCardReorder) return;
             e.preventDefault();
             const target = e.target.closest('.group-card');
             if (target && WO.draggedItemIndex !== null && !document.body.classList.contains('is-touch')) {
@@ -713,7 +899,7 @@
             WO.draggedItemIndex = null;
         });
 
-        // Keyword Drag & Drop
+        // Keyword Drag & Drop (Admin syncs to Firestore; Regular user reorders device-only if enabled)
         groupsContainer.addEventListener('dragstart', e => {
             const kwItem = e.target.closest('.keyword-grid-preview-item, li[data-keyword-index]');
             if (!kwItem || kwItem.dataset.keywordIndex === undefined) return;
@@ -723,7 +909,8 @@
                 e.dataTransfer.setData('text/plain', targetUrl);
                 e.dataTransfer.effectAllowed = WO.adminLoggedIn ? 'copyMove' : 'copyLink';
             }
-            if (!WO.adminLoggedIn) return;
+            const canReorderKw = WO.adminLoggedIn || Boolean(WO.preferences && WO.preferences.enableCardReorder);
+            if (!canReorderKw) return;
             WO.draggedKeywordData = { groupIndex: parseInt(kwItem.dataset.groupIndex), keywordIndex: parseInt(kwItem.dataset.keywordIndex), keyword: kwItem.dataset.keywordValue, bookmarkId: kwItem.dataset.bookmarkId };
             if (e.dataTransfer) e.dataTransfer.effectAllowed = 'copyMove';
             kwItem.classList.add('dragging');
@@ -731,7 +918,8 @@
         }, true);
 
         groupsContainer.addEventListener('dragover', e => {
-            if (!WO.adminLoggedIn || !WO.draggedKeywordData) return;
+            const canReorderKw = WO.adminLoggedIn || Boolean(WO.preferences && WO.preferences.enableCardReorder);
+            if (!canReorderKw || !WO.draggedKeywordData) return;
             const kwItem = e.target.closest('.keyword-grid-preview-item, li[data-keyword-index]');
             const card   = e.target.closest('.group-card');
             if (kwItem || card) {
@@ -749,7 +937,8 @@
         });
 
         groupsContainer.addEventListener('drop', e => {
-            if (!WO.adminLoggedIn || !WO.draggedKeywordData) return;
+            const canReorderKw = WO.adminLoggedIn || Boolean(WO.preferences && WO.preferences.enableCardReorder);
+            if (!canReorderKw || !WO.draggedKeywordData) return;
             const kwItem = e.target.closest('.keyword-grid-preview-item, li[data-keyword-index]');
             const card   = e.target.closest('.group-card');
             if (kwItem || card) {
@@ -760,24 +949,42 @@
                 let tgi, tki;
                 if (kwItem) { tgi = parseInt(kwItem.dataset.groupIndex); tki = parseInt(kwItem.dataset.keywordIndex); }
                 else { tgi = parseInt(card.dataset.groupIndex); tki = WO.groups[tgi].keywords.length; }
-                if (si === tgi) {
-                    if (ski !== tki) {
-                        const kws = WO.groups[si].keywords;
-                        const ids = WO.groups[si].keywordIds;
-                        const [moved] = kws.splice(ski, 1);
-                        const [movedId] = ids.splice(ski, 1);
-                        kws.splice(ski < tki ? tki - 1 : tki, 0, moved);
-                        ids.splice(ski < tki ? tki - 1 : tki, 0, movedId);
+
+                if (WO.adminLoggedIn) {
+                    // Admin: Sync to Firestore
+                    if (si === tgi) {
+                        if (ski !== tki) {
+                            const kws = WO.groups[si].keywords;
+                            const ids = WO.groups[si].keywordIds;
+                            const [moved] = kws.splice(ski, 1);
+                            const [movedId] = ids.splice(ski, 1);
+                            kws.splice(ski < tki ? tki - 1 : tki, 0, moved);
+                            ids.splice(ski < tki ? tki - 1 : tki, 0, movedId);
+                            (async () => { await WO.syncAndSaveGroups().catch(() => {}); WO.renderGroups(); })();
+                        }
+                    } else {
+                        const [moved] = WO.groups[si].keywords.splice(ski, 1);
+                        const [movedId] = WO.groups[si].keywordIds.splice(ski, 1);
+                        WO.groups[tgi].keywords.splice(tki, 0, moved);
+                        WO.groups[tgi].keywordIds.splice(tki, 0, movedId);
+                        const tags = WO.groups[si].keywordTags[movedId];
+                        if (tags) { WO.groups[tgi].keywordTags[movedId] = tags; delete WO.groups[si].keywordTags[movedId]; }
                         (async () => { await WO.syncAndSaveGroups().catch(() => {}); WO.renderGroups(); })();
                     }
-                } else {
-                    const [moved] = WO.groups[si].keywords.splice(ski, 1);
-                    const [movedId] = WO.groups[si].keywordIds.splice(ski, 1);
-                    WO.groups[tgi].keywords.splice(tki, 0, moved);
-                    WO.groups[tgi].keywordIds.splice(tki, 0, movedId);
-                    const tags = WO.groups[si].keywordTags[movedId];
-                    if (tags) { WO.groups[tgi].keywordTags[movedId] = tags; delete WO.groups[si].keywordTags[movedId]; }
-                    (async () => { await WO.syncAndSaveGroups().catch(() => {}); WO.renderGroups(); })();
+                } else if (si === tgi) {
+                    // Non-admin device-only: Save local bookmark order for this group without touching Firestore
+                    const group = WO.groups[si];
+                    if (group && ski !== tki) {
+                        if (!WO.localKeywordOrder) WO.localKeywordOrder = {};
+                        let order = Array.isArray(WO.localKeywordOrder[group.name])
+                            ? [...WO.localKeywordOrder[group.name]]
+                            : group.keywords.map((_, ki) => WO.getBookmarkId(group, ki));
+                        const [moved] = order.splice(ski, 1);
+                        order.splice(ski < tki ? tki - 1 : tki, 0, moved);
+                        WO.localKeywordOrder[group.name] = order;
+                        if (typeof WO.saveLocalKeywordOrder === 'function') WO.saveLocalKeywordOrder();
+                        WO.renderGroups();
+                    }
                 }
             }
             WO.draggedKeywordData = null;
