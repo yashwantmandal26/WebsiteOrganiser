@@ -10,6 +10,7 @@
         var p = JSON.parse(localStorage.getItem('wo-preferences') || '{}');
         var showSec = (p.secondsDefaulted === true) ? (p.showSeconds === true) : true;
         document.documentElement.dataset.showSeconds = showSec ? 'true' : 'false';
+        if (p.showWeather === false) document.documentElement.dataset.showWeather = 'false';
       } catch (e) {
         document.documentElement.dataset.theme = 'dark';
         document.documentElement.dataset.showSeconds = 'true';
@@ -46,7 +47,7 @@
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js">
-  <link rel="stylesheet" href="bundle.min.css?v=1147">
+  <link rel="stylesheet" href="bundle.min.css?v=1151">
 
   <link rel="manifest" href="manifest.json">
 
@@ -94,6 +95,34 @@
           <span class="weather-temp" id="weather-temp">--°</span>
           <span class="weather-city" id="weather-city"></span>
         </div>
+        <script>
+          (function() {
+            try {
+              var p = JSON.parse(localStorage.getItem('wo-preferences') || '{}');
+              if (p.showWeather === false) return;
+              var raw = localStorage.getItem('wo-weather-cache-v1');
+              if (raw) {
+                var w = JSON.parse(raw);
+                if (w && typeof w.temp !== 'undefined') {
+                  var el = document.getElementById('weather-widget');
+                  var iconEl = document.getElementById('weather-icon');
+                  var tempEl = document.getElementById('weather-temp');
+                  var cityEl = document.getElementById('weather-city');
+                  if (el) {
+                    if (iconEl && typeof w.code !== 'undefined') {
+                      var c = w.code;
+                      iconEl.textContent = (c === 0) ? (w.isDay ? '☀️' : '🌙') : (c === 1 ? '🌤️' : (c === 2 ? '⛅' : (c === 3 ? '☁️' : (c >= 45 && c <= 48 ? '🌫️' : (c >= 51 && c <= 67 ? '🌧️' : (c >= 71 && c <= 77 ? '🌨️' : '⛅'))))));
+                    }
+                    if (tempEl) tempEl.textContent = w.temp + '°';
+                    if (cityEl && w.city) cityEl.textContent = ' · ' + w.city;
+                    el.dataset.hasLoaded = 'true';
+                    el.style.display = 'inline-flex';
+                  }
+                }
+              }
+            } catch(e) {}
+          })();
+        </script>
         <div class="header-right">
           <!-- Admin Tools Hub Dropdown (Visible only to Admin) -->
           <div class="admin-hub-wrapper admin-only" id="admin-hub-wrapper" style="display: none !important;">
@@ -597,7 +626,7 @@
     })();
   </script>
   <!-- Application Bundle -->
-  <script defer src="bundle.min.js?v=1147"></script>
+  <script defer src="bundle.min.js?v=1151"></script>
 
   <div id="toast-container"></div>
   <!-- Global keyword tooltip portal — lives at body level to avoid contain:paint clipping -->

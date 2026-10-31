@@ -670,14 +670,46 @@
         if (groupNameInput) groupNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') WO.saveGroup(); });
         window.closeGroupModal = () => WO.toggleModal(groupModal, false);
 
-        // Logo
+        // Fast in-app dashboard refresh
+        WO.refreshDashboard = async function (showAnimation = true) {
+            const logo = document.querySelector('.site-logo');
+            if (showAnimation && logo) {
+                logo.classList.remove('is-refreshing');
+                void logo.offsetWidth;
+                logo.classList.add('is-refreshing');
+                setTimeout(() => logo.classList.remove('is-refreshing'), 700);
+            }
+            const container = document.querySelector('main.container');
+            if (container) {
+                container.style.transition = 'opacity 0.15s ease, transform 0.15s ease';
+                container.style.opacity = '0.6';
+            }
+            try {
+                if (typeof WO.loadGroups === 'function') await WO.loadGroups();
+            } catch (e) {}
+            if (typeof WO.renderGroups === 'function') WO.renderGroups();
+            if (typeof WO.renderTopHits === 'function') WO.renderTopHits();
+            if (container) {
+                setTimeout(() => {
+                    container.style.opacity = '1';
+                    setTimeout(() => { container.style.transition = ''; }, 200);
+                }, 100);
+            }
+            if (typeof window.showToast === 'function') {
+                window.showToast('✨ Dashboard refreshed', 2200);
+            }
+        };
+
+        // Logo (Smart Instant Refresh with Animation)
         const logoLink = document.querySelector('.site-logo-link');
         const logoRefreshDot = document.querySelector('.site-logo-refresh-dot');
         if (logoLink) {
             logoLink.addEventListener('click', e => {
+                e.preventDefault();
                 if (logoRefreshDot && !logoRefreshDot.hidden && logoRefreshDot.style.display !== 'none') {
-                    e.preventDefault();
                     window.location.reload();
+                } else if (typeof WO.refreshDashboard === 'function') {
+                    WO.refreshDashboard(true);
                 }
             });
         }

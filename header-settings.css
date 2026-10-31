@@ -3249,3 +3249,27 @@ html[data-theme="light"] .context-menu-item.item-delete:hover {
     height: 20px !important;
   }
 }
+
+/* ─── Ultra-Smooth App Launch & Refresh Animations ─── */
+@keyframes headerEntrance {
+  0% { opacity: 0.85; transform: translateY(-4px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes contentEntrance {
+  0% { opacity: 0.2; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+header.premium-header {
+  animation: headerEntrance 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+main.container {
+  animation: contentEntrance 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.site-logo.is-refreshing {
+  animation: logoSpin 0.65s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes logoSpin {
+  0% { transform: rotate(0deg) scale(0.95); }
+  50% { transform: rotate(180deg) scale(1.12); }
+  100% { transform: rotate(360deg) scale(1); }
+}
