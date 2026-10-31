@@ -1242,7 +1242,7 @@ html[data-theme="light"] .search-suggestions {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
-  padding: 15px 20px 15px;
+  padding: 2px 20px 15px;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
@@ -5976,7 +5976,7 @@ body {
   .groups-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 12px !important;
-    padding: 10px 14px 20px !important;
+    padding: 2px 14px 20px !important;
   }
 
   .group-card {
@@ -6056,7 +6056,7 @@ body {
   .groups-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 16px !important;
-    padding: 14px 20px 24px !important;
+    padding: 2px 20px 24px !important;
   }
 
   .group-card {
