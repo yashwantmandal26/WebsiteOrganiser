@@ -1647,7 +1647,7 @@ html[data-wallpaper-active="true"][data-theme="solid-dark"] .group-card-header {
 .top-hits-section {
   width: 100%;
   max-width: 1400px;
-  margin: 10px auto 2px;
+  margin: 10px auto 8px;
   padding: 0 16px;
   box-sizing: border-box;
   overscroll-behavior: contain !important;
@@ -1701,7 +1701,7 @@ html[data-wallpaper-active="true"] .top-hits-title {
   flex-wrap: nowrap !important;
   overflow-x: auto !important;
   overflow-y: hidden !important;
-  padding: 6px 4px 4px !important;
+  padding: 6px 4px 7px !important;
   margin: 0 !important;
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
@@ -2037,7 +2037,7 @@ html:not([data-theme="light"]) .top-hit-count {
 @media (max-width: 768px) {
   .top-hits-section {
     padding: 0 10px;
-    margin: 6px auto 2px;
+    margin: 6px auto 6px;
   }
   .top-hit-chip {
     padding: 0 8px !important;
