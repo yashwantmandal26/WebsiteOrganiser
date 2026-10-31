@@ -520,7 +520,8 @@
         cycleAccent: 'Control',
         clearSearch: 'Delete',
         openSettings: 'Ctrl+,',
-        closeModals: 'Escape'
+        closeModals: 'Escape',
+        adminAction: 'Alt+A'
     };
 
     const SHORTCUT_METADATA = [
@@ -529,17 +530,13 @@
         { id: 'cycleAccent', name: 'Cycle accent color', desc: 'Single tap to cycle through accent colors' },
         { id: 'clearSearch', name: 'Clear search query', desc: 'Clear search bar and restore all websites' },
         { id: 'openSettings', name: 'Open Settings modal', desc: 'Open Look, Sound & Shortcuts preferences' },
-        { id: 'closeModals', name: 'Close modals / Escape', desc: 'Dismiss active dialogs, modals, and search suggestions' }
+        { id: 'closeModals', name: 'Close modals / Escape', desc: 'Dismiss active dialogs, modals, and search suggestions' },
+        { id: 'adminAction', name: 'Admin Tools / Login', desc: 'Toggle Admin Tools dropdown (or open login if logged out)' }
     ];
 
     let savedShortcuts = {};
     try { savedShortcuts = JSON.parse(localStorage.getItem('wo-shortcuts') || '{}'); } catch {}
-    if (savedShortcuts && savedShortcuts.adminLogin) {
-        delete savedShortcuts.adminLogin;
-        try { localStorage.setItem('wo-shortcuts', JSON.stringify(savedShortcuts)); } catch {}
-    }
     WO.shortcuts = { ...DEFAULT_SHORTCUTS, ...(savedShortcuts || {}) };
-    delete WO.shortcuts.adminLogin;
     WO.DEFAULT_SHORTCUTS = DEFAULT_SHORTCUTS;
     WO.SHORTCUT_METADATA = SHORTCUT_METADATA;
 
@@ -781,6 +778,30 @@
             return true;
         }
 
+        if (actionId === 'adminAction') {
+            if (e) e.preventDefault();
+            if (WO.adminLoggedIn) {
+                const hubBtn = document.getElementById('admin-hub-btn');
+                if (hubBtn) hubBtn.click();
+            } else {
+                const adminModal = document.getElementById('admin-modal');
+                const adminIdInput = document.getElementById('admin-id-input');
+                const adminPasswordInput = document.getElementById('admin-password-input');
+                const adminErrorMsg = document.getElementById('admin-error-msg');
+                if (adminModal) {
+                    if (adminIdInput) adminIdInput.value = '';
+                    if (adminPasswordInput) adminPasswordInput.value = '';
+                    if (adminErrorMsg) {
+                        adminErrorMsg.textContent = 'Invalid credentials';
+                        adminErrorMsg.style.display = 'none';
+                    }
+                    WO.toggleModal(adminModal, true);
+                    if (adminIdInput) adminIdInput.focus();
+                }
+            }
+            return true;
+        }
+
         if (actionId === 'closeModals') {
             const activeModal = document.querySelector('.modal-container.visible');
             if (activeModal) {
@@ -829,6 +850,12 @@
             return;
         }
         singleModifierCombo = true;
+
+        if (e.altKey && (e.key === 'a' || e.key === 'A') && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+            e.preventDefault();
+            executeShortcutAction('adminAction', e);
+            return;
+        }
 
         const active = document.activeElement;
         const inInput = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable);

@@ -55,6 +55,18 @@
         return c;
     };
 
+    // ─── Word Display Formatting ──────────────────────────────────────────────
+    WO.formatDisplayName = function (text) {
+        if (!text || typeof text !== 'string') return text || '';
+        return text.replace(/\b([a-zA-Z0-9_\u00C0-\u017F]+)\b/g, (match) => {
+            if (!/[a-zA-Z]/.test(match)) return match;
+            if (match === match.toUpperCase()) {
+                return match.charAt(0).toUpperCase() + match.slice(1).toLowerCase();
+            }
+            return match.charAt(0).toUpperCase() + match.slice(1);
+        });
+    };
+
     WO.parseKeyword = function (keyword) {
         const trimmed = String(keyword || '').trim();
         let displayText = trimmed;
@@ -82,6 +94,7 @@
                 }
             }
         } catch {}
+        displayText = WO.formatDisplayName(displayText);
         return { displayText, targetUrl, isUrl };
     };
 

@@ -3092,15 +3092,15 @@ body.is-zooming .search-suggestions {
   text-align: center;
   margin-top: 2px;
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   
-  /* Modern 2-line clamping for optimal readability without truncation */
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  /* Single-line with dots (..) when exceeding width */
+  display: block;
+  white-space: nowrap;
   overflow: hidden;
-  white-space: normal;
-  word-break: break-word;
-  max-height: 2.36em;
+  text-overflow: ellipsis;
+  word-break: normal;
 }
 
 /* On hover, show the full text on a single line (it will bleed horizontally) */
@@ -5402,14 +5402,18 @@ textarea {
     line-height: 1.15 !important;
     margin-top: 3px !important;
     text-align: center !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
     
-    display: -webkit-box !important;
-    -webkit-line-clamp: 2 !important;
-    -webkit-box-orient: vertical !important;
+    display: block !important;
+    white-space: nowrap !important;
     overflow: hidden !important;
-    white-space: normal !important;
-    word-break: break-word !important;
-    max-height: 2.3em !important;
+    text-overflow: ellipsis !important;
+    word-break: normal !important;
+    -webkit-line-clamp: unset !important;
+    line-clamp: unset !important;
+    max-height: none !important;
   }
   
   /* List view adjustments */
@@ -6027,14 +6031,18 @@ body {
     line-height: 1.18 !important;
     margin-top: 3px !important;
     text-align: center !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
     
-    display: -webkit-box !important;
-    -webkit-line-clamp: 2 !important;
-    -webkit-box-orient: vertical !important;
+    display: block !important;
+    white-space: nowrap !important;
     overflow: hidden !important;
-    white-space: normal !important;
-    word-break: break-word !important;
-    max-height: 2.36em !important;
+    text-overflow: ellipsis !important;
+    word-break: normal !important;
+    -webkit-line-clamp: unset !important;
+    line-clamp: unset !important;
+    max-height: none !important;
   }
 
   .group-expand-chip {
@@ -6086,13 +6094,18 @@ body {
     font-size: 0.75rem !important;
     font-weight: 600 !important;
     line-height: 1.18 !important;
-    display: -webkit-box !important;
-    -webkit-line-clamp: 2 !important;
-    -webkit-box-orient: vertical !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    
+    display: block !important;
+    white-space: nowrap !important;
     overflow: hidden !important;
-    white-space: normal !important;
-    word-break: break-word !important;
-    max-height: 2.36em !important;
+    text-overflow: ellipsis !important;
+    word-break: normal !important;
+    -webkit-line-clamp: unset !important;
+    line-clamp: unset !important;
+    max-height: none !important;
   }
 }
 
@@ -6482,13 +6495,18 @@ html {
     line-height: 1.15 !important;
     margin-top: 3px !important;
     text-align: center !important;
-    display: -webkit-box !important;
-    -webkit-line-clamp: 2 !important;
-    -webkit-box-orient: vertical !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    
+    display: block !important;
+    white-space: nowrap !important;
     overflow: hidden !important;
-    white-space: normal !important;
-    word-break: break-word !important;
-    max-height: 2.3em !important;
+    text-overflow: ellipsis !important;
+    word-break: normal !important;
+    -webkit-line-clamp: unset !important;
+    line-clamp: unset !important;
+    max-height: none !important;
   }
 
   .bulk-toolbar {

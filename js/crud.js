@@ -536,6 +536,29 @@
         WO.renderGroups();
     };
 
+    WO.bulkSelectAll = function () {
+        if (!Array.isArray(WO.groups)) return;
+        WO.selectedBookmarkIds.clear();
+        WO.groups.forEach((group, gi) => {
+            if (!Array.isArray(group.keywords)) return;
+            group.keywords.forEach((_, ki) => {
+                const id = (typeof WO.getBookmarkId === 'function') ? WO.getBookmarkId(gi, ki) : `${gi}-${ki}`;
+                if (id) WO.selectedBookmarkIds.add(id);
+            });
+        });
+        WO.updateBulkToolbar();
+        WO.renderGroups();
+        if (typeof WO.showToast === 'function') {
+            WO.showToast(`Selected all ${WO.selectedBookmarkIds.size} bookmarks.`, 'info');
+        }
+    };
+
+    WO.bulkClearSelection = function () {
+        WO.selectedBookmarkIds.clear();
+        WO.updateBulkToolbar();
+        WO.renderGroups();
+    };
+
     function selectedEntries() {
         const result = [];
         WO.groups.forEach((group, gi) => group.keywordIds.forEach((id, ki) => {
@@ -627,22 +650,165 @@
     WO.restoreTrashItem = async function (groupIndex, itemId) {
         const group = WO.groups[groupIndex];
         if (!WO.restoreTrashItemInMemory(group, itemId)) return;
-        await WO.syncAndSaveGroups().catch(() => {}); WO.renderTrash(); WO.renderGroups();
+        await WO.syncAndSaveGroups().catch(() => {});
+        WO.renderTrash();
+        WO.renderGroups();
+        WO.updateAdminTrashBadge();
+        if (typeof WO.showToast === 'function') {
+            WO.showToast('Restored bookmark to ' + (group ? group.name : 'group'), 'success');
+        }
+    };
+
+    WO.updateAdminTrashBadge = function () {
+        const badge = document.getElementById('trash-count-badge');
+        const adminStatTrash = document.getElementById('admin-stat-trash');
+        const adminStatGroups = document.getElementById('admin-stat-groups');
+        const adminStatLinks = document.getElementById('admin-stat-links');
+
+        let totalTrash = 0;
+        let totalLinks = 0;
+        let totalGroups = (WO.groups && WO.groups.length) || 0;
+
+        if (Array.isArray(WO.groups)) {
+            WO.groups.forEach(g => {
+                if (Array.isArray(g.trash)) totalTrash += g.trash.length;
+                if (Array.isArray(g.keywords)) totalLinks += g.keywords.length;
+            });
+        }
+
+        if (badge) {
+            if (totalTrash > 0) {
+                badge.textContent = String(totalTrash);
+                badge.style.display = 'inline-flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        if (adminStatTrash) adminStatTrash.textContent = String(totalTrash);
+        if (adminStatGroups) adminStatGroups.textContent = String(totalGroups);
+        if (adminStatLinks) adminStatLinks.textContent = String(totalLinks);
+    };
+
+    WO.permanentlyDeleteTrashItem = async function (groupIndex, itemId, keywordName) {
+        if (!WO.adminLoggedIn) { alert('Admin access required.'); return; }
+        if (!confirm(`Permanently delete "${keywordName || 'this item'}"?\n\nThis action cannot be undone.`)) return;
+
+        const group = WO.groups[groupIndex];
+        if (!group || !Array.isArray(group.trash)) return;
+        const idx = group.trash.findIndex(t => t.id === itemId);
+        if (idx < 0) return;
+
+        const removed = group.trash.splice(idx, 1)[0];
+        await WO.syncAndSaveGroups().catch(() => {});
+        WO.renderTrash();
+        WO.updateAdminTrashBadge();
+
+        if (typeof WO.logActivity === 'function') {
+            WO.logActivity('PERMANENT_DELETE_KEYWORD', {
+                targetName: removed.keyword,
+                groupName: group.name,
+                groupIndex
+            });
+        }
+
+        if (typeof WO.showToast === 'function') {
+            WO.showToast('🗑️ Permanently deleted from Trash', 'info');
+        }
+    };
+
+    WO.emptyAllTrash = async function () {
+        if (!WO.adminLoggedIn) { alert('Admin access required.'); return; }
+        let totalCount = 0;
+        WO.groups.forEach(g => { if (Array.isArray(g.trash)) totalCount += g.trash.length; });
+        if (!totalCount) {
+            if (typeof WO.showToast === 'function') WO.showToast('Recycle Bin is already empty.', 'info');
+            return;
+        }
+
+        if (!confirm(`Permanently empty all ${totalCount} item${totalCount === 1 ? '' : 's'} from the Recycle Bin?\n\nThis will completely purge them. This action cannot be undone.`)) return;
+
+        WO.groups.forEach(g => { g.trash = []; });
+        await WO.syncAndSaveGroups().catch(() => {});
+        WO.renderTrash();
+        WO.updateAdminTrashBadge();
+
+        if (typeof WO.logActivity === 'function') {
+            WO.logActivity('EMPTY_ALL_TRASH', { totalCleared: totalCount });
+        }
+
+        if (typeof WO.showToast === 'function') {
+            WO.showToast(`🗑️ Permanently cleared ${totalCount} item${totalCount === 1 ? '' : 's'} from Trash`, 'success');
+        }
     };
 
     WO.renderTrash = function () {
-        const list = document.getElementById('trash-list'); if (!list) return;
+        const list = document.getElementById('trash-list');
+        const totalCountEl = document.getElementById('trash-total-count');
+        const emptyAllBtn = document.getElementById('trash-empty-all-btn');
+        if (!list) return;
+
         list.textContent = '';
-        let count = 0;
-        WO.groups.forEach((group, gi) => group.trash.forEach(item => {
-            count++;
-            const row = document.createElement('div'); row.className = 'trash-row';
-            const label = document.createElement('span'); label.textContent = `${item.keyword} — ${group.name}`;
-            const restore = document.createElement('button'); restore.type = 'button'; restore.className = 'btn'; restore.textContent = 'Restore';
-            restore.onclick = () => WO.restoreTrashItem(gi, item.id);
-            row.append(label, restore); list.appendChild(row);
-        }));
-        if (!count) { const empty = document.createElement('p'); empty.textContent = 'Trash is empty.'; list.appendChild(empty); }
+        let totalItems = 0;
+
+        WO.groups.forEach((group, gi) => {
+            if (!Array.isArray(group.trash)) return;
+            group.trash.forEach(item => {
+                totalItems++;
+                const parsed = (typeof WO.parseKeyword === 'function') ? WO.parseKeyword(item.keyword) : { displayText: item.keyword, targetUrl: item.keyword };
+                const displayText = parsed.displayText || item.keyword;
+                const targetUrl = parsed.targetUrl || item.keyword;
+
+                let dateStr = '';
+                if (item.deletedAt) {
+                    try {
+                        const d = new Date(item.deletedAt);
+                        dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    } catch {}
+                }
+
+                const card = document.createElement('div');
+                card.className = 'trash-card';
+                card.innerHTML = `
+                    <div class="trash-card-info">
+                        <div class="trash-card-title-row">
+                            <span class="trash-group-tag">📁 ${WO.escapeHtml(group.name)}</span>
+                            <strong class="trash-item-title">${WO.escapeHtml(displayText)}</strong>
+                            ${dateStr ? `<span class="trash-date-tag">🕒 ${WO.escapeHtml(dateStr)}</span>` : ''}
+                        </div>
+                        <span class="trash-item-url" title="${WO.escapeHtml(targetUrl)}">${WO.escapeHtml(targetUrl)}</span>
+                    </div>
+                    <div class="trash-card-actions">
+                        <button type="button" class="btn btn-sm holo-btn btn-restore" title="Restore back to ${WO.escapeHtml(group.name)}">🔄 Restore</button>
+                        <button type="button" class="btn btn-sm btn-danger btn-perm-delete" title="Permanently delete">🗑️ Delete</button>
+                    </div>
+                `;
+
+                const restoreBtn = card.querySelector('.btn-restore');
+                if (restoreBtn) {
+                    restoreBtn.onclick = () => WO.restoreTrashItem(gi, item.id);
+                }
+
+                const deleteBtn = card.querySelector('.btn-perm-delete');
+                if (deleteBtn) {
+                    deleteBtn.onclick = () => WO.permanentlyDeleteTrashItem(gi, item.id, displayText);
+                }
+
+                list.appendChild(card);
+            });
+        });
+
+        if (totalCountEl) totalCountEl.textContent = `${totalItems} item${totalItems === 1 ? '' : 's'} in trash`;
+        if (emptyAllBtn) emptyAllBtn.style.display = totalItems > 0 ? 'inline-flex' : 'none';
+
+        if (!totalItems) {
+            const empty = document.createElement('div');
+            empty.className = 'trash-empty-msg';
+            empty.textContent = '🎉 Recycle Bin is completely empty.';
+            list.appendChild(empty);
+        }
+
+        WO.updateAdminTrashBadge();
     };
 
     // ─── Import / Export ──────────────────────────────────────────────────────
@@ -751,6 +917,10 @@
         if (bulkModeBtn) bulkModeBtn.onclick = () => WO.setBulkMode(!WO.bulkMode);
         const bulkCancel = document.getElementById('bulk-cancel-btn');
         if (bulkCancel) bulkCancel.onclick = () => WO.setBulkMode(false);
+        const bulkSelectAll = document.getElementById('bulk-select-all-btn');
+        if (bulkSelectAll) bulkSelectAll.onclick = () => WO.bulkSelectAll();
+        const bulkClear = document.getElementById('bulk-clear-selection-btn');
+        if (bulkClear) bulkClear.onclick = () => WO.bulkClearSelection();
         const bulkMove = document.getElementById('bulk-move-btn');
         if (bulkMove) bulkMove.onclick = () => WO.bulkMoveSelected(Number(document.getElementById('bulk-target-group').value));
         const bulkTag = document.getElementById('bulk-tag-btn');
@@ -761,7 +931,10 @@
         if (trashBtn) trashBtn.onclick = () => { WO.renderTrash(); WO.toggleModal(document.getElementById('trash-modal'), true); };
         const trashClose = document.getElementById('trash-close-btn');
         if (trashClose) trashClose.onclick = () => WO.toggleModal(document.getElementById('trash-modal'), false);
+        const trashEmptyAll = document.getElementById('trash-empty-all-btn');
+        if (trashEmptyAll) trashEmptyAll.onclick = () => WO.emptyAllTrash();
         WO.updateBulkToolbar();
+        WO.updateAdminTrashBadge();
     };
 
     function cleanMetadataMap(value, validator) {

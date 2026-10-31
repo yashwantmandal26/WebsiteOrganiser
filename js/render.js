@@ -326,7 +326,7 @@
                             ${WO.bulkMode ? `<span class="bulk-check" aria-hidden="true">${WO.selectedBookmarkIds.has(bookmarkId) ? '✓' : ''}</span>` : ''}
                             ${isNew ? '<div class="keyword-new-badge">NEW</div>' : ''}
                             <div class="keyword-grid-icon">${WO.getFaviconOrEmoji(keyword)}</div>
-                            <div class="keyword-grid-text">${keywordLabelHtml}</div>
+                            <div class="keyword-grid-text" title="${WO.escapeHtml(displayText)}">${keywordLabelHtml}</div>
                             ${tags.length ? `<div class="keyword-tags">${tags.map(t => `<span>${WO.escapeHtml(t)}</span>`).join('')}</div>` : ''}
                             <div class="keyword-click-counter">${clickCount}</div>
                         `;
@@ -710,29 +710,6 @@
             return;
         }
 
-        const activeTimeframe = WO.topHitsTimeframe || localStorage.getItem('wo_tophits_timeframe') || 'all';
-        WO.topHitsTimeframe = activeTimeframe;
-
-        const toggleEl = document.getElementById('top-hits-timeframe-toggle');
-        if (toggleEl) {
-            toggleEl.querySelectorAll('.top-hits-timeframe-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.timeframe === activeTimeframe);
-            });
-            if (!toggleEl.dataset.bound) {
-                toggleEl.addEventListener('click', (e) => {
-                    const btn = e.target.closest('.top-hits-timeframe-btn');
-                    if (!btn) return;
-                    const tf = btn.dataset.timeframe;
-                    if (!tf || tf === WO.topHitsTimeframe) return;
-                    WO.topHitsTimeframe = tf;
-                    try { localStorage.setItem('wo_tophits_timeframe', tf); } catch {}
-                    if (typeof WO.playPreferenceSound === 'function') WO.playPreferenceSound('click');
-                    WO.renderTopHits();
-                });
-                toggleEl.dataset.bound = 'true';
-            }
-        }
-
         const hits = [];
         if (Array.isArray(WO.groups)) {
             WO.groups.forEach((group, gi) => {
@@ -741,9 +718,7 @@
                     if (!keyword) return;
                     const isSoftDeleted = WO.getBookmarkMetadata(WO.keywordDeletedStatus, gi, ki, keyword, false) === true;
                     if (isSoftDeleted && !WO.adminLoggedIn) return;
-                    const clickCount = typeof WO.getBookmarkTimeframeClicks === 'function'
-                        ? WO.getBookmarkTimeframeClicks(gi, ki, keyword, activeTimeframe)
-                        : WO.getBookmarkClickCount(gi, ki, keyword);
+                    const clickCount = WO.getBookmarkClickCount(gi, ki, keyword);
                     if (clickCount > 0) {
                         const { displayText, targetUrl } = WO.parseKeyword(keyword);
                         hits.push({
@@ -786,8 +761,7 @@
             chip.href = WO.resolveDynamicURL(item.targetUrl) || '#';
             chip.target = '_blank';
             chip.rel = 'noopener';
-            const timeframeLabel = activeTimeframe === 'week' ? 'clicks this week' : (activeTimeframe === 'month' ? 'clicks this month' : 'all-time clicks');
-            chip.title = `${item.displayText} (${item.clickCount} ${timeframeLabel})`;
+            chip.title = `${item.displayText} (${item.clickCount} click${item.clickCount === 1 ? '' : 's'})`;
 
             chip.innerHTML = `
                 <span class="top-hit-rank">#${displayRank}</span>

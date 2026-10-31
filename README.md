@@ -119,6 +119,17 @@ Administrative actions are protected to maintain organization integrity.
 
 ## 📋 Changelog
 
+### v1.0.31 (2026-10-31)
+- 🔤 **Website Name Standardization & Single-Line Text**:
+  - Enforced strict single-line display with ellipsis truncation (text-overflow: ellipsis; overflow: hidden; white-space: nowrap;) across all cards and viewport sizes.
+  - Implemented smart Title-Casing display formatter (Abc): converts all-caps names (e.g. VEGAMOVIES → Vegamovies), capitalizes lowercase names (e.g. movies4u → Movies4u), while preserving intentional mixed-case (e.g. VegaMovies).
+- ⚡ **Streamlined Frequently Used Sites**:
+  - Removed timeframe pill filters from Frequently Used Sites for a cleaner, unified all-time click ranking.
+- 🗑️ **Recycle Bin & Link Health Enhancements**:
+  - Enhanced Recycle Bin management with permanent deletion and empty-all actions.
+  - Improved Link Health scanner with DNS-over-HTTPS (DoH) probing, clickable filter chips, and timeout categorization.
+- 📦 **Production Bundle**: Re-compiled minified CSS & JS and updated cache version to v1144.
+
 ### v1.0.30 (2026-10-28)
 - 🔘 **Unified Circular Action Button Design**:
   - Redesigned the Floating **Add Group** (+) button to precisely match the header circular action buttons (Theme Toggle & Settings).

@@ -725,6 +725,18 @@
   border-radius: 14px;
   background: rgba(128, 128, 128, 0.08);
   border: 1px solid rgba(128, 128, 128, 0.15);
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.link-health-stat-chip:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.link-health-stat-chip:active {
+  transform: translateY(0);
 }
 
 .link-health-stat-chip.chip-alive {
@@ -997,4 +1009,258 @@
     width: 100%;
     justify-content: flex-end;
   }
+}
+
+/* ==========================================================================
+   Admin Hub Enhancements: Header, Identity, Stats & Badges
+   ========================================================================== */
+
+.admin-hub-header-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.admin-hub-user-email {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--placeholder-color, #888);
+  max-width: 190px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-hub-role-badge {
+  font-size: 0.65rem;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(123, 44, 191, 0.15);
+  color: #a855f7;
+  border: 1px solid rgba(123, 44, 191, 0.3);
+}
+
+[data-theme="dark"] .admin-hub-role-badge,
+[data-theme="solid-dark"] .admin-hub-role-badge {
+  background: rgba(168, 85, 247, 0.2);
+  color: #d8b4fe;
+  border-color: rgba(168, 85, 247, 0.35);
+}
+
+.admin-hub-stats-bar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  padding: 6px 10px 8px;
+  margin-bottom: 6px;
+  background: rgba(128, 128, 128, 0.08);
+  border-radius: 10px;
+}
+
+.admin-mini-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+}
+
+.admin-mini-val {
+  font-size: 0.95rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--text-color, #111);
+}
+
+[data-theme="dark"] .admin-mini-val,
+[data-theme="solid-dark"] .admin-mini-val {
+  color: #f1f5f9;
+}
+
+.admin-mini-lbl {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--placeholder-color, #888);
+}
+
+.menu-item-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+}
+
+.admin-count-badge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(239, 68, 68, 0.18);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  line-height: 1;
+}
+
+/* ==========================================================================
+   Recycle Bin / Trash Modal Redesign
+   ========================================================================== */
+
+.trash-modal-content {
+  max-width: 680px !important;
+  max-height: 85vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 20px !important;
+  border-radius: 20px !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4) !important;
+  background: rgba(28, 26, 40, 0.95) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  overflow: hidden !important;
+}
+
+[data-theme="light"] .trash-modal-content {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+.trash-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.15);
+}
+
+.trash-modal-title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--text-color, #111);
+}
+
+[data-theme="dark"] .trash-modal-title,
+[data-theme="solid-dark"] .trash-modal-title {
+  color: #f1f5f9;
+}
+
+.trash-modal-sub {
+  font-size: 0.78rem;
+  color: var(--placeholder-color, #888);
+  display: block;
+  margin-top: 2px;
+}
+
+.trash-actions-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.trash-count-pill {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--placeholder-color, #888);
+  background: rgba(128, 128, 128, 0.1);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.trash-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  overflow-y: auto !important;
+  max-height: 52vh !important;
+  padding-right: 4px !important;
+}
+
+.trash-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(128, 128, 128, 0.06);
+  border: 1px solid rgba(128, 128, 128, 0.13);
+  transition: all 0.2s ease;
+}
+
+.trash-card:hover {
+  background: rgba(128, 128, 128, 0.1);
+}
+
+.trash-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.trash-card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.trash-group-tag {
+  font-size: 0.7rem;
+  font-weight: 650;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(128, 128, 128, 0.12);
+  color: var(--placeholder-color, #777);
+}
+
+.trash-item-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-color, #111);
+}
+
+[data-theme="dark"] .trash-item-title,
+[data-theme="solid-dark"] .trash-item-title {
+  color: #f1f5f9;
+}
+
+.trash-date-tag {
+  font-size: 0.7rem;
+  color: var(--placeholder-color, #888);
+}
+
+.trash-item-url {
+  font-size: 0.75rem;
+  color: var(--placeholder-color, #888);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 440px;
+}
+
+.trash-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.trash-empty-msg {
+  padding: 30px 15px;
+  text-align: center;
+  color: var(--placeholder-color, #888);
+  font-size: 0.95rem;
+  font-weight: 600;
 }

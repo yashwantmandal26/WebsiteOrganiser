@@ -19,7 +19,7 @@
   <meta charset="UTF-8">
   <meta name="viewport"
     content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https:; media-src 'self' data:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://api.bigdatacloud.net https://freeipapi.com https://ipapi.co https://api.open-meteo.com; frame-src 'self' https://*.firebaseapp.com; object-src 'none'; base-uri 'self';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https:; media-src 'self' data:; connect-src 'self' https: http: https://dns.google https://cloudflare-dns.com https://*.googleapis.com https://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://api.bigdatacloud.net https://freeipapi.com https://ipapi.co https://api.open-meteo.com; frame-src 'self' https://*.firebaseapp.com; object-src 'none'; base-uri 'self';">
   <title>WebsiteOrganiser</title>
 
   <!-- PWA Meta Tags -->
@@ -46,7 +46,7 @@
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js">
-  <link rel="stylesheet" href="bundle.min.css?v=1134">
+  <link rel="stylesheet" href="bundle.min.css?v=1145">
 
   <link rel="manifest" href="manifest.json">
 
@@ -104,7 +104,25 @@
             </button>
             <div id="admin-hub-dropdown" class="admin-hub-menu" role="menu">
               <div class="admin-hub-header">
-                <span class="admin-hub-status">🛡️ Admin Session Active</span>
+                <div class="admin-hub-header-main">
+                  <span class="admin-hub-status">🛡️ Admin Session Active</span>
+                  <span id="admin-hub-user-email" class="admin-hub-user-email" style="display:none;"></span>
+                </div>
+                <span class="admin-hub-role-badge">Super Admin</span>
+              </div>
+              <div class="admin-hub-stats-bar" id="admin-hub-stats-bar">
+                <div class="admin-mini-stat">
+                  <span class="admin-mini-val" id="admin-stat-groups">0</span>
+                  <span class="admin-mini-lbl">Groups</span>
+                </div>
+                <div class="admin-mini-stat">
+                  <span class="admin-mini-val" id="admin-stat-links">0</span>
+                  <span class="admin-mini-lbl">Links</span>
+                </div>
+                <div class="admin-mini-stat">
+                  <span class="admin-mini-val" id="admin-stat-trash">0</span>
+                  <span class="admin-mini-lbl">Trash</span>
+                </div>
               </div>
               <div class="admin-hub-group">
                 <button type="button" id="activity-log-btn" class="admin-menu-item" role="menuitem">
@@ -117,7 +135,10 @@
                 <button type="button" id="trash-btn" class="admin-menu-item" role="menuitem">
                   <span class="menu-item-icon">🗑️</span>
                   <div class="menu-item-text">
-                    <span class="menu-item-title">Recycle Bin / Trash</span>
+                    <div class="menu-item-title-row">
+                      <span class="menu-item-title">Recycle Bin / Trash</span>
+                      <span id="trash-count-badge" class="admin-count-badge" style="display:none;">0</span>
+                    </div>
                     <span class="menu-item-desc">View & restore deleted links</span>
                   </div>
                 </button>
@@ -230,11 +251,6 @@
         <div class="top-hits-title-wrap">
           <span class="top-hits-title">Frequently Used Sites ⚡</span>
         </div>
-        <div class="top-hits-timeframe-toggle" id="top-hits-timeframe-toggle" role="group" aria-label="Frequently used timeframe">
-          <button type="button" class="top-hits-timeframe-btn active" data-timeframe="all" title="All-time clicks">All Time</button>
-          <button type="button" class="top-hits-timeframe-btn" data-timeframe="month" title="Clicks this month">This Month</button>
-          <button type="button" class="top-hits-timeframe-btn" data-timeframe="week" title="Clicks this week">This Week</button>
-        </div>
       </div>
       <div class="top-hits-scroll" id="top-hits-scroll">
         <!-- Dynamically rendered Top Hits -->
@@ -257,12 +273,14 @@
 
   <div id="bulk-toolbar" class="bulk-toolbar" hidden>
     <strong><span id="bulk-selection-count">0</span> selected</strong>
+    <button type="button" id="bulk-select-all-btn" class="btn btn-secondary btn-sm" title="Select all bookmarks across all groups">Select All</button>
+    <button type="button" id="bulk-clear-selection-btn" class="btn btn-secondary btn-sm" title="Clear current selection">Clear</button>
     <select id="bulk-target-group" aria-label="Move selected bookmarks to group"></select>
-    <button type="button" id="bulk-move-btn" class="btn">Move</button>
-    <input type="text" id="bulk-tag-input" placeholder="Tag (for example: work)">
-    <button type="button" id="bulk-tag-btn" class="btn">Add tag</button>
-    <button type="button" id="bulk-trash-btn" class="btn">Move to Trash</button>
-    <button type="button" id="bulk-cancel-btn" class="btn btn-secondary">Done</button>
+    <button type="button" id="bulk-move-btn" class="btn btn-sm">Move</button>
+    <input type="text" id="bulk-tag-input" placeholder="Tag (e.g. work)">
+    <button type="button" id="bulk-tag-btn" class="btn btn-sm">Add tag</button>
+    <button type="button" id="bulk-trash-btn" class="btn btn-sm btn-danger">Move to Trash</button>
+    <button type="button" id="bulk-cancel-btn" class="btn btn-secondary btn-sm">Done</button>
   </div>
 
   <!-- Modal for adding a keyword to a group -->
@@ -363,11 +381,23 @@
     </div>
   </div>
 
+  <!-- Recycle Bin / Trash Modal -->
   <div id="trash-modal" class="modal-container">
     <div class="modal-content trash-modal-content">
-      <h2>Trash</h2>
+      <div class="trash-modal-header">
+        <div class="trash-title-box">
+          <h2 class="trash-modal-title">🗑️ Recycle Bin & Trash</h2>
+          <span class="trash-modal-sub">View, restore, or permanently remove deleted bookmarks</span>
+        </div>
+        <button type="button" id="trash-close-btn" class="btn btn-secondary" style="padding:4px 12px;font-size:0.85rem;">✕ Close</button>
+      </div>
+
+      <div class="trash-actions-bar">
+        <span id="trash-total-count" class="trash-count-pill">0 items in trash</span>
+        <button type="button" id="trash-empty-all-btn" class="btn btn-danger" style="display:none;padding:5px 12px;font-size:0.82rem;">🗑️ Empty Trash</button>
+      </div>
+
       <div id="trash-list" class="trash-list"></div>
-      <div class="modal-actions"><button type="button" id="trash-close-btn" class="btn btn-secondary">Close</button></div>
     </div>
   </div>
 
@@ -439,19 +469,19 @@
 
       <!-- Stats Row -->
       <div class="link-health-stats-row">
-        <div class="link-health-stat-chip">
+        <div class="link-health-stat-chip" data-filter="all" title="Filter by all links">
           <span class="stat-num" id="lh-total-count">0</span>
           <span class="stat-name">Total Links</span>
         </div>
-        <div class="link-health-stat-chip chip-alive">
+        <div class="link-health-stat-chip chip-alive" data-filter="alive" title="Filter by alive links">
           <span class="stat-num" id="lh-alive-count">0</span>
           <span class="stat-name">✅ Alive</span>
         </div>
-        <div class="link-health-stat-chip chip-dead">
+        <div class="link-health-stat-chip chip-dead" data-filter="dead" title="Filter by dead & error links">
           <span class="stat-num" id="lh-dead-count">0</span>
           <span class="stat-name">❌ Dead / Error</span>
         </div>
-        <div class="link-health-stat-chip chip-timeout">
+        <div class="link-health-stat-chip chip-timeout" data-filter="timeout" title="Filter by timed out links">
           <span class="stat-num" id="lh-timeout-count">0</span>
           <span class="stat-name">⚠️ Timeout (>6s)</span>
         </div>
@@ -472,7 +502,8 @@
         </div>
         <div class="link-health-filter-chips">
           <button type="button" class="lh-filter-btn active" data-filter="all">All (<span id="lh-tab-all">0</span>)</button>
-          <button type="button" class="lh-filter-btn" data-filter="dead">❌ Dead Only (<span id="lh-tab-dead">0</span>)</button>
+          <button type="button" class="lh-filter-btn" data-filter="dead">❌ Dead (<span id="lh-tab-dead">0</span>)</button>
+          <button type="button" class="lh-filter-btn" data-filter="timeout">⚠️ Timeout (<span id="lh-tab-timeout">0</span>)</button>
           <button type="button" class="lh-filter-btn" data-filter="alive">✅ Alive (<span id="lh-tab-alive">0</span>)</button>
         </div>
       </div>
@@ -566,7 +597,7 @@
     })();
   </script>
   <!-- Application Bundle -->
-  <script defer src="bundle.min.js?v=1134"></script>
+  <script defer src="bundle.min.js?v=1145"></script>
 
   <div id="toast-container"></div>
   <!-- Global keyword tooltip portal — lives at body level to avoid contain:paint clipping -->

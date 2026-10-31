@@ -388,6 +388,22 @@
         if (headerLeft) headerLeft.style.textShadow = WO.adminLoggedIn ? '0 0 12px rgba(123,44,191,0.5)' : '';
         const clock = document.getElementById('live-clock');
         if (clock) clock.style.boxShadow = ''; // Ensure clock has no shadow
+
+        // Update Admin Hub User Email & Identity
+        const emailEl = document.getElementById('admin-hub-user-email');
+        if (emailEl) {
+            if (WO.adminLoggedIn) {
+                const u = window.firebaseAuth && window.firebaseAuth.currentUser;
+                const email = (u && (u.email || u.displayName)) || (WO.ADMIN_EMAILS && WO.ADMIN_EMAILS[0]) || 'Admin Session';
+                emailEl.textContent = email;
+                emailEl.style.display = 'block';
+            } else {
+                emailEl.style.display = 'none';
+            }
+        }
+        if (typeof WO.updateAdminTrashBadge === 'function') {
+            WO.updateAdminTrashBadge();
+        }
     };
 
     // ── URL Opening ───────────────────────────────────────────────────────
@@ -743,7 +759,7 @@
                     }
                     if (deleteEl) {
                         deleteEl.classList.remove('is-hidden');
-                        if (deleteText) deleteText.textContent = 'Perm Delete';
+                        if (deleteText) deleteText.textContent = 'Delete';
                         deleteEl.onclick = () => { hideContextMenu(); WO.deleteKeyword(groupIndex, keywordIndex); };
                     }
                 } else {
@@ -1058,6 +1074,9 @@
         if (hubBtn && hubWrapper) {
             hubBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
+                if (typeof WO.updateAdminTrashBadge === 'function') {
+                    WO.updateAdminTrashBadge();
+                }
                 const isOpen = hubWrapper.classList.toggle('is-open');
                 hubBtn.setAttribute('aria-expanded', String(isOpen));
             });
@@ -1094,6 +1113,22 @@
                 WO.logoutAdmin();
             });
         }
+
+        // ── Admin Inactivity Auto-Lock (45 Minutes) ──
+        let lastAdminActivity = Date.now();
+        const INACTIVITY_LIMIT_MS = 45 * 60 * 1000;
+        const resetAdminActivity = () => { lastAdminActivity = Date.now(); };
+        ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'].forEach(ev => {
+            window.addEventListener(ev, resetAdminActivity, { passive: true });
+        });
+        setInterval(() => {
+            if (WO.adminLoggedIn && (Date.now() - lastAdminActivity > INACTIVITY_LIMIT_MS)) {
+                WO.logoutAdmin();
+                if (typeof WO.showToast === 'function') {
+                    WO.showToast('🔒 Admin session locked due to inactivity (45m).', 'info');
+                }
+            }
+        }, 60000);
 
     }; // end WO.initUI
 
