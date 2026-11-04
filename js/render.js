@@ -320,13 +320,16 @@
                             : WO.escapeHtml(displayText);
 
                         // Store description for global tooltip portal (avoids contain:paint clipping)
-                        if (description) item.dataset.description = description;
+                        if (description) {
+                            item.dataset.description = description;
+                            item.title = description;
+                        }
 
                         item.innerHTML = `
                             ${WO.bulkMode ? `<span class="bulk-check" aria-hidden="true">${WO.selectedBookmarkIds.has(bookmarkId) ? '✓' : ''}</span>` : ''}
                             ${isNew ? '<div class="keyword-new-badge">NEW</div>' : ''}
                             <div class="keyword-grid-icon">${WO.getFaviconOrEmoji(keyword)}</div>
-                            <div class="keyword-grid-text" title="${WO.escapeHtml(displayText)}">${keywordLabelHtml}</div>
+                            <div class="keyword-grid-text" title="${WO.escapeHtml(description || displayText)}">${keywordLabelHtml}</div>
                             ${tags.length ? `<div class="keyword-tags">${tags.map(t => `<span>${WO.escapeHtml(t)}</span>`).join('')}</div>` : ''}
                             <div class="keyword-click-counter">${clickCount}</div>
                         `;

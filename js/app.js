@@ -163,63 +163,112 @@
             const tip = document.getElementById('kw-tooltip');
             if (!tip) return;
 
-            let _hideTimer;
+            let _currentTipItem = null;
+            let _hideTimer = null;
+            let _animFrame = null;
 
             function show(item) {
                 clearTimeout(_hideTimer);
-                const desc = item.dataset.description;
-                if (!desc) return;
+                if (_animFrame) cancelAnimationFrame(_animFrame);
 
-                tip.textContent = desc;
-                tip.style.opacity = '0';
+                const desc = item.dataset.description;
+                if (!desc || !desc.trim()) {
+                    hide(true);
+                    return;
+                }
+
+                _currentTipItem = item;
+                tip.textContent = desc.trim();
                 tip.style.display = 'block';
 
-                // Position after the browser has laid out the tip
-                requestAnimationFrame(() => {
+                _animFrame = requestAnimationFrame(() => {
+                    if (_currentTipItem !== item) return;
                     const rect = item.getBoundingClientRect();
-                    const th   = tip.offsetHeight;
-                    const tw   = tip.offsetWidth;
-                    const gap  = 10;
+                    const th   = tip.offsetHeight || 30;
+                    const tw   = tip.offsetWidth || 130;
+                    const gap  = 9;
                     const vw   = window.innerWidth;
                     const vh   = window.innerHeight;
 
                     // Prefer above; flip below if not enough room
+                    let isFlipped = false;
                     let top = rect.top - th - gap;
-                    if (top < 4) top = rect.bottom + gap;
+                    if (top < 6) {
+                        top = rect.bottom + gap;
+                        isFlipped = true;
+                    }
 
                     // Clamp horizontally
                     let left = rect.left + rect.width / 2 - tw / 2;
                     left = Math.max(8, Math.min(left, vw - tw - 8));
+                    top  = Math.max(6, Math.min(top, vh - th - 6));
 
-                    // Clamp vertically (bottom edge)
-                    top = Math.min(top, vh - th - 8);
-
-                    tip.style.left = left + 'px';
-                    tip.style.top  = top  + 'px';
+                    tip.classList.toggle('flip-below', isFlipped);
+                    tip.style.left = Math.round(left) + 'px';
+                    tip.style.top  = Math.round(top)  + 'px';
                     tip.style.opacity = '1';
                 });
             }
 
-            function hide() {
+            function hide(immediate = false) {
                 clearTimeout(_hideTimer);
-                _hideTimer = setTimeout(() => { tip.style.opacity = '0'; }, 80);
+                if (_animFrame) cancelAnimationFrame(_animFrame);
+
+                if (immediate) {
+                    tip.style.opacity = '0';
+                    tip.style.display = 'none';
+                    _currentTipItem = null;
+                    return;
+                }
+
+                _hideTimer = setTimeout(() => {
+                    tip.style.opacity = '0';
+                    setTimeout(() => {
+                        if (!_currentTipItem) tip.style.display = 'none';
+                    }, 180);
+                }, 60);
             }
 
             document.addEventListener('mouseover', e => {
                 const item = e.target.closest('.keyword-grid-preview-item');
-                if (item && item.dataset.description) show(item);
+                if (item) {
+                    if (item !== _currentTipItem) {
+                        if (item.dataset.description && item.dataset.description.trim()) {
+                            show(item);
+                        } else {
+                            _currentTipItem = null;
+                            hide(true);
+                        }
+                    }
+                } else {
+                    if (_currentTipItem) {
+                        _currentTipItem = null;
+                        hide();
+                    }
+                }
             }, { passive: true });
 
             document.addEventListener('mouseout', e => {
                 const item = e.target.closest('.keyword-grid-preview-item');
-                if (item && !item.contains(e.relatedTarget)) hide();
+                if (item && (!e.relatedTarget || !item.contains(e.relatedTarget))) {
+                    if (_currentTipItem === item) {
+                        _currentTipItem = null;
+                        hide();
+                    }
+                }
             }, { passive: true });
 
+            // Keyboard accessibility for card tooltips
+            document.addEventListener('focusin', e => {
+                const item = e.target.closest('.keyword-grid-preview-item');
+                if (item && item.dataset.description) show(item);
+            });
+            document.addEventListener('focusout', () => hide(true));
+
             // Hide immediately on scroll to avoid stale positions
-            document.addEventListener('scroll', hide, { passive: true, capture: true });
+            document.addEventListener('scroll', () => hide(true), { passive: true, capture: true });
         })();
 
-        // Kick off data loading (shows cache instantly, then syncs)
         loadDataFromServer();
 
         // Handle PWA shortcut actions (e.g. ?action=add-group from manifest.json)

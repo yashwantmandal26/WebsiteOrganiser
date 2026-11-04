@@ -5198,7 +5198,7 @@ textarea {
   -webkit-backdrop-filter: blur(10px);
 }
 
-/* Arrow pointing down (toward the keyword tile) */
+/* Arrow pointing down (when tooltip is above the keyword tile) */
 #kw-tooltip::after {
   content: '';
   position: absolute;
@@ -5209,19 +5209,32 @@ textarea {
   border-top-color: rgba(20, 20, 20, 0.95);
 }
 
+/* Arrow pointing up (when tooltip is flipped below the keyword tile) */
+#kw-tooltip.flip-below::after {
+  top: auto;
+  bottom: 100%;
+  border-top-color: transparent;
+  border-bottom-color: rgba(20, 20, 20, 0.95);
+}
+
 [data-theme="light"] #kw-tooltip {
   background: rgba(255, 255, 255, 0.98);
-  color: #333;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: #1e293b;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.14);
+  border: 1px solid rgba(0, 0, 0, 0.12);
 }
 
 [data-theme="light"] #kw-tooltip::after {
   border-top-color: rgba(255, 255, 255, 0.98);
 }
 
-/* Hide on touch devices (same as before) */
-@media (pointer: coarse) {
+[data-theme="light"] #kw-tooltip.flip-below::after {
+  border-top-color: transparent;
+  border-bottom-color: rgba(255, 255, 255, 0.98);
+}
+
+/* Hide only on pure touch devices with no hover capability */
+@media (hover: none) and (pointer: coarse) {
   #kw-tooltip { display: none !important; }
 }
 

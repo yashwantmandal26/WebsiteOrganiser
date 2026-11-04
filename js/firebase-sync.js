@@ -137,9 +137,19 @@
     };
     WO.getBookmarkMetadata = function (store, groupIndex, keywordIndex, keyword, fallback) {
         const id = WO.getBookmarkMetadataKey(groupIndex, keywordIndex, keyword);
-        if (store && store[id] !== undefined) return store[id];
+        if (store && id && store[id] !== undefined && store[id] !== '') return store[id];
         const legacy = WO.getKeywordEncodedKey(keyword);
-        return store && store[legacy] !== undefined ? store[legacy] : fallback;
+        if (store && legacy && store[legacy] !== undefined && store[legacy] !== '') return store[legacy];
+        if (store && keyword && store[keyword] !== undefined && store[keyword] !== '') return store[keyword];
+
+        // Fallback to default descriptions if this is keywordDescriptions
+        if (store === WO.keywordDescriptions && WO.DEFAULT_KEYWORD_DESCRIPTIONS) {
+            if (id && WO.DEFAULT_KEYWORD_DESCRIPTIONS[id]) return WO.DEFAULT_KEYWORD_DESCRIPTIONS[id];
+            if (legacy && WO.DEFAULT_KEYWORD_DESCRIPTIONS[legacy]) return WO.DEFAULT_KEYWORD_DESCRIPTIONS[legacy];
+            if (keyword && WO.DEFAULT_KEYWORD_DESCRIPTIONS[keyword]) return WO.DEFAULT_KEYWORD_DESCRIPTIONS[keyword];
+        }
+
+        return fallback;
     };
 
     WO.getBookmarkClickCount = function (groupIndex, keywordIndex, keyword) {

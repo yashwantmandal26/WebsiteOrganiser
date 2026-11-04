@@ -119,6 +119,16 @@ Administrative actions are protected to maintain organization integrity.
 
 ## 📋 Changelog
 
+### v1.0.34 (2026-11-04)
+- 💬 **Universal Short Comments for All Websites**:
+  - Researched and populated concise, informative short descriptions across all 144 websites in all 12 categories.
+  - Cleaned up placeholder comments with professional descriptions.
+  - Added automated fallback resolution in getBookmarkMetadata ensuring every website always displays its comment.
+- 🎯 **Card Hover Tooltips & Touchscreen Device Fix**:
+  - Resolved hover tooltip visibility bug on touchscreen laptops and hybrid devices by updating pointer media queries to (hover: none) and (pointer: coarse).
+  - Eliminated tooltip flickering with active item tracking, smooth positioning, and dynamic arrow flip (.flip-below).
+  - Added native title fallback attribute so comments always show reliably across all devices.
+
 ### v1.0.33 (2026-11-04)
 - 🎤 **Voice Input for Search (Speech Recognition)**:
   - Microphone button integrated seamlessly into the search bar with listening ripple animations across Light, Dark, and Solid Dark themes.
