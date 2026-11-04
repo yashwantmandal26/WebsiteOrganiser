@@ -28,7 +28,7 @@
             return;
         }
 
-        resetKeywordStates(false, true); // Global fn defined in app.js
+        if (typeof WO.resetKeywordStates === 'function') WO.resetKeywordStates(false, true); else if (typeof window.resetKeywordStates === 'function') window.resetKeywordStates(false, true);
         if (!WO.groups || WO.groups.length === 0) {
             const backup = WO.loadLocalDataBackup();
             if (!backup || !WO.applyLocalDataBackup(backup)) {
@@ -40,11 +40,11 @@
         WO.ensureStableBookmarkIds();
 
         const fragment = document.createDocumentFragment();
-        const normalizedSearchQuery = WO.searchMode === WO.SEARCH_MODE_KEYWORDS
+        const normalizedSearchQuery = WO.activeKeywordSearchQuery
             ? WO.normalizeSearchQuery(WO.activeKeywordSearchQuery)
             : '';
         const searchTokens = normalizedSearchQuery ? normalizedSearchQuery.split(/\s+/).filter(Boolean) : [];
-        const isKeywordSearchActive = WO.searchMode === WO.SEARCH_MODE_KEYWORDS && searchTokens.length > 0;
+        const isKeywordSearchActive = searchTokens.length > 0;
 
         const orderedGroups = WO.getOrderedGroupEntries();
         const filteredGroups = orderedGroups.map(({ group, originalIndex }) => {
@@ -559,11 +559,11 @@
         const container = _groupsContainerCache;
         if (!container) return;
 
-        const normalizedQuery = WO.searchMode === WO.SEARCH_MODE_KEYWORDS
+        const normalizedQuery = WO.activeKeywordSearchQuery
             ? WO.normalizeSearchQuery(WO.activeKeywordSearchQuery)
             : '';
         const searchTokens = normalizedQuery ? normalizedQuery.split(/\s+/).filter(Boolean) : [];
-        const isActive = WO.searchMode === WO.SEARCH_MODE_KEYWORDS && searchTokens.length > 0;
+        const isActive = searchTokens.length > 0;
 
         const activeGroupIndices = new Set();
         const items = container.querySelectorAll('.keyword-grid-preview-item');
@@ -571,7 +571,7 @@
         // Fast-path: single loop over pre-cached strings
         for (let i = 0; i < items.length; i++) {
             const item = items[i];
-            const searchText = item._searchText || (item._searchText = (item.dataset.keywordValue + ' ' + (item.dataset.description || '')).toLowerCase());
+            const searchText = item._searchText || (item._searchText = (item.dataset.keywordValue + ' ' + (item._displayText || '') + ' ' + (item.dataset.targetUrl || '') + ' ' + (item.dataset.description || '')).toLowerCase());
             const matches = !isActive || WO.matchesKeywordSearch(searchText, searchTokens);
 
             if (matches) {
@@ -708,7 +708,7 @@
             return;
         }
 
-        if (WO.searchMode === WO.SEARCH_MODE_KEYWORDS && WO.activeKeywordSearchQuery) {
+        if (WO.activeKeywordSearchQuery && WO.activeKeywordSearchQuery.trim()) {
             section.style.display = 'none';
             return;
         }

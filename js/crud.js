@@ -324,7 +324,8 @@
             renameKeywordInput.style.cursor  = 'text';
         }
         const ek = WO.renameTargetBookmarkId || encodeURIComponent(oldKeyword).replace(/\./g, '%2E');
-        renameKeywordDescInput.value = WO.keywordDescriptions[ek] || '';
+        const currentDesc = WO.getBookmarkMetadata(WO.keywordDescriptions, groupIndex, keywordIndex, oldKeyword, '') || '';
+        renameKeywordDescInput.value = currentDesc;
         WO.toggleModal(renameModal, true);
         if (commentOnly) renameKeywordDescInput.focus();
         else { renameKeywordInput.focus(); renameKeywordInput.select(); }
@@ -379,7 +380,7 @@
         }
 
         const metadataKey = WO.renameTargetBookmarkId || encodeURIComponent(oldKeyword).replace(/\./g, '%2E');
-        const oldDescription = WO.keywordDescriptions[metadataKey] || '';
+        const oldDescription = WO.getBookmarkMetadata(WO.keywordDescriptions, WO.renameTargetGroupIndex, WO.renameTargetKeywordIndex, oldKeyword, '') || '';
 
         if (newKeyword === oldKeyword) {
             if (newDescription !== oldDescription) {

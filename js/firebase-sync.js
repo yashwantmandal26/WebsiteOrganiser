@@ -188,6 +188,9 @@
         if (WO.DEFAULT_CLICK_COUNTS && (!WO.globalClickCounts || Object.keys(WO.globalClickCounts).length === 0)) {
             WO.globalClickCounts = JSON.parse(JSON.stringify(WO.DEFAULT_CLICK_COUNTS));
         }
+        if (WO.DEFAULT_KEYWORD_DESCRIPTIONS && (!WO.keywordDescriptions || Object.keys(WO.keywordDescriptions).length === 0)) {
+            WO.keywordDescriptions = JSON.parse(JSON.stringify(WO.DEFAULT_KEYWORD_DESCRIPTIONS));
+        }
         WO.groups.forEach((group, gi) => (group.keywords || []).forEach((keyword, ki) => {
             const id = WO.getBookmarkId(group, ki);
             const legacy = WO.getKeywordEncodedKey(keyword);
@@ -219,7 +222,32 @@
                 }
             }
 
-            [[WO.keywordDescriptions, ''], [WO.keywordAddedAt, null], [WO.keywordDeletedStatus, false]].forEach(([store]) => {
+            if (WO.keywordDescriptions) {
+                const curIdDesc = id ? WO.keywordDescriptions[id] : undefined;
+                const curLegDesc = legacy ? WO.keywordDescriptions[legacy] : undefined;
+                const curRawDesc = keyword ? WO.keywordDescriptions[keyword] : undefined;
+                const defDesc = (WO.DEFAULT_KEYWORD_DESCRIPTIONS && (
+                    (id && WO.DEFAULT_KEYWORD_DESCRIPTIONS[id]) ||
+                    (legacy && WO.DEFAULT_KEYWORD_DESCRIPTIONS[legacy]) ||
+                    (keyword && WO.DEFAULT_KEYWORD_DESCRIPTIONS[keyword])
+                )) || '';
+
+                const resolvedDesc = (curIdDesc && String(curIdDesc).trim()) ||
+                                     (curLegDesc && String(curLegDesc).trim()) ||
+                                     (curRawDesc && String(curRawDesc).trim()) ||
+                                     defDesc;
+
+                if (resolvedDesc) {
+                    if (id && (!WO.keywordDescriptions[id] || !String(WO.keywordDescriptions[id]).trim())) {
+                        WO.keywordDescriptions[id] = resolvedDesc;
+                    }
+                    if (legacy && (!WO.keywordDescriptions[legacy] || !String(WO.keywordDescriptions[legacy]).trim())) {
+                        WO.keywordDescriptions[legacy] = resolvedDesc;
+                    }
+                }
+            }
+
+            [[WO.keywordAddedAt, null], [WO.keywordDeletedStatus, false]].forEach(([store]) => {
                 if (id && store[id] === undefined && store[legacy] !== undefined) store[id] = store[legacy];
             });
         }));
@@ -452,6 +480,7 @@
             if (descriptionsDoc.exists) {
                 const n = descriptionsDoc.data() || {};
                 if (shallowObjectChanged(WO.keywordDescriptions, n)) { WO.keywordDescriptions = n; changed = true; }
+                WO.migrateMetadataToStableIds();
             }
             if (addedAtDoc.exists) {
                 const n = addedAtDoc.data() || {};
@@ -558,7 +587,12 @@
         WO.descriptionsRef.onSnapshot((doc) => {
             if (doc.exists) {
                 const n = doc.data() || {};
-                if (shallowObjectChanged(WO.keywordDescriptions, n)) { WO.keywordDescriptions = n; WO.saveLocalDataBackup(); WO.debouncedSnapshotRender(); }
+                if (shallowObjectChanged(WO.keywordDescriptions, n)) {
+                    WO.keywordDescriptions = n;
+                    WO.migrateMetadataToStableIds();
+                    WO.saveLocalDataBackup();
+                    WO.debouncedSnapshotRender();
+                }
             }
         }, (e) => console.warn('Descriptions snapshot error:', e));
 
@@ -616,10 +650,18 @@
 
     WO.saveKeywordDescription = async function (keyword, description, metadataKey) {
         if (!keyword) return;
-        const ek = metadataKey || WO.getKeywordEncodedKey(keyword);
+        const legacyKey = WO.getKeywordEncodedKey(keyword);
+        const ek = metadataKey || legacyKey;
         WO.keywordDescriptions[ek] = description;
+        if (legacyKey && legacyKey !== ek) {
+            WO.keywordDescriptions[legacyKey] = description;
+        }
         WO.saveLocalDataBackup();
-        try { await WO.descriptionsRef.set({ [ek]: description }, { merge: true }); }
+        try {
+            const payload = { [ek]: description };
+            if (legacyKey && legacyKey !== ek) payload[legacyKey] = description;
+            await WO.descriptionsRef.set(payload, { merge: true });
+        }
         catch (e) { console.error('Failed to save keyword description:', e); }
     };
 

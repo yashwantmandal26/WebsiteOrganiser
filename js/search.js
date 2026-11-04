@@ -39,6 +39,7 @@
         const clearSearchBtn    = document.getElementById('clear-search-btn');
         const voiceSearchBtn    = document.getElementById('voice-search-btn');
         const searchSuggestions = document.getElementById('search-suggestions');
+        const _searchBarWrapper = document.querySelector('.search-bar-wrapper') || (searchInput ? searchInput.closest('.search-bar-wrapper') : null);
 
         if (!searchInput) return;
 

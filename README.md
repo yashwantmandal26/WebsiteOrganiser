@@ -119,6 +119,17 @@ Administrative actions are protected to maintain organization integrity.
 
 ## 📋 Changelog
 
+### v1.0.35 (2026-11-04)
+- 💬 **Restored Original User Comments & Pre-Filled Edit Comment Modal**:
+  - Restored 100% of user's custom previous comments (e.g. "THE BESST", "moviee", "yt", "for broswe's extra features yyyy", "Englishhh", etc.) across all categories.
+  - Fixed Edit Comment modal so existing comments always pre-fill cleanly instead of appearing blank.
+  - Implemented dual-key persistence (bookmarkId + encoded key) in Firestore and local backups so custom comments are never lost.
+  - Enhanced metadata migration to automatically seed default comments when Firestore data has unpopulated entries.
+- 🔍 **Live Search Initiation Fix (Name & Comment Instant Filtering)**:
+  - Fixed undeclared `_searchBarWrapper` variable in search module that prevented dropdown suggestions from opening.
+  - Eliminated dead searchMode check in rendering pipeline so cards on the dashboard instantly filter and highlight by website name, URL, or comment on every keystroke.
+  - Added safe wrapper bounds calculations and defensive guard for resetKeywordStates.
+
 ### v1.0.34 (2026-11-04)
 - 💬 **Universal Short Comments for All Websites**:
   - Researched and populated concise, informative short descriptions across all 144 websites in all 12 categories.
