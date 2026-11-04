@@ -1,8 +1,9 @@
 {
   "name": "websiteorganiser-scraper",
-  "version": "1.0.32",
+  "version": "1.0.33",
   "private": true,
   "scripts": {
+    "start": "node server.js",
     "build": "node build.js"
   },
   "devDependencies": {

@@ -179,13 +179,53 @@
         return WO.KEYWORD_GRADIENTS[idx];
     };
 
+    // ─── Favicon Loading & Fallback ──────────────────────────────────────────
+    WO.onFaviconLoad = function (img) {
+        if (!img) return;
+        // Only Google S2 returns generic 16x16 globe placeholder when domain has no icon
+        if (img.naturalWidth <= 16) {
+            WO.onFaviconError(img);
+        }
+    };
+
+    WO.onFaviconError = function (img) {
+        if (!img) return;
+        img.onload = null;
+        img.onerror = null;
+        img.classList.add('favicon-failed');
+        img.style.setProperty('display', 'none', 'important');
+        if (img.nextElementSibling) {
+            img.nextElementSibling.style.setProperty('display', 'flex', 'important');
+        }
+    };
+
     // Memoize favicon/emoji HTML — same keyword always produces same HTML string
     const _faviconCache = new Map();
     WO.getFaviconOrEmoji = function (keyword) {
         if (_faviconCache.has(keyword)) return _faviconCache.get(keyword);
+        const trimmed = String(keyword || '').trim();
+        const lowerKey = trimmed.toLowerCase();
+        const cleanName = lowerKey.replace(/^https?:\/\//i, '').replace(/\/.*$/, '').replace(/^www\./, '').trim();
+        const hostWithoutTld = cleanName.split('.')[0];
+
+        // 1. Direct Authentic Brand Icon Lookup (Instant local high-res logo)
+        const brandIcon = WO.BRAND_ICONS && (
+            WO.BRAND_ICONS[cleanName] ||
+            WO.BRAND_ICONS[hostWithoutTld] ||
+            WO.BRAND_ICONS[lowerKey]
+        );
+
+        if (brandIcon) {
+            const result = `<img src='${brandIcon}' class='keyword-favicon' alt='' loading='lazy' decoding='async'>`;
+            if (_faviconCache.size >= 500) _faviconCache.clear();
+            _faviconCache.set(keyword, result);
+            return result;
+        }
+
+        // 2. Standard URL Domain Lookup via Google S2
         let isUrl = false, host = '';
         try {
-            let test = keyword;
+            let test = trimmed;
             if (!/^https?:\/\//i.test(test)) test = 'https://' + test;
             const parsed = new URL(test);
             if (parsed.hostname && parsed.hostname.includes('.')) {
@@ -193,26 +233,27 @@
                 host  = parsed.hostname.replace(/^www\./, '');
             }
         } catch {}
+
         let result;
-        if (isUrl) {
-            const fl = host.charAt(0).toUpperCase();
-            const g  = WO.getKeywordGradient(host);
+        if (isUrl && host) {
+            const fl = (trimmed.charAt(0) || host.charAt(0)).toUpperCase();
+            const g  = WO.getKeywordGradient(host || trimmed);
             const letterFallback = `<span class='keyword-letter' style='background: linear-gradient(135deg, ${g[0]}, ${g[1]}); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;'>${fl}</span>`;
             const faviconUrl = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=64`;
+
             result = `<img src='${faviconUrl}' class='keyword-favicon' alt='' loading='lazy' decoding='async' `
-                   + `onload="if(this.naturalWidth<=16){this.classList.add('favicon-failed');this.style.setProperty('display','none','important');if(this.nextElementSibling)this.nextElementSibling.style.setProperty('display','flex','important');}" `
-                   + `onerror="this.classList.add('favicon-failed');this.style.setProperty('display','none','important');if(this.nextElementSibling)this.nextElementSibling.style.setProperty('display','flex','important');}">`
+                   + `onload='WO.onFaviconLoad(this)' `
+                   + `onerror='WO.onFaviconError(this)'>`
                    + `<div class='keyword-fallback-container' style='display:none;width:100%;height:100%;align-items:center;justify-content:center;'>${letterFallback}</div>`;
         } else {
-            const fl = keyword.charAt(0).toUpperCase();
-            const g  = WO.getKeywordGradient(keyword);
+            const fl = trimmed.charAt(0).toUpperCase();
+            const g  = WO.getKeywordGradient(trimmed);
             result = `<span class='keyword-letter' style='background: linear-gradient(135deg, ${g[0]}, ${g[1]}); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;'>${fl}</span>`;
         }
         if (_faviconCache.size >= 500) _faviconCache.clear(); // cap memory usage
         _faviconCache.set(keyword, result);
         return result;
     };
-    // Allow external code to invalidate the cache when keywords change
     WO.clearFaviconCache = function () { _faviconCache.clear(); };
 
     // ─── Search Utilities ─────────────────────────────────────────────────────

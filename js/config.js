@@ -473,6 +473,64 @@ WO.DOMAIN_DISPLAY_MAP = {
     'x.com': 'X', 'www.x.com': 'X'
 };
 
+// ─── Direct Authentic Brand Icons ─────────────────────────────────────────────
+// High-resolution local icons mapped by brand keyword or domain for authentic logo display
+WO.BRAND_ICONS = {
+    // Movies & Streaming
+    'vegamovies': 'media/icons/vegamovies.png',
+    'vegamovies.im': 'media/icons/vegamovies.png',
+    'vegamovies.nl': 'media/icons/vegamovies.png',
+    'vegamovies.yt': 'media/icons/vegamovies.png',
+
+    'uhdmovies': 'media/icons/uhdmovies.png',
+    'uhdmovies.org': 'media/icons/uhdmovies.png',
+    'uhdmovies.vip': 'media/icons/uhdmovies.png',
+
+    'hdhub4u': 'media/icons/hdhub4u.png',
+    'hdhub4u.med': 'media/icons/hdhub4u.png',
+    'hdhub4u.tv': 'media/icons/hdhub4u.png',
+
+    'katworld': 'media/icons/katworld.png',
+    'katworld.net': 'media/icons/katworld.png',
+
+    'extramovies': 'media/icons/extramovies.png',
+    'extramovies.shop': 'media/icons/extramovies.png',
+    'extramovies.lat': 'media/icons/extramovies.png',
+
+    'movies4u': 'media/icons/movies4u.png',
+    'movies4u.vip': 'media/icons/movies4u.png',
+    'movies4u.cc': 'media/icons/movies4u.png',
+
+    'moviesgum': 'media/icons/moviesgum.png',
+    'moviesgum.com': 'media/icons/moviesgum.png',
+
+    'hicine': 'media/icons/hicine.png',
+    'hicine.info': 'media/icons/hicine.png',
+
+    'world4ufree': 'media/icons/world4ufree.png',
+    'world4ufree.org': 'media/icons/world4ufree.png',
+
+    'hdmovie2': 'media/icons/hdmovie2.png',
+    'hdmovie2.rest': 'media/icons/hdmovie2.png',
+
+    'cineby': 'media/icons/cineby.png',
+    'cineby.app': 'media/icons/cineby.png',
+
+    'netmirror': 'media/icons/netmirror.png',
+    'netmirror.app': 'media/icons/netmirror.png',
+
+    'multimovies': 'media/icons/multimovies.png',
+    'multimovies.top': 'media/icons/multimovies.png',
+
+    'moonflix': 'media/icons/moonflix.png',
+    'moonflix.fun': 'media/icons/moonflix.png',
+
+    // Gaming & Repacks
+    'dodi-repacks': 'media/icons/dodi-repacks.png',
+    'dodi': 'media/icons/dodi-repacks.png',
+    'dodi-repacks.site': 'media/icons/dodi-repacks.png'
+};
+
 // ─── LocalStorage Keys ────────────────────────────────────────────────────────
 WO.LOCAL_BACKUP_KEY      = 'websiteorganiser_data_backup_v1';
 WO.LOCAL_GROUP_ORDER_KEY = 'websiteorganiser_group_order';

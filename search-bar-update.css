@@ -155,6 +155,76 @@ html[data-theme="solid-dark"] .google-search-input::placeholder {
   color: var(--icon-hover-color);
 }
 
+/* Voice Search Microphone Button */
+.voice-search-btn {
+  order: 2;
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  min-height: 30px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--icon-color, #656879);
+  flex-shrink: 0;
+  margin-left: 4px;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.voice-search-btn svg,
+.voice-search-btn .voice-search-icon {
+  width: 18px;
+  height: 18px;
+  display: block;
+  stroke: currentColor;
+  transition: transform 0.2s ease;
+}
+
+.voice-search-btn:hover {
+  transform: scale(1.12);
+  color: var(--preference-accent, #7b2cbf);
+  background: rgba(123, 44, 191, 0.1);
+}
+
+.voice-search-btn:active {
+  transform: scale(0.92);
+}
+
+.voice-search-btn.is-listening {
+  color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.18) !important;
+  animation: voiceListeningPulse 1.25s infinite ease-in-out !important;
+}
+
+.voice-search-btn.is-listening svg,
+.voice-search-btn.is-listening .voice-search-icon {
+  transform: scale(1.1);
+  stroke: #ef4444 !important;
+}
+
+@keyframes voiceListeningPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 0 7px rgba(239, 68, 68, 0);
+    transform: scale(1.14);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    transform: scale(1);
+  }
+}
+
 /* Header Layout Updates */
 
 

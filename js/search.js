@@ -37,6 +37,7 @@
         const searchInput       = document.getElementById('google-search-input');
         const searchSubmitBtn   = document.getElementById('search-submit-btn');
         const clearSearchBtn    = document.getElementById('clear-search-btn');
+        const voiceSearchBtn    = document.getElementById('voice-search-btn');
         const searchSuggestions = document.getElementById('search-suggestions');
 
         if (!searchInput) return;
@@ -607,6 +608,7 @@
 
         // ── Submit (Enter / button click) ─────────────────────────────────────
         function submitFromBar(inNewTab = false) {
+            _baseQueryPrefix = '';
             if (_pastedImageDataUrl) { executeGoogleLensSearch(inNewTab); return; }
             const rawValue = searchInput.value;
             const tq = WO.normalizeSearchQuery(rawValue);
@@ -718,6 +720,7 @@
         // ── Keyboard navigation ───────────────────────────────────────────────
         searchInput.addEventListener('keydown', e => {
             if (e.key === 'Enter') {
+                if (_isVoiceListening) stopVoiceSearch(false);
                 if (_pastedImageDataUrl) {
                     e.preventDefault();
                     executeGoogleLensSearch(e.ctrlKey || e.metaKey);
@@ -728,6 +731,11 @@
                 return;
             }
             if (e.key === 'Escape') {
+                if (_isVoiceListening) {
+                    e.preventDefault();
+                    stopVoiceSearch(true);
+                    return;
+                }
                 if (_pastedImageDataUrl) {
                     e.preventDefault();
                     clearPastedImage();
@@ -756,11 +764,146 @@
             }
         });
 
+        // ── Voice Search (Speech Recognition) ─────────────────────────────────
+        let _voiceRecognition = null;
+        let _isVoiceListening = false;
+        let _speechOriginalPlaceholder = '';
+        let _baseQueryPrefix = '';
+
+        function stopVoiceSearch(restoreFocus = true) {
+            if (_voiceRecognition) {
+                try {
+                    _voiceRecognition.stop();
+                } catch (_) {}
+            }
+            _isVoiceListening = false;
+            if (voiceSearchBtn) {
+                voiceSearchBtn.classList.remove('is-listening');
+                voiceSearchBtn.setAttribute('aria-pressed', 'false');
+                voiceSearchBtn.title = 'Search with voice';
+            }
+            if (searchInput && _speechOriginalPlaceholder) {
+                if (searchInput.placeholder === 'Listening... Speak now') {
+                    searchInput.placeholder = _speechOriginalPlaceholder;
+                }
+            }
+            if (restoreFocus && searchInput) {
+                searchInput.focus();
+                const len = searchInput.value.length;
+                try { searchInput.setSelectionRange(len, len); } catch (_) {}
+            }
+        }
+        WO.stopVoiceSearch = stopVoiceSearch;
+
+        if (voiceSearchBtn) {
+            voiceSearchBtn.addEventListener('click', e => {
+                e.preventDefault();
+
+                // Haptic feedback on mobile if supported
+                if (navigator.vibrate) {
+                    try { navigator.vibrate(20); } catch (_) {}
+                }
+
+                const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!SpeechRec) {
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('Voice search is not supported in this browser.', 3500);
+                    }
+                    return;
+                }
+
+                // Toggle off if currently listening
+                if (_isVoiceListening) {
+                    stopVoiceSearch(true);
+                    return;
+                }
+
+                try {
+                    // Capture existing input text so repeated mic activations append rather than overwrite
+                    const existingText = (searchInput.value || '').trim();
+                    _baseQueryPrefix = existingText.length > 0 ? (existingText + ' ') : '';
+
+                    _voiceRecognition = new SpeechRec();
+                    _voiceRecognition.continuous = true;
+                    _voiceRecognition.interimResults = true;
+                    _voiceRecognition.maxAlternatives = 1;
+                    _voiceRecognition.lang = navigator.language || 'en-US';
+
+                    _speechOriginalPlaceholder = searchInput.placeholder || 'Search websites, games, tools...';
+
+                    _voiceRecognition.onstart = function () {
+                        _isVoiceListening = true;
+                        voiceSearchBtn.classList.add('is-listening');
+                        voiceSearchBtn.setAttribute('aria-pressed', 'true');
+                        voiceSearchBtn.title = 'Listening... Tap to stop';
+                        searchInput.placeholder = 'Listening... Speak now';
+                    };
+
+                    _voiceRecognition.onresult = function (event) {
+                        let interimText = '';
+                        let finalText = '';
+
+                        // Accumulate all finalized chunks and interim speech in this session
+                        for (let i = 0; i < event.results.length; ++i) {
+                            const res = event.results[i];
+                            if (res.isFinal) {
+                                finalText += res[0].transcript + ' ';
+                            } else {
+                                interimText += res[0].transcript;
+                            }
+                        }
+
+                        const sessionTranscript = (finalText + interimText).trim();
+                        if (sessionTranscript) {
+                            const combinedQuery = _baseQueryPrefix + sessionTranscript;
+                            searchInput.value = combinedQuery;
+                            if (clearSearchBtn) clearSearchBtn.style.display = 'block';
+                            searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+                        }
+                    };
+
+                    _voiceRecognition.onerror = function (event) {
+                        console.warn('[Voice Search] Error:', event.error);
+                        stopVoiceSearch(true);
+
+                        if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+                            if (typeof window.showToast === 'function') {
+                                window.showToast('Microphone access was denied. Please allow microphone permissions.', 4000);
+                            }
+                        } else if (event.error === 'network') {
+                            if (typeof window.showToast === 'function') {
+                                window.showToast('Voice recognition network error. Please check internet connection.', 3500);
+                            }
+                        } else if (event.error === 'no-speech') {
+                            if (typeof window.showToast === 'function') {
+                                window.showToast('No speech detected. Tap mic and try again.', 2500);
+                            }
+                        }
+                    };
+
+                    _voiceRecognition.onend = function () {
+                        stopVoiceSearch(true);
+                        // NOTE: Search will ONLY execute after user presses Enter or clicks Search submit button!
+                    };
+
+                    _voiceRecognition.start();
+                } catch (err) {
+                    console.error('[Voice Search] Failed to start:', err);
+                    stopVoiceSearch(true);
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('Could not start microphone: ' + (err.message || err), 3500);
+                    }
+                }
+            });
+        }
+
         // ── Clear button ──────────────────────────────────────────────────────
         if (clearSearchBtn) {
             clearSearchBtn.style.display = 'none';
             clearSearchBtn.addEventListener('click', () => {
+                stopVoiceSearch(false);
                 clearPastedImage();
+                _baseQueryPrefix = '';
                 searchInput.value = '';
                 clearSearchBtn.style.display = 'none';
                 hideSuggestions();
@@ -770,7 +913,12 @@
             });
         }
 
-        if (searchSubmitBtn) searchSubmitBtn.addEventListener('click', () => submitFromBar(false));
+        if (searchSubmitBtn) {
+            searchSubmitBtn.addEventListener('click', () => {
+                if (_isVoiceListening) stopVoiceSearch(false);
+                submitFromBar(false);
+            });
+        }
 
         // ── Delegated suggestion events ───────────────────────────────────────
         searchSuggestions.addEventListener('mousedown', function(e) {

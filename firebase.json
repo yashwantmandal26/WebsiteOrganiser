@@ -22,7 +22,9 @@
       "**/.*",
       "**/node_modules/**",
       "test-round.html",
-      "ChatGPT Image*.png"
+      "ChatGPT Image*.png",
+      "server.js",
+      "start-server.bat"
     ],
     "rewrites": [
       {

@@ -119,6 +119,21 @@ Administrative actions are protected to maintain organization integrity.
 
 ## 📋 Changelog
 
+### v1.0.33 (2026-11-04)
+- 🎤 **Voice Input for Search (Speech Recognition)**:
+  - Microphone button integrated seamlessly into the search bar with listening ripple animations across Light, Dark, and Solid Dark themes.
+  - Live speech recognition transcribes words directly into the search bar.
+  - Search executes exclusively on Enter key (or search button click) — zero accidental premature searches.
+  - Smart resume & append support: toggling mic on/off continues typing from where user left off without deleting prior text.
+  - Fully mobile-optimized with haptic vibration feedback, touch targets, and non-overlapping responsive layout.
+- 🎨 **Authentic Brand Favicons & Local Icons**:
+  - Replaced generic letter avatars with authentic high-res brand icons for streaming & download sites (Vegamovies, UHDMovies, Hdhub4u, ExtraMovies, Katworld, Movies4u, Moviesgum, Hicine, Cineby, etc.).
+- 💾 **Full Comment (Description) Import & Export**:
+  - Website descriptions & comments are now completely preserved and exported in JSON backups.
+  - Import supports Merge and Replace modes with full comment restoration and instant Cloud Firestore sync.
+- 🌐 **1-Click Local Development Server**:
+  - Added lightweight server.js and start-server.bat (npm start) to run on http://localhost:5000 with persistent microphone and GPS permission storage.
+
 ### v1.0.32 (2026-11-04)
 - 🔍 **Google Lens Image Search Integration**:
   - Direct reverse visual image search powered by Google Lens for pasted screenshots and local images.

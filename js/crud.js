@@ -812,6 +812,51 @@
     };
 
     // ─── Import / Export ──────────────────────────────────────────────────────
+    function getImportedComment(ig, kw, importedIndex, imported) {
+        if (!kw) return '';
+        const cleanKw = String(kw).trim();
+        const encKw = (typeof WO.getKeywordEncodedKey === 'function')
+            ? WO.getKeywordEncodedKey(cleanKw)
+            : encodeURIComponent(cleanKw).replace(/\./g, '%2E');
+        const id = (Array.isArray(ig.keywordIds) && ig.keywordIds[importedIndex]) ? ig.keywordIds[importedIndex] : null;
+
+        // 1. Check bookmark object if group has bookmarks array
+        if (ig.bookmarks && Array.isArray(ig.bookmarks)) {
+            const b = ig.bookmarks.find(item => item && (item.keyword === cleanKw || item.url === cleanKw || (id && item.id === id)));
+            if (b && (b.comment || b.description || b.note)) return String(b.comment || b.description || b.note).trim();
+        }
+
+        // 2. Check group.comments dictionary
+        if (ig.comments && typeof ig.comments === 'object') {
+            if (ig.comments[cleanKw]) return String(ig.comments[cleanKw]).trim();
+            if (id && ig.comments[id]) return String(ig.comments[id]).trim();
+            if (ig.comments[encKw]) return String(ig.comments[encKw]).trim();
+        }
+
+        // 3. Check group.keywordDescriptions dictionary
+        if (ig.keywordDescriptions && typeof ig.keywordDescriptions === 'object') {
+            if (ig.keywordDescriptions[cleanKw]) return String(ig.keywordDescriptions[cleanKw]).trim();
+            if (id && ig.keywordDescriptions[id]) return String(ig.keywordDescriptions[id]).trim();
+            if (ig.keywordDescriptions[encKw]) return String(ig.keywordDescriptions[encKw]).trim();
+        }
+
+        // 4. Check top-level imported.keywordDescriptions
+        if (imported && imported.keywordDescriptions && typeof imported.keywordDescriptions === 'object') {
+            if (id && imported.keywordDescriptions[id]) return String(imported.keywordDescriptions[id]).trim();
+            if (imported.keywordDescriptions[cleanKw]) return String(imported.keywordDescriptions[cleanKw]).trim();
+            if (imported.keywordDescriptions[encKw]) return String(imported.keywordDescriptions[encKw]).trim();
+        }
+
+        // 5. Check top-level imported.comments
+        if (imported && imported.comments && typeof imported.comments === 'object') {
+            if (imported.comments[cleanKw]) return String(imported.comments[cleanKw]).trim();
+            if (id && imported.comments[id]) return String(imported.comments[id]).trim();
+            if (imported.comments[encKw]) return String(imported.comments[encKw]).trim();
+        }
+
+        return '';
+    }
+
     WO.initImportExport = function () {
         const exportBtn       = document.getElementById('export-btn');
         const importBtn       = document.getElementById('import-btn');
@@ -819,10 +864,65 @@
 
         if (exportBtn) {
             exportBtn.addEventListener('click', () => {
+                WO.ensureStableBookmarkIds();
+                WO.migrateMetadataToStableIds();
+
+                // Build rich group export with comments attached to each keyword and group
+                const exportedGroups = WO.groups.map((group, gi) => {
+                    const comments = {};
+                    const bookmarksWithDetails = [];
+
+                    (group.keywords || []).forEach((kw, ki) => {
+                        const bookmarkId = WO.getBookmarkId(group, ki);
+                        const comment = WO.getBookmarkMetadata(WO.keywordDescriptions, gi, ki, kw, '');
+                        if (comment) {
+                            comments[kw] = comment;
+                            if (bookmarkId) comments[bookmarkId] = comment;
+                        }
+                        bookmarksWithDetails.push({
+                            keyword: kw,
+                            id: bookmarkId,
+                            comment: comment || '',
+                            tags: Array.isArray(group.keywordTags?.[bookmarkId]) ? group.keywordTags[bookmarkId] : [],
+                            clickCount: WO.getBookmarkClickCount(gi, ki, kw)
+                        });
+                    });
+
+                    const cleanGroup = {
+                        name: group.name,
+                        keywords: [...group.keywords],
+                        keywordIds: Array.isArray(group.keywordIds) ? [...group.keywordIds] : [],
+                        keywordTags: group.keywordTags ? { ...group.keywordTags } : {},
+                        comments: comments,
+                        bookmarks: bookmarksWithDetails
+                    };
+                    if (group.color) cleanGroup.color = group.color;
+                    if (Array.isArray(group.trash) && group.trash.length) cleanGroup.trash = [...group.trash];
+                    return cleanGroup;
+                });
+
+                // Comprehensive keywordDescriptions: keyed by BOTH bookmarkId and keyword/encodedKey
+                const allDescriptions = { ...WO.keywordDescriptions };
+                WO.groups.forEach((group, gi) => {
+                    (group.keywords || []).forEach((kw, ki) => {
+                        const comment = WO.getBookmarkMetadata(WO.keywordDescriptions, gi, ki, kw, '');
+                        if (comment) {
+                            const id = WO.getBookmarkId(group, ki);
+                            const enc = WO.getKeywordEncodedKey(kw);
+                            if (id) allDescriptions[id] = comment;
+                            if (enc) allDescriptions[enc] = comment;
+                            allDescriptions[kw] = comment;
+                        }
+                    });
+                });
+
                 const data = JSON.stringify({
-                    exportDate: new Date().toISOString(), version: '5.0',
-                    groups: WO.groups, keywordAddedAt: WO.keywordAddedAt,
-                    globalClickCounts: WO.globalClickCounts, keywordDescriptions: WO.keywordDescriptions,
+                    exportDate: new Date().toISOString(),
+                    version: '5.1',
+                    groups: exportedGroups,
+                    keywordDescriptions: allDescriptions,
+                    keywordAddedAt: WO.keywordAddedAt,
+                    globalClickCounts: WO.globalClickCounts,
                     keywordDeletedStatus: WO.keywordDeletedStatus,
                     preferences: {
                         theme: document.documentElement.dataset.theme || 'light',
@@ -831,10 +931,13 @@
                         personalUsage: WO.localClickCounts
                     }
                 }, null, 2);
+
                 const a    = document.createElement('a');
                 a.href     = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
                 a.download = `websiteorganiser-backup-${new Date().toISOString().slice(0, 10)}.json`;
-                document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
                 URL.revokeObjectURL(a.href);
             });
         }
@@ -862,35 +965,88 @@
                         WO.globalClickCounts   = imported.globalClickCounts   || {};
                         WO.keywordDescriptions = imported.keywordDescriptions || {};
                         WO.keywordDeletedStatus= imported.keywordDeletedStatus || {};
+
+                        // Ensure every bookmark gets its comment attached to both its ID and its encodedKey
+                        WO.ensureStableBookmarkIds();
+                        imported.groups.forEach((ig, gi) => {
+                            (ig.keywords || []).forEach((kw, ki) => {
+                                const comment = getImportedComment(ig, kw, ki, imported);
+                                if (comment) {
+                                    const id = WO.getBookmarkId(ig, ki);
+                                    const enc = WO.getKeywordEncodedKey(kw);
+                                    if (id) WO.keywordDescriptions[id] = comment;
+                                    if (enc) WO.keywordDescriptions[enc] = comment;
+                                }
+                            });
+                        });
                     } else {
+                        // MERGE
                         imported.groups.forEach(ig => {
                             const eg = WO.groups.find(g => g.name.toLowerCase() === ig.name.toLowerCase());
                             if (eg) {
-                                ig.keywords.forEach((kw, importedIndex) => {
-                                    if (!eg.keywords.some(k => k.toLowerCase() === kw.toLowerCase())) {
+                                (ig.keywords || []).forEach((kw, importedIndex) => {
+                                    const comment = getImportedComment(ig, kw, importedIndex, imported);
+                                    const existingIndex = eg.keywords.findIndex(k => k.toLowerCase() === kw.toLowerCase());
+
+                                    if (existingIndex !== -1) {
+                                        // Website already exists in group -> update/attach comment if imported has one
+                                        if (comment) {
+                                            const existingId = eg.keywordIds ? eg.keywordIds[existingIndex] : null;
+                                            const enc = WO.getKeywordEncodedKey(kw);
+                                            if (existingId) WO.keywordDescriptions[existingId] = comment;
+                                            if (enc) WO.keywordDescriptions[enc] = comment;
+                                        }
+                                    } else {
+                                        // New website in group
                                         eg.keywords.push(kw);
-                                        const id = ig.keywordIds[importedIndex] || WO.createBookmarkId();
+                                        const id = (Array.isArray(ig.keywordIds) && ig.keywordIds[importedIndex]) ? ig.keywordIds[importedIndex] : WO.createBookmarkId();
+                                        if (!Array.isArray(eg.keywordIds)) eg.keywordIds = [];
                                         eg.keywordIds.push(id);
-                                        if (ig.keywordTags[id]) eg.keywordTags[id] = ig.keywordTags[id];
-                                        WO.keywordAddedAt[id] = imported.keywordAddedAt[id] || Date.now();
+                                        if (ig.keywordTags && ig.keywordTags[id]) {
+                                            if (!eg.keywordTags) eg.keywordTags = {};
+                                            eg.keywordTags[id] = ig.keywordTags[id];
+                                        }
+                                        WO.keywordAddedAt[id] = (imported.keywordAddedAt && imported.keywordAddedAt[id]) || Date.now();
+
+                                        if (comment) {
+                                            const enc = WO.getKeywordEncodedKey(kw);
+                                            WO.keywordDescriptions[id] = comment;
+                                            WO.keywordDescriptions[enc] = comment;
+                                        }
                                     }
                                 });
                             } else {
+                                // New group entirely
                                 WO.groups.push(ig);
-                                ig.keywords.forEach((kw, i) => { const id = ig.keywordIds[i]; if (WO.keywordAddedAt[id] === undefined) WO.keywordAddedAt[id] = imported.keywordAddedAt[id] || Date.now(); });
+                                (ig.keywords || []).forEach((kw, i) => {
+                                    const id = Array.isArray(ig.keywordIds) ? ig.keywordIds[i] : null;
+                                    const comment = getImportedComment(ig, kw, i, imported);
+                                    if (id && WO.keywordAddedAt[id] === undefined) {
+                                        WO.keywordAddedAt[id] = (imported.keywordAddedAt && imported.keywordAddedAt[id]) || Date.now();
+                                    }
+                                    if (comment) {
+                                        const enc = WO.getKeywordEncodedKey(kw);
+                                        if (id) WO.keywordDescriptions[id] = comment;
+                                        if (enc) WO.keywordDescriptions[enc] = comment;
+                                    }
+                                });
                             }
                         });
-                        if (imported.globalClickCounts)   Object.assign(WO.globalClickCounts, imported.globalClickCounts);
+
+                        if (imported.globalClickCounts) Object.assign(WO.globalClickCounts, imported.globalClickCounts);
                         if (imported.keywordDescriptions && typeof imported.keywordDescriptions === 'object') {
                             for (const [k, v] of Object.entries(imported.keywordDescriptions)) {
                                 if (k !== '__proto__' && k !== 'constructor' && k !== 'prototype') {
-                                    WO.keywordDescriptions[k] = v;
+                                    if (WO.keywordDescriptions[k] === undefined || !WO.keywordDescriptions[k]) {
+                                        WO.keywordDescriptions[k] = v;
+                                    }
                                 }
                             }
                         }
-                        if (imported.keywordAddedAt)      Object.assign(WO.keywordAddedAt, imported.keywordAddedAt);
+                        if (imported.keywordAddedAt) Object.assign(WO.keywordAddedAt, imported.keywordAddedAt);
                         if (imported.keywordDeletedStatus) Object.assign(WO.keywordDeletedStatus, imported.keywordDeletedStatus);
                     }
+
                     WO.ensureStableBookmarkIds();
                     WO.migrateMetadataToStableIds();
                     if (imported.preferences) {
@@ -899,14 +1055,22 @@
                         if (['light','dark','solid-dark'].includes(imported.preferences.theme)) WO.setTheme(imported.preferences.theme);
                     }
                     await WO.syncAndSaveGroups();
-                    try { await Promise.all([WO.clickCountsRef.set(WO.globalClickCounts), WO.descriptionsRef.set(WO.keywordDescriptions), WO.keywordAddedAtRef.set(WO.keywordAddedAt), WO.deletedStatusRef.set(WO.keywordDeletedStatus)]); }
-                    catch (e) { console.error('Failed to sync metadata:', e); }
+                    try {
+                        await Promise.all([
+                            WO.clickCountsRef.set(WO.globalClickCounts),
+                            WO.descriptionsRef.set(WO.keywordDescriptions),
+                            WO.keywordAddedAtRef.set(WO.keywordAddedAt),
+                            WO.deletedStatusRef.set(WO.keywordDeletedStatus)
+                        ]);
+                    } catch (e) {
+                        console.error('Failed to sync metadata:', e);
+                    }
                     WO.saveLocalDataBackup();
                     WO.renderGroups();
                     if (choice === 'replace') {
-                        window.showToast('Backup replaced successfully.', 10000, 'Undo replacement', WO.restoreImportRecovery);
+                        window.showToast('Backup replaced successfully with all comments.', 10000, 'Undo replacement', WO.restoreImportRecovery);
                     } else {
-                        window.showToast('Backup merged successfully.', 4000);
+                        window.showToast('Backup merged successfully with all comments.', 4000);
                     }
                 } catch (err) { alert('Failed to import backup: ' + err.message); }
                 importFileInput.value = '';
@@ -951,25 +1115,62 @@
         if (!raw || !Array.isArray(raw.groups)) throw new Error('Invalid backup: missing groups array.');
         if (raw.groups.length > 500) throw new Error('Invalid backup: too many groups.');
         const groups = raw.groups.map(group => {
-            if (!group || typeof group.name !== 'string' || !group.name.trim() || group.name.length > 100 || !Array.isArray(group.keywords)) return null;
-            if (group.keywords.length > 5000) return null;
+            if (!group || typeof group.name !== 'string' || !group.name.trim() || group.name.length > 100) return null;
+            const rawKeywords = Array.isArray(group.keywords) ? group.keywords : (Array.isArray(group.bookmarks) ? group.bookmarks : []);
+            if (!Array.isArray(rawKeywords) || rawKeywords.length > 5000) return null;
+
+            const extractedKeywords = [];
+            const extractedComments = cleanMetadataMap(group.comments || group.keywordDescriptions, v => typeof v === 'string' && v.length <= 2000);
+
+            rawKeywords.forEach(item => {
+                if (typeof item === 'string' && item.trim()) {
+                    extractedKeywords.push(item.trim());
+                } else if (item && typeof item === 'object') {
+                    const kw = (item.keyword || item.url || item.name || '').trim();
+                    if (kw) {
+                        extractedKeywords.push(kw);
+                        const c = (item.comment || item.description || item.note || '').trim();
+                        if (c) {
+                            extractedComments[kw] = c;
+                            if (item.id) extractedComments[item.id] = c;
+                        }
+                    }
+                }
+            });
+
             const clean = {
                 name: group.name.trim(),
-                keywords: group.keywords.filter(k => typeof k === 'string' && k.trim() && k.length <= 2048).map(k => k.trim()),
-                keywordIds: Array.isArray(group.keywordIds) ? group.keywords.map((_, i) => {
+                keywords: extractedKeywords.filter(k => k.length <= 2048),
+                keywordIds: Array.isArray(group.keywordIds) ? extractedKeywords.map((_, i) => {
                     const id = group.keywordIds[i]; return typeof id === 'string' && id.length <= 100 ? id : '';
                 }) : [],
                 keywordTags: cleanMetadataMap(group.keywordTags, v => Array.isArray(v) && v.every(t => typeof t === 'string' && t.length <= 30)),
+                comments: extractedComments,
                 trash: Array.isArray(group.trash) ? group.trash.filter(t => t && typeof t.id === 'string' && typeof t.keyword === 'string' && t.keyword.length <= 2048).slice(0, 5000) : []
             };
             if (typeof group.color === 'string' && /^#[0-9a-f]{6}$/i.test(group.color)) clean.color = group.color;
             return clean;
         }).filter(Boolean);
+
         if (!groups.length && raw.groups.length) throw new Error('No valid groups were found in this backup.');
+
+        // Collect all comments from top-level and group-level sources
+        const allComments = {
+            ...cleanMetadataMap(raw.comments, v => typeof v === 'string' && v.length <= 2000),
+            ...cleanMetadataMap(raw.keywordDescriptions, v => typeof v === 'string' && v.length <= 2000)
+        };
+        groups.forEach(g => {
+            if (g.comments && typeof g.comments === 'object') {
+                Object.entries(g.comments).forEach(([k, v]) => {
+                    if (v && typeof v === 'string') allComments[k] = v;
+                });
+            }
+        });
+
         const backup = {
             groups,
             globalClickCounts: cleanMetadataMap(raw.globalClickCounts, v => Number.isFinite(Number(v)) && Number(v) >= 0),
-            keywordDescriptions: cleanMetadataMap(raw.keywordDescriptions, v => typeof v === 'string' && v.length <= 2000),
+            keywordDescriptions: allComments,
             keywordAddedAt: cleanMetadataMap(raw.keywordAddedAt, v => Number.isFinite(Number(v))),
             keywordDeletedStatus: cleanMetadataMap(raw.keywordDeletedStatus, v => v === true),
             preferences: raw.preferences && typeof raw.preferences === 'object' ? raw.preferences : null
@@ -979,23 +1180,39 @@
     };
 
     WO.previewImport = function (imported) {
-        let added = 0, changed = 0, skipped = 0;
+        let added = 0, changed = 0, skipped = 0, commentCount = 0;
         const existingGroups = new Map(WO.groups.map(g => [g.name.trim().toLowerCase(), g]));
+
         imported.groups.forEach(group => {
             const existing = existingGroups.get(group.name.toLowerCase());
-            if (!existing) { added += group.keywords.length; return; }
-            const existingSet = new Set(existing.keywords.map(k => k.trim().toLowerCase()));
-            group.keywords.forEach(k => existingSet.has(k.toLowerCase()) ? skipped++ : added++);
-            if (group.color !== existing.color) changed++;
+            if (!existing) {
+                added += group.keywords.length;
+            } else {
+                const existingSet = new Set(existing.keywords.map(k => k.trim().toLowerCase()));
+                group.keywords.forEach(k => existingSet.has(k.toLowerCase()) ? skipped++ : added++);
+                if (group.color !== existing.color) changed++;
+            }
+            (group.keywords || []).forEach((kw, ki) => {
+                if (getImportedComment(group, kw, ki, imported)) commentCount++;
+            });
         });
-        return { groups: imported.groups.length, bookmarks: imported.groups.reduce((n, g) => n + g.keywords.length, 0), added, changed, skipped };
+
+        return {
+            groups: imported.groups.length,
+            bookmarks: imported.groups.reduce((n, g) => n + g.keywords.length, 0),
+            added,
+            changed,
+            skipped,
+            comments: commentCount
+        };
     };
 
     WO.askImportChoice = function (stats) {
         return new Promise(resolve => {
             const modal = document.getElementById('import-preview-modal');
             const summary = document.getElementById('import-preview-summary');
-            summary.textContent = `${stats.groups} groups and ${stats.bookmarks} bookmarks. Merge would add ${stats.added}, update ${stats.changed} group settings, and skip ${stats.skipped} duplicates.`;
+            const commentNote = stats.comments ? ` (including ${stats.comments} comment${stats.comments === 1 ? '' : 's'})` : '';
+            summary.textContent = `${stats.groups} groups and ${stats.bookmarks} bookmarks${commentNote}. Merge would add ${stats.added}, update ${stats.changed} group settings, and skip ${stats.skipped} duplicates.`;
             const finish = choice => { WO.toggleModal(modal, false); resolve(choice); };
             document.getElementById('import-merge-btn').onclick = () => finish('merge');
             document.getElementById('import-replace-btn').onclick = () => finish('replace');
