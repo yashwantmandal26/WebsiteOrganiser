@@ -119,6 +119,15 @@ Administrative actions are protected to maintain organization integrity.
 
 ## 📋 Changelog
 
+### v1.0.32 (2026-11-04)
+- 🔍 **Google Lens Image Search Integration**:
+  - Direct reverse visual image search powered by Google Lens for pasted screenshots and local images.
+  - Mini thumbnail preview chip with one-click dismiss badge inside the search bar.
+  - Single-tap enlarged lightbox image preview modal to inspect screenshots before searching.
+  - Global `Enter` key shortcut to search with Google Lens immediately from anywhere on the page without manual click.
+  - High-speed direct image upload pipeline with zero Cloudflare stalls.
+  - Universal Drag & Drop support across search bar and page.
+
 ### v1.0.31 (2026-10-31)
 - 🔤 **Website Name Standardization & Single-Line Text**:
   - Enforced strict single-line display with ellipsis truncation (text-overflow: ellipsis; overflow: hidden; white-space: nowrap;) across all cards and viewport sizes.

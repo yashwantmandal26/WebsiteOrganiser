@@ -41,11 +41,350 @@
 
         if (!searchInput) return;
 
-        const _searchBarWrapper = searchInput.closest('.search-bar-wrapper') || searchInput.parentElement;
+        // ── Google Lens Image Search & Drag-Drop ───────────────────────────
+        const pastedImageChip   = document.getElementById('pasted-image-chip');
+        const pastedImageThumb  = document.getElementById('pasted-image-thumb');
+        const pastedImageRemove = document.getElementById('pasted-image-remove');
+        const lensSearchBtn     = document.getElementById('lens-search-btn');
 
-        // Auto-portal to body so backdrop-filter can blur root content across all browser engines
-        if (searchSuggestions && searchSuggestions.parentElement !== document.body) {
-            document.body.appendChild(searchSuggestions);
+        let _pastedImageDataUrl = null;
+        let _pastedImageBlob = null;
+        let _pastedImageIsDirectUrl = false;
+        let _uploadedLensUrl = null;
+        let _isUploadingLens = false;
+
+        async function uploadImageForLens(blob) {
+            if (!blob) return;
+            _isUploadingLens = true;
+            _uploadedLensUrl = null;
+            try {
+                const ext = (blob.type && blob.type.split('/')[1]) || 'png';
+                const filename = 'search_' + Date.now() + '.' + ext;
+                const fd = new FormData();
+                fd.append('file', blob, filename);
+
+                // Primary host: kappa.lol (CORS enabled, direct raw image file served, accepted by Google Lens)
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 5000);
+                    const res = await fetch('https://kappa.lol/api/upload', {
+                        method: 'POST',
+                        body: fd,
+                        signal: controller.signal
+                    });
+                    clearTimeout(timeoutId);
+                    if (res.ok) {
+                        const json = await res.json();
+                        if (json && json.link) {
+                            _uploadedLensUrl = json.link;
+                            console.log('[Google Lens] Direct image ready via kappa:', _uploadedLensUrl);
+                            return;
+                        }
+                    }
+                } catch (e1) {
+                    console.warn('[Google Lens] kappa.lol upload failed, trying fallback:', e1);
+                }
+
+                // Fallback host: sxcu.net (CORS enabled, direct image at url.png)
+                try {
+                    const controller2 = new AbortController();
+                    const timeoutId2 = setTimeout(() => controller2.abort(), 5000);
+                    const fd2 = new FormData();
+                    fd2.append('file', blob, filename);
+                    const res2 = await fetch('https://sxcu.net/api/files/create', {
+                        method: 'POST',
+                        body: fd2,
+                        signal: controller2.signal
+                    });
+                    clearTimeout(timeoutId2);
+                    if (res2.ok) {
+                        const json2 = await res2.json();
+                        if (json2 && json2.url) {
+                            _uploadedLensUrl = json2.url + '.png';
+                            console.log('[Google Lens] Direct image ready via sxcu:', _uploadedLensUrl);
+                            return;
+                        }
+                    }
+                } catch (e2) {
+                    console.warn('[Google Lens] sxcu.net fallback failed:', e2);
+                }
+            } catch (err) {
+                console.warn('[Google Lens] Upload error:', err);
+            } finally {
+                _isUploadingLens = false;
+            }
+        }
+
+        const imagePreviewModal        = document.getElementById('image-preview-modal');
+        const imagePreviewModalImg     = document.getElementById('image-preview-modal-img');
+        const imagePreviewModalClose   = document.getElementById('image-preview-modal-close');
+        const imagePreviewModalRemove  = document.getElementById('image-preview-modal-remove-btn');
+        const imagePreviewModalSearch  = document.getElementById('image-preview-modal-search-btn');
+
+        function openImagePreviewModal() {
+            if (!_pastedImageDataUrl || !imagePreviewModal || !imagePreviewModalImg) return;
+            imagePreviewModalImg.src = _pastedImageDataUrl;
+            imagePreviewModal.style.display = 'flex';
+            imagePreviewModal.setAttribute('aria-hidden', 'false');
+        }
+
+        function closeImagePreviewModal() {
+            if (!imagePreviewModal) return;
+            imagePreviewModal.style.display = 'none';
+            imagePreviewModal.setAttribute('aria-hidden', 'true');
+            if (searchInput) searchInput.focus();
+        }
+
+        function showPastedImageChip(src) {
+            if (!pastedImageChip || !pastedImageThumb) return;
+            pastedImageThumb.src = src;
+            pastedImageChip.style.display = 'inline-flex';
+            hideSuggestions();
+            if (clearSearchBtn) clearSearchBtn.style.display = 'block';
+            if (searchInput) {
+                searchInput.placeholder = 'Search image with Google Lens ↵';
+                searchInput.focus();
+                // Re-trigger focus across multiple delays to guarantee focus even after Windows OS flyout (Win+V) finishes closing
+                setTimeout(() => { if (_pastedImageDataUrl && searchInput) searchInput.focus(); }, 60);
+                setTimeout(() => { if (_pastedImageDataUrl && searchInput) searchInput.focus(); }, 180);
+                setTimeout(() => { if (_pastedImageDataUrl && searchInput) searchInput.focus(); }, 350);
+            }
+        }
+
+        function clearPastedImage() {
+            _pastedImageDataUrl = null;
+            _pastedImageBlob = null;
+            _pastedImageIsDirectUrl = false;
+            _uploadedLensUrl = null;
+            _isUploadingLens = false;
+            closeImagePreviewModal();
+            if (pastedImageChip) pastedImageChip.style.display = 'none';
+            if (pastedImageThumb) pastedImageThumb.src = '';
+            if (lensSearchBtn) {
+                lensSearchBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M3 9V5a2 2 0 0 1 2-2h4M15 3h4a2 2 0 0 1 2 2v4M21 15v4a2 2 0 0 1-2 2h-4M9 21H5a2 2 0 0 1-2-2v-4"/></svg><span>Google Lens</span><span class="chip-badge-hint" id="lens-chip-hint">Enter ↵</span>';
+            }
+            updateSearchPlaceholder();
+            if (clearSearchBtn && (!searchInput || !searchInput.value.trim())) {
+                clearSearchBtn.style.display = 'none';
+            }
+        }
+        WO.clearPastedImage = clearPastedImage;
+
+        async function executeGoogleLensSearch(inNewTab = false) {
+            if (!_pastedImageDataUrl) return;
+
+            // 1. Direct public image link already available
+            if (_pastedImageIsDirectUrl && _pastedImageDataUrl.startsWith('http')) {
+                const lensUrl = 'https://lens.google.com/uploadbyurl?url=' + encodeURIComponent(_pastedImageDataUrl);
+                WO.openURLWithBrowser(lensUrl, inNewTab);
+                if (typeof window.showToast === 'function') {
+                    window.showToast('🔍 Searching with Google Lens...', 3000);
+                }
+                clearPastedImage();
+                if (searchInput) { searchInput.value = ''; searchInput.blur(); }
+                hideSuggestions();
+                return;
+            }
+
+            // 2. Wait up to 2.2s if background upload is still in flight
+            if (_isUploadingLens && !_uploadedLensUrl) {
+                if (lensSearchBtn) {
+                    lensSearchBtn.innerHTML = '<span class="lens-spinner"></span> <span>Searching...</span>';
+                }
+                let waited = 0;
+                while (_isUploadingLens && waited < 2200) {
+                    await new Promise(r => setTimeout(r, 100));
+                    waited += 100;
+                }
+            }
+
+            // 3. Direct Google Lens Reverse Image Results via uploaded URL
+            if (_uploadedLensUrl) {
+                const lensUrl = 'https://lens.google.com/uploadbyurl?url=' + encodeURIComponent(_uploadedLensUrl);
+                WO.openURLWithBrowser(lensUrl, inNewTab);
+                if (typeof window.showToast === 'function') {
+                    window.showToast('🔍 Opening Google Lens Visual Results...', 3000);
+                }
+                clearPastedImage();
+                if (searchInput) { searchInput.value = ''; searchInput.blur(); }
+                hideSuggestions();
+                return;
+            }
+
+            // 4. Fallback if upload failed or offline: write to clipboard & open Google Lens
+            if (_pastedImageBlob && navigator.clipboard && window.ClipboardItem) {
+                try {
+                    navigator.clipboard.write([
+                        new ClipboardItem({ [_pastedImageBlob.type || 'image/png']: _pastedImageBlob })
+                    ]).catch(() => {});
+                } catch {}
+            }
+            WO.openURLWithBrowser('https://lens.google.com/', inNewTab);
+            if (typeof window.showToast === 'function') {
+                window.showToast('🔍 Google Lens opened! Press Ctrl+V in Google Lens to search your screenshot.', 4500);
+            }
+
+            clearPastedImage();
+            if (searchInput) {
+                searchInput.value = '';
+                searchInput.blur();
+            }
+            hideSuggestions();
+        }
+
+        function processImageFile(file) {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (ev) {
+                _pastedImageDataUrl = ev.target.result;
+                _pastedImageBlob = file;
+                _pastedImageIsDirectUrl = false;
+                showPastedImageChip(_pastedImageDataUrl);
+                // Immediately upload in background so Google Lens direct URL is ready
+                uploadImageForLens(file);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function processDirectImageUrl(url) {
+            if (!url) return;
+            _pastedImageDataUrl = url;
+            _pastedImageBlob = null;
+            _pastedImageIsDirectUrl = !url.startsWith('data:');
+            _uploadedLensUrl = _pastedImageIsDirectUrl ? url : null;
+            showPastedImageChip(_pastedImageDataUrl);
+        }
+
+        function handleSearchPaste(e) {
+            const clipboardData = e.clipboardData || window.clipboardData;
+            if (!clipboardData) return;
+
+            // 1. Check for image item in clipboardData.items (screenshots, copied files)
+            let imageFile = null;
+            if (clipboardData.items) {
+                for (let i = 0; i < clipboardData.items.length; i++) {
+                    const item = clipboardData.items[i];
+                    if (item.type && item.type.startsWith('image/')) {
+                        imageFile = item.getAsFile();
+                        if (imageFile) break;
+                    }
+                }
+            }
+
+            // 2. Fallback to clipboardData.files
+            if (!imageFile && clipboardData.files && clipboardData.files.length) {
+                for (let i = 0; i < clipboardData.files.length; i++) {
+                    const file = clipboardData.files[i];
+                    const name = (file.name || '').toLowerCase();
+                    if ((file.type && file.type.startsWith('image/')) || name.endsWith('.png') || name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.webp') || name.endsWith('.gif') || name.endsWith('.bmp') || name.endsWith('.svg') || name.endsWith('.avif')) {
+                        imageFile = file;
+                        break;
+                    }
+                }
+            }
+
+            if (imageFile) {
+                e.preventDefault();
+                processImageFile(imageFile);
+                return;
+            }
+
+            // 3. Check for HTML containing an <img> tag (copied from web page)
+            const html = clipboardData.getData('text/html');
+            if (html && (!searchInput || !searchInput.value.trim())) {
+                const imgMatch = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+                if (imgMatch && imgMatch[1]) {
+                    const src = imgMatch[1].trim();
+                    if (src.startsWith('http://') || src.startsWith('https://') || src.startsWith('data:image/')) {
+                        e.preventDefault();
+                        processDirectImageUrl(src);
+                        return;
+                    }
+                }
+            }
+
+            // 4. Check for direct image URL or base64 data URI in text
+            const text = clipboardData.getData('text');
+            if (text) {
+                const trimmed = text.trim();
+                if (trimmed.startsWith('data:image/')) {
+                    e.preventDefault();
+                    processDirectImageUrl(trimmed);
+                    return;
+                }
+                const isImgUrl = (trimmed.startsWith('http://') || trimmed.startsWith('https://')) && (/\.(png|jpe?g|webp|gif|svg|avif)(\?.*)?$/i.test(trimmed));
+                if (isImgUrl && (!searchInput || !searchInput.value.trim())) {
+                    e.preventDefault();
+                    processDirectImageUrl(trimmed);
+                    return;
+                }
+            }
+        }
+
+        function handleImageDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (_searchBarWrapper) _searchBarWrapper.classList.remove('drag-target-active');
+
+            const dt = e.dataTransfer;
+            if (!dt) return;
+
+            // 1. Dropped files (desktop/folder/screenshots)
+            if (dt.files && dt.files.length) {
+                for (let i = 0; i < dt.files.length; i++) {
+                    const file = dt.files[i];
+                    const name = (file.name || '').toLowerCase();
+                    if ((file.type && file.type.startsWith('image/')) || name.endsWith('.png') || name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.webp') || name.endsWith('.gif') || name.endsWith('.bmp') || name.endsWith('.svg') || name.endsWith('.avif')) {
+                        processImageFile(file);
+                        return;
+                    }
+                }
+            }
+
+            // 2. Dropped items (Snipping Tool, browser drag, etc.)
+            if (dt.items && dt.items.length) {
+                for (let i = 0; i < dt.items.length; i++) {
+                    const item = dt.items[i];
+                    if ((item.type && item.type.startsWith('image/')) || item.kind === 'file') {
+                        const file = item.getAsFile();
+                        if (file) {
+                            const name = (file.name || '').toLowerCase();
+                            if ((file.type && file.type.startsWith('image/')) || name.endsWith('.png') || name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.webp') || name.endsWith('.gif') || name.endsWith('.bmp') || name.endsWith('.svg') || name.endsWith('.avif')) {
+                                processImageFile(file);
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 3. Dropped image from webpage (<img> tag or anchor)
+            const html = dt.getData('text/html');
+            if (html) {
+                const imgMatch = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+                if (imgMatch && imgMatch[1]) {
+                    const src = imgMatch[1].trim();
+                    if (src.startsWith('http://') || src.startsWith('https://') || src.startsWith('data:image/')) {
+                        processDirectImageUrl(src);
+                        return;
+                    }
+                }
+            }
+
+            // 4. Dropped image URL (text/uri-list or text)
+            const uri = dt.getData('text/uri-list') || dt.getData('text');
+            if (uri) {
+                const trimmed = uri.trim();
+                if (trimmed.startsWith('data:image/')) {
+                    processDirectImageUrl(trimmed);
+                    return;
+                }
+                const isImgUrl = (trimmed.startsWith('http://') || trimmed.startsWith('https://')) && (/\.(png|jpe?g|webp|gif|svg|avif)(\?.*)?$/i.test(trimmed));
+                if (isImgUrl) {
+                    processDirectImageUrl(trimmed);
+                    return;
+                }
+            }
         }
 
         function updateSuggestionsPosition() {
@@ -180,6 +519,7 @@
 
         // ── Hybrid: main entry point for showing suggestions ──────────────────
         function showSuggestions(query) {
+            if (_pastedImageDataUrl) { hideSuggestions(); return; }
             const nq = WO.normalizeSearchQuery(query);
 
             // Empty input → show history (or nothing)
@@ -236,6 +576,7 @@
 
         function updateSearchPlaceholder() {
             if (!searchInput) return;
+            if (_pastedImageDataUrl) { searchInput.placeholder = "Press Enter to search with Google Lens..."; return; }
             const engine = getSearchFallbackEngine();
             if (WO.preferences && WO.preferences.customSearchFallback && engine.name !== 'Google') {
                 searchInput.placeholder = `Search websites or fallback to ${engine.name}...`;
@@ -266,6 +607,7 @@
 
         // ── Submit (Enter / button click) ─────────────────────────────────────
         function submitFromBar(inNewTab = false) {
+            if (_pastedImageDataUrl) { executeGoogleLensSearch(inNewTab); return; }
             const rawValue = searchInput.value;
             const tq = WO.normalizeSearchQuery(rawValue);
             if (!tq) { searchInput.focus(); return; }
@@ -375,8 +717,30 @@
 
         // ── Keyboard navigation ───────────────────────────────────────────────
         searchInput.addEventListener('keydown', e => {
-            if (e.key === 'Enter') { e.preventDefault(); submitFromBar(e.ctrlKey || e.metaKey); return; }
-            if (e.key === 'Escape') { hideSuggestions(); searchInput.blur(); return; }
+            if (e.key === 'Enter') {
+                if (_pastedImageDataUrl) {
+                    e.preventDefault();
+                    executeGoogleLensSearch(e.ctrlKey || e.metaKey);
+                    return;
+                }
+                e.preventDefault();
+                submitFromBar(e.ctrlKey || e.metaKey);
+                return;
+            }
+            if (e.key === 'Escape') {
+                if (_pastedImageDataUrl) {
+                    e.preventDefault();
+                    clearPastedImage();
+                    return;
+                }
+                hideSuggestions();
+                searchInput.blur();
+                return;
+            }
+            if ((e.key === 'Backspace' || e.key === 'Delete') && searchInput.value === '' && _pastedImageDataUrl) {
+                clearPastedImage();
+                return;
+            }
 
             const hasKW = WO.currentKeywordSuggestions && WO.currentKeywordSuggestions.length > 0;
             const hasGoogle = WO.currentSuggestions && WO.currentSuggestions.length > 0;
@@ -396,6 +760,7 @@
         if (clearSearchBtn) {
             clearSearchBtn.style.display = 'none';
             clearSearchBtn.addEventListener('click', () => {
+                clearPastedImage();
                 searchInput.value = '';
                 clearSearchBtn.style.display = 'none';
                 hideSuggestions();
@@ -484,7 +849,164 @@
             }
         });
 
-        // Initialise — force hybrid mode always
+        // ── Global & Search Bar Image Listeners ──────────────────────
+        searchInput.addEventListener('paste', handleSearchPaste);
+
+        // Global Paste: Pressing Ctrl+V anywhere on page catches screenshots!
+        document.addEventListener('paste', e => {
+            const active = document.activeElement;
+            const tag = (active && active.tagName || '').toLowerCase();
+            // Don't intercept if user is typing text into another editable input/modal
+            if (active && active !== searchInput && (tag === 'input' || tag === 'textarea' || active.isContentEditable)) {
+                const cd = e.clipboardData;
+                let hasImg = false;
+                if (cd && cd.items) {
+                    for (let i = 0; i < cd.items.length; i++) {
+                        if (cd.items[i].type && cd.items[i].type.startsWith('image/')) {
+                            hasImg = true;
+                            break;
+                        }
+                    }
+                }
+                if (!hasImg) return;
+            }
+            handleSearchPaste(e);
+        });
+
+        // Global Drag Prevention: Stop browser from opening dropped files outside search bar
+        window.addEventListener('dragover', e => {
+            if (e.dataTransfer) {
+                e.preventDefault();
+            }
+        }, false);
+
+        window.addEventListener('drop', e => {
+            if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+                const files = e.dataTransfer.files;
+                let hasImg = false;
+                for (let i = 0; i < files.length; i++) {
+                    const f = files[i];
+                    const name = (f.name || '').toLowerCase();
+                    if ((f.type && f.type.startsWith('image/')) || name.endsWith('.png') || name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.webp') || name.endsWith('.gif') || name.endsWith('.bmp') || name.endsWith('.svg') || name.endsWith('.avif')) {
+                        hasImg = true;
+                        break;
+                    }
+                }
+                if (hasImg) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleImageDrop(e);
+                }
+            }
+        }, false);
+
+        // Wrapper and Input Drag & Drop Handlers
+        const dragTargets = [_searchBarWrapper, searchInput].filter(Boolean);
+        dragTargets.forEach(elem => {
+            elem.addEventListener('dragenter', e => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (_searchBarWrapper) _searchBarWrapper.classList.add('drag-target-active');
+            });
+
+            elem.addEventListener('dragover', e => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+                if (_searchBarWrapper) _searchBarWrapper.classList.add('drag-target-active');
+            });
+
+            elem.addEventListener('dragleave', e => {
+                if (_searchBarWrapper && !elem.contains(e.relatedTarget) && !_searchBarWrapper.contains(e.relatedTarget)) {
+                    _searchBarWrapper.classList.remove('drag-target-active');
+                }
+            });
+
+            elem.addEventListener('drop', handleImageDrop);
+        });
+
+        if (lensSearchBtn) {
+            lensSearchBtn.addEventListener('click', e => {
+                e.preventDefault();
+                executeGoogleLensSearch(e.ctrlKey || e.metaKey);
+            });
+        }
+
+        if (pastedImageRemove) {
+            pastedImageRemove.addEventListener('click', e => {
+                e.preventDefault();
+                e.stopPropagation();
+                clearPastedImage();
+                searchInput.focus();
+            });
+        }
+
+        // Single tap / click on pasted thumbnail opens large lightbox preview
+        if (pastedImageThumb) {
+            pastedImageThumb.addEventListener('click', e => {
+                e.preventDefault();
+                e.stopPropagation();
+                openImagePreviewModal();
+            });
+        }
+
+        if (imagePreviewModalClose) {
+            imagePreviewModalClose.addEventListener('click', e => {
+                e.preventDefault();
+                closeImagePreviewModal();
+            });
+        }
+
+        if (imagePreviewModalRemove) {
+            imagePreviewModalRemove.addEventListener('click', e => {
+                e.preventDefault();
+                closeImagePreviewModal();
+                clearPastedImage();
+                if (searchInput) searchInput.focus();
+            });
+        }
+
+        if (imagePreviewModalSearch) {
+            imagePreviewModalSearch.addEventListener('click', e => {
+                e.preventDefault();
+                closeImagePreviewModal();
+                executeGoogleLensSearch(e.ctrlKey || e.metaKey);
+            });
+        }
+
+        if (imagePreviewModal) {
+            imagePreviewModal.addEventListener('click', e => {
+                if (e.target === imagePreviewModal) {
+                    closeImagePreviewModal();
+                }
+            });
+        }
+
+        // Global Keydown: Enter anywhere immediately searches image; Escape closes modal
+        document.addEventListener('keydown', e => {
+            // 1. Escape key closes preview modal
+            if (e.key === 'Escape' && imagePreviewModal && imagePreviewModal.style.display !== 'none') {
+                e.preventDefault();
+                closeImagePreviewModal();
+                return;
+            }
+
+            // 2. Enter key anywhere searches with Google Lens when image is attached!
+            if (e.key === 'Enter' && _pastedImageDataUrl) {
+                const active = document.activeElement;
+                const tag = (active && active.tagName || '').toLowerCase();
+                // Only skip if user is actively typing in another input/textarea (like rename modal)
+                if (active && active !== searchInput && (tag === 'input' || tag === 'textarea' || active.isContentEditable)) {
+                    return;
+                }
+                e.preventDefault();
+                if (imagePreviewModal && imagePreviewModal.style.display !== 'none') {
+                    closeImagePreviewModal();
+                }
+                executeGoogleLensSearch(e.ctrlKey || e.metaKey);
+            }
+        });
+
         WO.searchMode = WO.SEARCH_MODE_GOOGLE; // keep state compat, but UI is always hybrid
         WO.activeKeywordSearchQuery = '';
     };

@@ -26,7 +26,9 @@
         wallpaper: 'none',
         wallpaperCustomUrl: '',
         wallpaperBlur: 6,
-        wallpaperDim: 25
+        wallpaperDim: 25,
+                customSearchFallback: false,
+        searchEngine: 'google'
     };
     const choices = {
         hoverTone: ['soft','bell','pop','crystal','wood','digital'],
@@ -37,7 +39,8 @@
         tileSpacing: ['tight','default','airy'],
         tileCorners: ['rounded','soft','square'],
         hoverEffect: ['default','lift','glow','none'],
-        wallpaper: ['none', 'mountain', 'galaxy', 'forest', 'sunset', 'neon', 'abstract', 'custom', 'upload']
+        wallpaper: ['none', 'mountain', 'galaxy', 'forest', 'sunset', 'neon', 'abstract', 'custom', 'upload'],
+                searchEngine: ['google', 'youtube', 'duckduckgo', 'perplexity', 'chatgpt', 'gemini', 'bing', 'github']
     };
     const ranges = {
         volume: [0, 100],
@@ -106,7 +109,12 @@
         neon: 'Cyberpunk Neon (Unsplash)',
         abstract: 'Minimal Silk Flow (Unsplash)',
         custom: 'Custom Image URL',
-        upload: 'Upload from Device'
+        upload: 'Upload from Device',
+                google: 'Google',
+        youtube: 'YouTube',
+        duckduckgo: 'DuckDuckGo',
+        bing: 'Microsoft Bing',
+        github: 'GitHub'
     };
     function row(key, label, description = '') {
         let control;
@@ -163,6 +171,10 @@
     </fieldset></details>
     <details class="preference-section"><summary>Header, Quick Bar & Clock <span>Weather, Frequently Used Sites & details</span></summary><fieldset><legend class="sr-only">Header and clock</legend>
         ${row('showWeather','Show weather widget','Subtle temperature & icon next to clock')}${row('showTopHits','Show Frequently Used Sites bar','Automatic 1-click access to most clicked websites')}${row('showClock','Show clock','Visible on wide screens')}${row('showSeconds','Show seconds')}${row('clockFormat','Time format')}${row('showTagline','Brand tagline')}
+    </fieldset></details>
+    <details class="preference-section"><summary>Search fallback <span>Engines & Google fallback</span></summary><fieldset><legend class="sr-only">Search fallback</legend>
+        ${row('customSearchFallback','Custom search fallback','Use a custom search engine instead of Google fallback')}
+        ${row('searchEngine','Fallback search engine','Engine used for standard keyword search fallback')}
     </fieldset></details>
     <details class="preference-section" id="preference-shortcuts-section"><summary>Keyboard shortcuts <span>Customize keys & combinations</span></summary><fieldset><legend class="sr-only">Keyboard shortcuts</legend>
         <div id="shortcuts-list-container"></div>
@@ -237,7 +249,7 @@
 
     function apply() {
         const p = WO.preferences || normalize({}); root = document.documentElement;
-        for (const key of ['showClock','showSeconds','clockFormat','glass','reducedMotion','showTagline','accent','tileSize','tileSpacing','tileCorners','hoverEffect','showCategoryIcons','showWeather','showTopHits']) root.dataset[key] = String(p[key]);
+        for (const key of ['showClock','showSeconds','clockFormat','glass','reducedMotion','showTagline','accent','tileSize','tileSpacing','tileCorners','hoverEffect','showCategoryIcons','showWeather','showTopHits','customSearchFallback','searchEngine']) root.dataset[key] = String(p[key]);
         const curAccent = accents[p.accent] || accents.violet;
         root.style.setProperty('--preference-accent', curAccent[0]);
         root.style.setProperty('--preference-accent-light', curAccent[1]);
