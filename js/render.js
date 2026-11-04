@@ -40,11 +40,11 @@
         WO.ensureStableBookmarkIds();
 
         const fragment = document.createDocumentFragment();
-        const normalizedSearchQuery = WO.activeKeywordSearchQuery
+        const normalizedSearchQuery = WO.searchMode === WO.SEARCH_MODE_KEYWORDS
             ? WO.normalizeSearchQuery(WO.activeKeywordSearchQuery)
             : '';
         const searchTokens = normalizedSearchQuery ? normalizedSearchQuery.split(/\s+/).filter(Boolean) : [];
-        const isKeywordSearchActive = searchTokens.length > 0;
+        const isKeywordSearchActive = WO.searchMode === WO.SEARCH_MODE_KEYWORDS && searchTokens.length > 0;
 
         const orderedGroups = WO.getOrderedGroupEntries();
         const filteredGroups = orderedGroups.map(({ group, originalIndex }) => {
@@ -559,11 +559,11 @@
         const container = _groupsContainerCache;
         if (!container) return;
 
-        const normalizedQuery = WO.activeKeywordSearchQuery
+        const normalizedQuery = WO.searchMode === WO.SEARCH_MODE_KEYWORDS
             ? WO.normalizeSearchQuery(WO.activeKeywordSearchQuery)
             : '';
         const searchTokens = normalizedQuery ? normalizedQuery.split(/\s+/).filter(Boolean) : [];
-        const isActive = searchTokens.length > 0;
+        const isActive = WO.searchMode === WO.SEARCH_MODE_KEYWORDS && searchTokens.length > 0;
 
         const activeGroupIndices = new Set();
         const items = container.querySelectorAll('.keyword-grid-preview-item');
@@ -708,7 +708,7 @@
             return;
         }
 
-        if (WO.activeKeywordSearchQuery && WO.activeKeywordSearchQuery.trim()) {
+        if (WO.searchMode === WO.SEARCH_MODE_KEYWORDS && WO.activeKeywordSearchQuery) {
             section.style.display = 'none';
             return;
         }

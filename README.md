@@ -119,6 +119,12 @@ Administrative actions are protected to maintain organization integrity.
 
 ## 📋 Changelog
 
+### v1.0.36 (2026-11-04)
+- 🎯 **Fixed Dashboard Cards Hiding on Search**:
+  - Reverted intrusive dashboard grid filtering during search bar typing — all 12 categories and cards remain completely visible on screen.
+  - Search query matches are now cleanly confined to the dropdown suggestions portal without hiding background content.
+  - Preserved instant suggestions by website name, URL, and comments.
+
 ### v1.0.35 (2026-11-04)
 - 💬 **Restored Original User Comments & Pre-Filled Edit Comment Modal**:
   - Restored 100% of user's custom previous comments (e.g. "THE BESST", "moviee", "yt", "for broswe's extra features yyyy", "Englishhh", etc.) across all categories.

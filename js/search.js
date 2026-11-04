@@ -697,15 +697,6 @@
             const nq = WO.normalizeSearchQuery(q);
             if (clearSearchBtn) clearSearchBtn.style.display = nq.length > 0 ? 'block' : 'none';
 
-            // Update live card filtering immediately
-            WO.activeKeywordSearchQuery = nq;
-
-            // Instantly filter tiles in next animation frame (0-16ms)
-            if (_searchRenderRaf) cancelAnimationFrame(_searchRenderRaf);
-            _searchRenderRaf = requestAnimationFrame(() => {
-                WO.updateSearchHighlighting();
-            });
-
             // Smooth debounce for dropdown suggestions (35ms)
             clearTimeout(_suggestionsTimer);
             _suggestionsTimer = setTimeout(() => {
