@@ -6457,9 +6457,11 @@ html {
   .search-bar-container {
     margin: 0 !important;
     padding: 0 !important;
+    height: 42px !important;
+    position: relative !important;
   }
-  .search-bar-wrapper { min-height: 42px !important; border-radius: 14px !important; }
-  .google-search-input { min-height: 42px !important; padding: 9px 6px !important; }
+  .search-bar-wrapper { min-height: 42px !important; height: auto !important; border-radius: 14px !important; }
+  .google-search-input { min-height: 24px !important; padding: 2px 0 !important; }
 
   main.container {
     padding: 8px !important;

@@ -47,7 +47,7 @@
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js">
-  <link rel="stylesheet" href="bundle.min.css?v=1171">
+  <link rel="stylesheet" href="bundle.min.css?v=1174">
 
   <link rel="manifest" href="manifest.json">
 
@@ -228,15 +228,14 @@
               <img id="pasted-image-thumb" class="pasted-image-thumb" src="" alt="Pasted Image" title="Click for enlarged preview">
               <button type="button" id="pasted-image-remove" class="pasted-image-remove" title="Remove image" aria-label="Remove image">✕</button>
             </div>
-            <button type="button" id="lens-search-btn" class="pasted-image-btn lens-btn chip-btn-default" title="Search with Google Lens (Enter)">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M3 9V5a2 2 0 0 1 2-2h4M15 3h4a2 2 0 0 1 2 2v4M21 15v4a2 2 0 0 1-2 2h-4M9 21H5a2 2 0 0 1-2-2v-4"/></svg>
-              <span>Google Lens</span>
-              <span class="chip-badge-hint" id="lens-chip-hint">Enter ↵</span>
+            <button type="button" id="lens-search-btn" class="pasted-image-btn lens-btn chip-btn-default" title="Search with Google Lens (Enter)" aria-label="Search with Google Lens">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M3 9V5a2 2 0 0 1 2-2h4M15 3h4a2 2 0 0 1 2 2v4M21 15v4a2 2 0 0 1-2 2h-4M9 21H5a2 2 0 0 1-2-2v-4"/></svg>
             </button>
           </div>
-          <input type="text" id="google-search-input" class="google-search-input"
+          <textarea id="google-search-input" class="google-search-input"
+            rows="1"
             placeholder="Search websites, games, tools..." aria-label="Search websites, games and tools"
-            autocomplete="new-password" spellcheck="false">
+            autocomplete="new-password" spellcheck="false"></textarea>
 
           <button type="button" id="search-submit-btn" class="search-submit-btn" aria-label="Search"
             title="Search">
@@ -644,7 +643,7 @@
     })();
   </script>
   <!-- Application Bundle -->
-  <script defer src="bundle.min.js?v=1171"></script>
+  <script defer src="bundle.min.js?v=1174"></script>
 
   <div id="toast-container"></div>
   <!-- Global keyword tooltip portal — lives at body level to avoid contain:paint clipping -->

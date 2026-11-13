@@ -87,7 +87,7 @@
                     console.warn('[Google Lens] kappa.lol upload failed, trying fallback:', e1);
                 }
 
-                // Fallback host: sxcu.net (CORS enabled, direct image at url.png)
+                // Fallback host 1: sxcu.net (CORS enabled, direct image at url.png)
                 try {
                     const controller2 = new AbortController();
                     const timeoutId2 = setTimeout(() => controller2.abort(), 5000);
@@ -109,6 +109,30 @@
                     }
                 } catch (e2) {
                     console.warn('[Google Lens] sxcu.net fallback failed:', e2);
+                }
+
+                // Fallback host 2: tmpfiles.org
+                try {
+                    const controller3 = new AbortController();
+                    const timeoutId3 = setTimeout(() => controller3.abort(), 5000);
+                    const fd3 = new FormData();
+                    fd3.append('file', blob, filename);
+                    const res3 = await fetch('https://tmpfiles.org/api/v1/upload', {
+                        method: 'POST',
+                        body: fd3,
+                        signal: controller3.signal
+                    });
+                    clearTimeout(timeoutId3);
+                    if (res3.ok) {
+                        const json3 = await res3.json();
+                        if (json3 && json3.data && json3.data.url) {
+                            _uploadedLensUrl = json3.data.url.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
+                            console.log('[Google Lens] Direct image ready via tmpfiles:', _uploadedLensUrl);
+                            return;
+                        }
+                    }
+                } catch (e3) {
+                    console.warn('[Google Lens] tmpfiles.org fallback failed:', e3);
                 }
             } catch (err) {
                 console.warn('[Google Lens] Upload error:', err);
@@ -144,12 +168,13 @@
             hideSuggestions();
             if (clearSearchBtn) clearSearchBtn.style.display = 'block';
             if (searchInput) {
-                searchInput.placeholder = 'Search image with Google Lens ↵';
+                searchInput.placeholder = 'Search or ask about this image... (Enter ↵)';
+                if (typeof autoResizeSearchInput === 'function') autoResizeSearchInput();
                 searchInput.focus();
                 // Re-trigger focus across multiple delays to guarantee focus even after Windows OS flyout (Win+V) finishes closing
-                setTimeout(() => { if (_pastedImageDataUrl && searchInput) searchInput.focus(); }, 60);
-                setTimeout(() => { if (_pastedImageDataUrl && searchInput) searchInput.focus(); }, 180);
-                setTimeout(() => { if (_pastedImageDataUrl && searchInput) searchInput.focus(); }, 350);
+                setTimeout(() => { if (_pastedImageDataUrl && searchInput) { searchInput.focus(); if (typeof autoResizeSearchInput === 'function') autoResizeSearchInput(); } }, 60);
+                setTimeout(() => { if (_pastedImageDataUrl && searchInput) { searchInput.focus(); if (typeof autoResizeSearchInput === 'function') autoResizeSearchInput(); } }, 180);
+                setTimeout(() => { if (_pastedImageDataUrl && searchInput) { searchInput.focus(); if (typeof autoResizeSearchInput === 'function') autoResizeSearchInput(); } }, 350);
             }
         }
 
@@ -163,9 +188,10 @@
             if (pastedImageChip) pastedImageChip.style.display = 'none';
             if (pastedImageThumb) pastedImageThumb.src = '';
             if (lensSearchBtn) {
-                lensSearchBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M3 9V5a2 2 0 0 1 2-2h4M15 3h4a2 2 0 0 1 2 2v4M21 15v4a2 2 0 0 1-2 2h-4M9 21H5a2 2 0 0 1-2-2v-4"/></svg><span>Google Lens</span><span class="chip-badge-hint" id="lens-chip-hint">Enter ↵</span>';
+                lensSearchBtn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M3 9V5a2 2 0 0 1 2-2h4M15 3h4a2 2 0 0 1 2 2v4M21 15v4a2 2 0 0 1-2 2h-4M9 21H5a2 2 0 0 1-2-2v-4"/></svg>';
             }
             updateSearchPlaceholder();
+            if (typeof autoResizeSearchInput === 'function') autoResizeSearchInput();
             if (clearSearchBtn && (!searchInput || !searchInput.value.trim())) {
                 clearSearchBtn.style.display = 'none';
             }
@@ -175,15 +201,20 @@
         async function executeGoogleLensSearch(inNewTab = false) {
             if (!_pastedImageDataUrl) return;
 
+            const queryText = (searchInput ? searchInput.value : '').trim();
+
             // 1. Direct public image link already available
             if (_pastedImageIsDirectUrl && _pastedImageDataUrl.startsWith('http')) {
-                const lensUrl = 'https://lens.google.com/uploadbyurl?url=' + encodeURIComponent(_pastedImageDataUrl);
+                let lensUrl = 'https://lens.google.com/uploadbyurl?url=' + encodeURIComponent(_pastedImageDataUrl);
+                if (queryText) {
+                    lensUrl += '&q=' + encodeURIComponent(queryText);
+                }
                 WO.openURLWithBrowser(lensUrl, inNewTab);
                 if (typeof window.showToast === 'function') {
                     window.showToast('🔍 Searching with Google Lens...', 3000);
                 }
                 clearPastedImage();
-                if (searchInput) { searchInput.value = ''; searchInput.blur(); }
+                if (searchInput) { searchInput.value = ''; searchInput.blur(); if (typeof autoResizeSearchInput === 'function') autoResizeSearchInput(); }
                 hideSuggestions();
                 return;
             }
@@ -191,7 +222,7 @@
             // 2. Wait up to 2.2s if background upload is still in flight
             if (_isUploadingLens && !_uploadedLensUrl) {
                 if (lensSearchBtn) {
-                    lensSearchBtn.innerHTML = '<span class="lens-spinner"></span> <span>Searching...</span>';
+                    lensSearchBtn.innerHTML = '<span class="lens-spinner"></span>';
                 }
                 let waited = 0;
                 while (_isUploadingLens && waited < 2200) {
@@ -202,13 +233,16 @@
 
             // 3. Direct Google Lens Reverse Image Results via uploaded URL
             if (_uploadedLensUrl) {
-                const lensUrl = 'https://lens.google.com/uploadbyurl?url=' + encodeURIComponent(_uploadedLensUrl);
+                let lensUrl = 'https://lens.google.com/uploadbyurl?url=' + encodeURIComponent(_uploadedLensUrl);
+                if (queryText) {
+                    lensUrl += '&q=' + encodeURIComponent(queryText);
+                }
                 WO.openURLWithBrowser(lensUrl, inNewTab);
                 if (typeof window.showToast === 'function') {
                     window.showToast('🔍 Opening Google Lens Visual Results...', 3000);
                 }
                 clearPastedImage();
-                if (searchInput) { searchInput.value = ''; searchInput.blur(); }
+                if (searchInput) { searchInput.value = ''; searchInput.blur(); if (typeof autoResizeSearchInput === 'function') autoResizeSearchInput(); }
                 hideSuggestions();
                 return;
             }
@@ -221,7 +255,11 @@
                     ]).catch(() => {});
                 } catch {}
             }
-            WO.openURLWithBrowser('https://lens.google.com/', inNewTab);
+            let fallbackUrl = 'https://lens.google.com/';
+            if (queryText) {
+                fallbackUrl += '?q=' + encodeURIComponent(queryText);
+            }
+            WO.openURLWithBrowser(fallbackUrl, inNewTab);
             if (typeof window.showToast === 'function') {
                 window.showToast('🔍 Google Lens opened! Press Ctrl+V in Google Lens to search your screenshot.', 4500);
             }
@@ -230,6 +268,7 @@
             if (searchInput) {
                 searchInput.value = '';
                 searchInput.blur();
+                if (typeof autoResizeSearchInput === 'function') autoResizeSearchInput();
             }
             hideSuggestions();
         }
@@ -401,6 +440,21 @@
         window.addEventListener('resize', updateSuggestionsPosition, { passive: true });
         window.addEventListener('scroll', updateSuggestionsPosition, { passive: true });
 
+        // ── Auto-expanding Multiline Search Input ─────────────────────────────
+        function autoResizeSearchInput() {
+            if (!searchInput) return;
+            searchInput.style.height = 'auto';
+            const scrollH = searchInput.scrollHeight;
+            const minH = 28;
+            const maxH = 150;
+            const targetH = Math.max(minH, Math.min(scrollH, maxH));
+            searchInput.style.height = targetH + 'px';
+            searchInput.style.overflowY = scrollH > maxH ? 'auto' : 'hidden';
+            updateSuggestionsPosition();
+        }
+        WO.autoResizeSearchInput = autoResizeSearchInput;
+        window.addEventListener('resize', autoResizeSearchInput, { passive: true });
+
         // ── History Helpers ───────────────────────────────────────────────────
         let _historyCache = null;
         function loadHistory() {
@@ -561,6 +615,7 @@
                 it.classList.toggle('selected', i === WO.selectedSuggestionIndex);
                 if (i === WO.selectedSuggestionIndex) {
                     searchInput.value = it.dataset.query || searchInput.value;
+                    if (typeof autoResizeSearchInput === 'function') autoResizeSearchInput();
                     it.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
                 }
             });
@@ -578,7 +633,7 @@
 
         function updateSearchPlaceholder() {
             if (!searchInput) return;
-            if (_pastedImageDataUrl) { searchInput.placeholder = "Press Enter to search with Google Lens..."; return; }
+            if (_pastedImageDataUrl) { searchInput.placeholder = "Search or ask about this image... (Enter ↵)"; return; }
             const engine = getSearchFallbackEngine();
             if (WO.preferences && WO.preferences.customSearchFallback && engine.name !== 'Google') {
                 searchInput.placeholder = `Search websites or fallback to ${engine.name}...`;
@@ -603,6 +658,7 @@
             }
             searchInput.value = '';
             searchInput.blur();
+            if (typeof autoResizeSearchInput === 'function') autoResizeSearchInput();
             hideSuggestions();
             if (clearSearchBtn) clearSearchBtn.style.display = 'none';
         }
@@ -622,6 +678,7 @@
             if (tq === '/admin' || tq === '!admin' || tq === '#admin' || tq === 'admin') {
                 searchInput.value = '';
                 searchInput.blur();
+                if (typeof autoResizeSearchInput === 'function') autoResizeSearchInput();
                 hideSuggestions();
                 if (clearSearchBtn) clearSearchBtn.style.display = 'none';
                 const adminModal = document.getElementById('admin-modal');
@@ -636,7 +693,7 @@
             // Direct URL shortcut (e.g. "youtube") — only when no trailing space
             if (!hasTrailingSpace) {
                 const direct = WO.getDirectWebsiteUrl(tq);
-                if (direct) { WO.openURLWithBrowser(direct, inNewTab); searchInput.value = ''; searchInput.blur(); hideSuggestions(); if (clearSearchBtn) clearSearchBtn.style.display = 'none'; return; }
+                if (direct) { WO.openURLWithBrowser(direct, inNewTab); searchInput.value = ''; searchInput.blur(); if (typeof autoResizeSearchInput === 'function') autoResizeSearchInput(); hideSuggestions(); if (clearSearchBtn) clearSearchBtn.style.display = 'none'; return; }
             }
 
             // Keyword suggestion selected via arrow keys → open it; otherwise open first suggestion
@@ -647,7 +704,7 @@
                 if (r) {
                     if (r.keyword && r.groupIndex != null) WO.incrementKeywordClick(r.groupIndex, r.keyword);
                     WO.openURLWithBrowser(r.targetUrl, inNewTab);
-                    searchInput.value = ''; searchInput.blur(); hideSuggestions();
+                    searchInput.value = ''; searchInput.blur(); if (typeof autoResizeSearchInput === 'function') autoResizeSearchInput(); hideSuggestions();
                     if (clearSearchBtn) clearSearchBtn.style.display = 'none';
                     return;
                 }
@@ -666,12 +723,12 @@
                     e.preventDefault(); e.stopPropagation();
                     if (r.keyword && r.groupIndex != null) WO.incrementKeywordClick(r.groupIndex, r.keyword);
                     WO.openURLWithBrowser(r.targetUrl, e.ctrlKey || e.metaKey);
-                    searchInput.value = ''; searchInput.blur(); hideSuggestions();
+                    searchInput.value = ''; searchInput.blur(); if (typeof autoResizeSearchInput === 'function') autoResizeSearchInput(); hideSuggestions();
                     if (clearSearchBtn) clearSearchBtn.style.display = 'none';
                 }
                 return;
             }
-            if (item.dataset.action === 'clear-history') { clearHistory(); hideSuggestions(); searchInput.value = ''; searchInput.focus(); return; }
+            if (item.dataset.action === 'clear-history') { clearHistory(); hideSuggestions(); searchInput.value = ''; if (typeof autoResizeSearchInput === 'function') autoResizeSearchInput(); searchInput.focus(); return; }
             const q = item.dataset.query; if (q) performGoogleSearch(q);
         }
         function handleSuggestionAuxClick(item, e) {
@@ -693,9 +750,10 @@
         let _searchRenderRaf = null;
         let _suggestionsTimer = null;
         searchInput.addEventListener('input', e => {
+            if (typeof autoResizeSearchInput === 'function') autoResizeSearchInput();
             const q  = e.target.value;
             const nq = WO.normalizeSearchQuery(q);
-            if (clearSearchBtn) clearSearchBtn.style.display = nq.length > 0 ? 'block' : 'none';
+            if (clearSearchBtn) clearSearchBtn.style.display = (nq.length > 0 || _pastedImageDataUrl) ? 'block' : 'none';
 
             // Smooth debounce for dropdown suggestions (35ms)
             clearTimeout(_suggestionsTimer);
@@ -706,12 +764,18 @@
 
 
         searchInput.addEventListener('focus', () => {
+            if (typeof autoResizeSearchInput === 'function') autoResizeSearchInput();
             showSuggestions(searchInput.value);
         });
 
         // ── Keyboard navigation ───────────────────────────────────────────────
         searchInput.addEventListener('keydown', e => {
             if (e.key === 'Enter') {
+                if (e.shiftKey) {
+                    // Shift+Enter allows newline in multiline textarea
+                    setTimeout(() => { if (typeof autoResizeSearchInput === 'function') autoResizeSearchInput(); }, 0);
+                    return;
+                }
                 if (_isVoiceListening) stopVoiceSearch(false);
                 if (_pastedImageDataUrl) {
                     e.preventDefault();
@@ -897,6 +961,7 @@
                 clearPastedImage();
                 _baseQueryPrefix = '';
                 searchInput.value = '';
+                if (typeof autoResizeSearchInput === 'function') autoResizeSearchInput();
                 clearSearchBtn.style.display = 'none';
                 hideSuggestions();
                 WO.activeKeywordSearchQuery = '';
@@ -1146,6 +1211,96 @@
                 executeGoogleLensSearch(e.ctrlKey || e.metaKey);
             }
         });
+
+        if (typeof autoResizeSearchInput === 'function') autoResizeSearchInput();
+
+        // ── One-Time Image Search Feature Announcement ──────────────────────
+        function checkAndShowLensAnnouncement() {
+            const KEY = 'wo_lens_intro_v1';
+            try {
+                if (localStorage.getItem(KEY) === 'true') return;
+            } catch { return; }
+
+            const wrapper = _searchBarWrapper || document.querySelector('.search-bar-wrapper');
+            if (!wrapper) return;
+
+            // Wait 1.2s for initial page load animations to settle
+            setTimeout(() => {
+                try {
+                    if (localStorage.getItem(KEY) === 'true') return;
+                } catch { return; }
+
+                // Don't show if user has already attached an image in this session
+                if (_pastedImageDataUrl) {
+                    try { localStorage.setItem(KEY, 'true'); } catch {}
+                    return;
+                }
+
+                const pill = document.createElement('div');
+                pill.id = 'image-search-feature-pill';
+                pill.className = 'image-search-feature-pill';
+                pill.setAttribute('role', 'status');
+                pill.setAttribute('aria-live', 'polite');
+
+                const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent);
+                const kbdKey = isMac ? '⌘' : 'Ctrl';
+
+                pill.innerHTML = `
+                    <span class="feature-pill-text">✨ <strong>New:</strong> Search with images! Simply press <kbd class="feature-kbd">${kbdKey}</kbd>+<kbd class="feature-kbd">V</kbd> or drop any screenshot into the search bar.</span>
+                    <button type="button" class="feature-pill-dismiss" aria-label="Dismiss announcement" title="Got it">Got it ✕</button>
+                `;
+
+                function updatePillPos() {
+                    const rect = wrapper.getBoundingClientRect();
+                    pill.style.top = Math.round(rect.bottom + 10) + 'px';
+                    pill.style.left = '50%';
+                }
+
+                updatePillPos();
+                window.addEventListener('resize', updatePillPos, { passive: true });
+                window.addEventListener('scroll', updatePillPos, { passive: true });
+
+                document.body.appendChild(pill);
+
+                // Animate entrance
+                requestAnimationFrame(() => {
+                    pill.classList.add('visible');
+                });
+
+                let dismissed = false;
+                function dismiss() {
+                    if (dismissed) return;
+                    dismissed = true;
+                    try { localStorage.setItem(KEY, 'true'); } catch {}
+                    pill.classList.remove('visible');
+                    pill.classList.add('hiding');
+                    window.removeEventListener('resize', updatePillPos);
+                    window.removeEventListener('scroll', updatePillPos);
+                    setTimeout(() => {
+                        if (pill.parentNode) pill.parentNode.removeChild(pill);
+                    }, 320);
+                }
+
+                const dismissBtn = pill.querySelector('.feature-pill-dismiss');
+                if (dismissBtn) {
+                    dismissBtn.addEventListener('click', e => {
+                        e.stopPropagation();
+                        dismiss();
+                    });
+                }
+
+                // Auto dismiss after 8.5 seconds
+                const timer = setTimeout(dismiss, 8500);
+
+                // If user clicks inside search input or pastes an image, dismiss cleanly
+                if (searchInput) {
+                    searchInput.addEventListener('focus', () => { clearTimeout(timer); dismiss(); }, { once: true });
+                }
+                document.addEventListener('paste', () => { clearTimeout(timer); dismiss(); }, { once: true });
+            }, 1200);
+        }
+
+        checkAndShowLensAnnouncement();
 
         WO.searchMode = WO.SEARCH_MODE_GOOGLE; // keep state compat, but UI is always hybrid
         WO.activeKeywordSearchQuery = '';
