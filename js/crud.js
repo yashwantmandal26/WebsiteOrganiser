@@ -349,13 +349,6 @@
         }
         const oldKeyword  = WO.groups[WO.renameTargetGroupIndex].keywords[WO.renameTargetKeywordIndex];
 
-        // Security check: Only authenticated Admin can rename website name or link. Normal users can only comment.
-        if (newKeyword !== oldKeyword && !WO.adminLoggedIn) {
-            alert('Admin access required to rename website name or link.');
-            WO.toggleModal(renameModal, false);
-            return;
-        }
-
         if (/^(javascript|data|vbscript|file):/i.test(newKeyword.trim())) {
             alert('Invalid link: dangerous URL scheme detected.');
             return;
@@ -443,11 +436,10 @@
     };
 
     WO.deleteKeyword = async function (groupIndex, keywordIndex) {
-        if (!WO.adminLoggedIn) {
-            alert('Admin access required to delete websites.');
+        if (!WO.groups[groupIndex] || !WO.groups[groupIndex].keywords[keywordIndex]) {
+            window.showToast('⚠️ Data changed. Try again.', 3000);
             return;
         }
-        if (!WO.groups[groupIndex] || !WO.groups[groupIndex].keywords[keywordIndex]) { window.showToast('⚠️ Data changed. Try again.', 3000); return; }
         const kw = WO.groups[groupIndex].keywords[keywordIndex];
         const group = WO.groups[groupIndex];
 
@@ -461,9 +453,38 @@
         }
 
         const bookmarkId = WO.getBookmarkId(groupIndex, keywordIndex);
-        const ek = bookmarkId || WO.getKeywordEncodedKey(kw);
-        const isSoftDeleted = WO.keywordDeletedStatus && WO.keywordDeletedStatus[ek] === true;
+        const metadataKey = (typeof WO.getBookmarkMetadataKey === 'function')
+            ? WO.getBookmarkMetadataKey(groupIndex, keywordIndex, kw)
+            : (bookmarkId || WO.getKeywordEncodedKey(kw));
+        const isSoftDeleted = Boolean(WO.keywordDeletedStatus && WO.keywordDeletedStatus[metadataKey] === true);
+        const parsed = (typeof WO.parseKeyword === 'function') ? WO.parseKeyword(kw) : { displayText: kw };
+        const displayName = (parsed && parsed.displayText) ? parsed.displayText : kw;
 
+        // ── Normal User Deletion: Soft delete (hidden from everyone, not permanently removed) ──
+        if (!WO.adminLoggedIn) {
+            if (!confirm(`Delete "${displayName}"? It will not be shown to anyone.`)) return;
+
+            await WO.animateKeywordOut(groupIndex, kw);
+            await WO.saveKeywordDeletedStatus(kw, true, metadataKey);
+            WO.renderGroups();
+
+            if (typeof WO.logActivity === 'function') {
+                WO.logActivity('DELETE_KEYWORD', {
+                    targetName: displayName,
+                    groupName: group.name,
+                    groupIndex: groupIndex,
+                    diff: { type: 'soft_delete', hidden: true }
+                });
+            }
+
+            window.showToast(`"${displayName}" deleted (hidden from view).`, 6000, 'Undo', async () => {
+                await WO.saveKeywordDeletedStatus(kw, false, metadataKey);
+                WO.renderGroups();
+            });
+            return;
+        }
+
+        // ── Admin Deletion: Move to Trash ──
         const deletePayload = {
             keyword: kw,
             description: WO.getBookmarkMetadata(WO.keywordDescriptions, groupIndex, keywordIndex, kw, ''),
@@ -472,24 +493,27 @@
             groupIndex: groupIndex
         };
 
+        if (!confirm(isSoftDeleted ? `Move "${displayName}" to Trash?` : `Move "${displayName}" to Trash?`)) return;
 
-
-        if (!confirm(isSoftDeleted ? 'Move this keyword to Trash?' : 'Move this keyword to Trash?')) return;
-        
         await WO.animateKeywordOut(groupIndex, kw);
+
+        if (isSoftDeleted) {
+            await WO.saveKeywordDeletedStatus(kw, false, metadataKey).catch(() => {});
+        }
 
         const tags = (group.keywordTags && group.keywordTags[bookmarkId]) || [];
         const trashItem = { id: bookmarkId, keyword: kw, tags, deletedAt: Date.now(), originalIndex: keywordIndex };
+        group.trash = group.trash || [];
         group.trash.push(trashItem);
         group.keywords.splice(keywordIndex, 1);
-        group.keywordIds.splice(keywordIndex, 1);
+        if (group.keywordIds) group.keywordIds.splice(keywordIndex, 1);
         if (group.keywordTags) delete group.keywordTags[bookmarkId];
         await WO.syncAndSaveGroups().catch(() => {});
         WO.renderGroups();
 
         if (typeof WO.logActivity === 'function') {
             WO.logActivity('DELETE_KEYWORD', {
-                targetName: kw,
+                targetName: displayName,
                 groupName: group.name,
                 groupIndex: groupIndex,
                 payload: deletePayload

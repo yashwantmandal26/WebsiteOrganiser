@@ -501,8 +501,12 @@
             });
         }
 
-        groupsContainer.innerHTML = '';
-        groupsContainer.appendChild(fragment);
+        if (typeof groupsContainer.replaceChildren === 'function') {
+            groupsContainer.replaceChildren(fragment);
+        } else {
+            groupsContainer.innerHTML = '';
+            groupsContainer.appendChild(fragment);
+        }
 
         if (typeof WO.renderTopHits === 'function') {
             WO.renderTopHits();
@@ -828,8 +832,12 @@
             fragment.appendChild(chip);
         });
 
-        scrollEl.innerHTML = '';
-        scrollEl.appendChild(fragment);
+        if (typeof scrollEl.replaceChildren === 'function') {
+            scrollEl.replaceChildren(fragment);
+        } else {
+            scrollEl.innerHTML = '';
+            scrollEl.appendChild(fragment);
+        }
         _initTopHitsWheel();
         requestAnimationFrame(() => _updateTopHitsScrollMask(scrollEl));
     };

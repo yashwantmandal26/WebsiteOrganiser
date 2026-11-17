@@ -778,37 +778,29 @@
                 editEl.onclick = () => { hideContextMenu(); WO.renameKeyword(groupIndex, keywordIndex, keyword, true); };
             }
 
-            if (WO.adminLoggedIn) {
-                // Admin gets full control: Comment, Rename, Delete, and Restore (if soft-deleted)
-                if (renameEl) {
-                    renameEl.classList.remove('is-hidden');
-                    renameEl.onclick = () => { hideContextMenu(); WO.renameKeyword(groupIndex, keywordIndex, keyword, false); };
-                }
-                if (isSoftDeleted) {
-                    if (restoreEl) {
-                        restoreEl.classList.remove('is-hidden');
-                        restoreEl.onclick = () => { hideContextMenu(); WO.restoreKeyword(groupIndex, keywordIndex); };
-                    }
-                    if (deleteEl) {
-                        deleteEl.classList.remove('is-hidden');
-                        if (deleteText) deleteText.textContent = 'Delete';
-                        deleteEl.onclick = () => { hideContextMenu(); WO.deleteKeyword(groupIndex, keywordIndex); };
-                    }
+            // Rename / Edit option is now available for ALL users (normal users + admins)
+            if (renameEl) {
+                renameEl.classList.remove('is-hidden');
+                renameEl.onclick = () => { hideContextMenu(); WO.renameKeyword(groupIndex, keywordIndex, keyword, false); };
+            }
+
+            // Delete option is now available for ALL users
+            // Normal users: soft delete (hidden from view for everyone, not permanently removed)
+            // Admins: move to Trash
+            if (deleteEl) {
+                deleteEl.classList.remove('is-hidden');
+                if (deleteText) deleteText.textContent = 'Delete';
+                deleteEl.onclick = () => { hideContextMenu(); WO.deleteKeyword(groupIndex, keywordIndex); };
+            }
+
+            // Restore option: only available when an item is soft-deleted and viewed in Admin mode
+            if (restoreEl) {
+                if (isSoftDeleted && WO.adminLoggedIn) {
+                    restoreEl.classList.remove('is-hidden');
+                    restoreEl.onclick = () => { hideContextMenu(); WO.restoreKeyword(groupIndex, keywordIndex); };
                 } else {
-                    if (restoreEl) {
-                        restoreEl.classList.add('is-hidden');
-                    }
-                    if (deleteEl) {
-                        deleteEl.classList.remove('is-hidden');
-                        if (deleteText) deleteText.textContent = 'Delete';
-                        deleteEl.onclick = () => { hideContextMenu(); WO.deleteKeyword(groupIndex, keywordIndex); };
-                    }
+                    restoreEl.classList.add('is-hidden');
                 }
-            } else {
-                // Normal User: ONLY Comment is visible. Rename, Restore, and Delete are strictly hidden.
-                if (renameEl)  renameEl.classList.add('is-hidden');
-                if (restoreEl) restoreEl.classList.add('is-hidden');
-                if (deleteEl)  deleteEl.classList.add('is-hidden');
             }
         }
 

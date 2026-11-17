@@ -1463,19 +1463,19 @@ body.admin-mode .admin-hub-wrapper {
 /* Mobile & Narrow Screen Responsiveness */
 @media (max-width: 600px) {
   .pasted-image-chip {
-    gap: 5px;
+    gap: 4px;
     margin-right: 4px;
   }
   .pasted-image-preview-wrap,
   .pasted-image-thumb {
-    width: 28px;
-    height: 28px;
+    width: 24px;
+    height: 24px;
   }
   .pasted-image-btn {
-    width: 28px;
-    height: 28px;
-    min-width: 28px;
-    min-height: 28px;
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    min-height: 24px;
     padding: 0;
   }
   .chip-badge-hint {
@@ -1489,20 +1489,20 @@ body.admin-mode .admin-hub-wrapper {
   }
   .pasted-image-preview-wrap,
   .pasted-image-thumb {
-    width: 26px;
-    height: 26px;
+    width: 22px;
+    height: 22px;
   }
   .pasted-image-btn {
     padding: 0;
-    width: 26px;
-    height: 26px;
-    min-width: 26px;
-    min-height: 26px;
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    min-height: 22px;
     justify-content: center;
   }
   .pasted-image-btn svg {
-    width: 15px;
-    height: 15px;
+    width: 13px;
+    height: 13px;
   }
 }
 

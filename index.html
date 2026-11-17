@@ -36,6 +36,8 @@
   <meta name="msapplication-tap-highlight" content="no">
 
   <!-- Performance: Resource Hints & Font Preloads -->
+  <link rel="preconnect" href="https://www.google.com" crossorigin>
+  <link rel="dns-prefetch" href="https://www.google.com">
   <link rel="preconnect" href="https://favicon.im" crossorigin>
   <link rel="dns-prefetch" href="https://favicon.im">
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
@@ -47,7 +49,7 @@
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js">
   <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js">
-  <link rel="stylesheet" href="bundle.min.css?v=1176">
+  <link rel="stylesheet" href="bundle.min.css?v=1190">
 
   <link rel="manifest" href="manifest.json">
 
@@ -611,13 +613,23 @@
   <!-- Modular Firebase Config -->
   <script type="module" src="firebase-config.js"></script>
   <script>
-    // Register Service Worker for offline support and cache-first performance
+    // Register Service Worker for offline support, instant reload & automatic updates
     if ('serviceWorker' in navigator) {
+      let _swRefreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (!_swRefreshing) {
+          _swRefreshing = true;
+          window.location.reload();
+        }
+      });
+
       navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).then(registration => {
         registration.update().catch(() => {});
         document.addEventListener('visibilitychange', () => {
           if (!document.hidden) registration.update().catch(() => {});
         });
+        // Check for updates every 15 minutes when tab stays open
+        setInterval(() => registration.update().catch(() => {}), 15 * 60 * 1000);
       }).catch(err => {
         console.warn('SW registration failed:', err);
       });
@@ -643,7 +655,7 @@
     })();
   </script>
   <!-- Application Bundle -->
-  <script defer src="bundle.min.js?v=1176"></script>
+  <script defer src="bundle.min.js?v=1190"></script>
 
   <div id="toast-container"></div>
   <!-- Global keyword tooltip portal — lives at body level to avoid contain:paint clipping -->

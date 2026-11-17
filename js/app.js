@@ -154,6 +154,7 @@
         WO.initImportExport();
         if (typeof WO.initActivityLoggerUI === 'function') WO.initActivityLoggerUI();
         if (typeof WO.initLinkHealth === 'function') WO.initLinkHealth();
+        if (typeof WO.initEasterEggs === 'function') WO.initEasterEggs();
 
         // ─── Global Keyword Tooltip Portal ────────────────────────────────────
         // Tooltip lives at body level (outside all group cards) so it's never

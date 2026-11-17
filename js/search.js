@@ -444,7 +444,7 @@
         function autoResizeSearchInput() {
             if (!searchInput) return;
             const isMobile = window.innerWidth <= 800;
-            const singleLineH = isMobile ? 20 : 22;
+            const singleLineH = isMobile ? 23 : 24;
             const maxH = isMobile ? 120 : 150;
 
             if (!searchInput.value) {
@@ -506,10 +506,16 @@
         // ── Keyword search core ───────────────────────────────────────────────
         function getKeywordSearchResults(query) {
             const nq     = WO.normalizeSearchQuery(query);
+            if (nq.startsWith('/')) return []; // Slash queries are reserved for commands, not website matching
             const tokens = nq.toLowerCase().split(/\s+/).filter(Boolean);
             const results = [];
             WO.groups.forEach((group, gi) => {
                 group.keywords.forEach((keyword, ki) => {
+                    const isSoftDeleted = (typeof WO.getBookmarkMetadata === 'function')
+                        ? (WO.getBookmarkMetadata(WO.keywordDeletedStatus, gi, ki, keyword, false) === true)
+                        : Boolean(WO.keywordDeletedStatus && WO.keywordDeletedStatus[keyword]);
+                    if (isSoftDeleted && !WO.adminLoggedIn) return;
+
                     const { displayText, targetUrl } = WO.parseKeyword(keyword);
                     const ek   = WO.getBookmarkMetadataKey(gi, ki, keyword);
                     const desc = WO.getBookmarkMetadata(WO.keywordDescriptions, gi, ki, keyword, '');
@@ -569,6 +575,21 @@
             searchSuggestions.style.display = 'block';
         }
 
+        // ── Easter Egg suggestion renderer ───────────────────────────────────
+        function renderEasterEggSuggestion(ee) {
+            let html = '<div class="suggestion-header"><span>Secret Command</span></div>';
+            html += `<div class="suggestion-item suggestion-item-easter-egg selected" data-index="0" data-suggestion-mode="easter-egg" data-command="${WO.escapeHtml(ee.command)}">
+                <span class="suggestion-easter-icon">${ee.icon || '✨'}</span>
+                <div class="keyword-suggestion-content">
+                    <span class="suggestion-text">${WO.escapeHtml(ee.title)} <span class="easter-egg-tag">SECRET</span></span>
+                    <div class="keyword-suggestion-meta">${WO.escapeHtml(ee.description)} &middot; Press Enter ↵</div>
+                </div>
+            </div>`;
+            updateSuggestionsPosition();
+            searchSuggestions.innerHTML = html;
+            searchSuggestions.style.display = 'block';
+        }
+
         // ── History suggestion (empty-input focus) ────────────────────────────
         function renderHistorySuggestions() {
             const history = loadHistory();
@@ -605,6 +626,17 @@
                 WO.selectedKeywordSuggestionIndex = -1;
                 hideSuggestions();
                 return;
+            }
+
+            // Easter egg command suggestions (e.g. "/hack", "hack", "/balloon", "balloon")
+            if (typeof WO.getEasterEggSuggestion === 'function') {
+                const ee = WO.getEasterEggSuggestion(nq);
+                if (ee) {
+                    WO.currentKeywordSuggestions = [ee];
+                    WO.selectedKeywordSuggestionIndex = 0;
+                    renderEasterEggSuggestion(ee);
+                    return;
+                }
             }
 
             // Try keyword search first
@@ -704,6 +736,16 @@
                 return;
             }
 
+            // Easter Egg Shortcuts (e.g. "hack", "/hack", "balloon", "/balloon")
+            if (typeof WO.handleSearchEasterEgg === 'function' && WO.handleSearchEasterEgg(tq)) {
+                searchInput.value = '';
+                searchInput.blur();
+                if (typeof autoResizeSearchInput === 'function') autoResizeSearchInput();
+                hideSuggestions();
+                if (clearSearchBtn) clearSearchBtn.style.display = 'none';
+                return;
+            }
+
             // Direct URL shortcut (e.g. "youtube") — only when no trailing space
             if (!hasTrailingSpace) {
                 const direct = WO.getDirectWebsiteUrl(tq);
@@ -716,6 +758,16 @@
                 const idx = WO.selectedKeywordSuggestionIndex >= 0 ? WO.selectedKeywordSuggestionIndex : 0;
                 const r = WO.currentKeywordSuggestions[idx];
                 if (r) {
+                    if (r.isEasterEgg) {
+                        if (typeof WO.handleSearchEasterEgg === 'function') {
+                            WO.handleSearchEasterEgg(r.command || tq);
+                        }
+                        searchInput.value = ''; searchInput.blur();
+                        if (typeof autoResizeSearchInput === 'function') autoResizeSearchInput();
+                        hideSuggestions();
+                        if (clearSearchBtn) clearSearchBtn.style.display = 'none';
+                        return;
+                    }
                     if (r.keyword && r.groupIndex != null) WO.incrementKeywordClick(r.groupIndex, r.keyword);
                     WO.openURLWithBrowser(r.targetUrl, inNewTab);
                     searchInput.value = ''; searchInput.blur(); if (typeof autoResizeSearchInput === 'function') autoResizeSearchInput(); hideSuggestions();
@@ -730,6 +782,18 @@
 
         // ── Suggestion click handlers ─────────────────────────────────────────
         function handleSuggestionClick(item, e) {
+            if (item.dataset.suggestionMode === 'easter-egg' || item.dataset.command) {
+                e.preventDefault(); e.stopPropagation();
+                const cmd = item.dataset.command;
+                if (typeof WO.handleSearchEasterEgg === 'function') {
+                    WO.handleSearchEasterEgg(cmd);
+                }
+                searchInput.value = ''; searchInput.blur();
+                if (typeof autoResizeSearchInput === 'function') autoResizeSearchInput();
+                hideSuggestions();
+                if (clearSearchBtn) clearSearchBtn.style.display = 'none';
+                return;
+            }
             const mode = item.dataset.suggestionMode || 'google';
             if (mode === 'keywords') {
                 const r = WO.currentKeywordSuggestions[Number(item.dataset.index)];

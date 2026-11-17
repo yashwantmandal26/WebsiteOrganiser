@@ -37,10 +37,10 @@ service cloud.firestore {
       allow write: if true;
     }
 
-    // keywordDeletedStatus: soft deletes and restores are strictly restricted to authenticated admins
+    // keywordDeletedStatus: anyone can read/write (allows normal users to soft-delete website cards)
     match /sharedData/keywordDeletedStatus {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if true;
     }
 
     // activityLogs: audit logs contain sensitive GPS & IP data; strictly restricted to authenticated admins

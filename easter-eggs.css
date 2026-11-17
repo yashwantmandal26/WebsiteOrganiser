@@ -1,0 +1,289 @@
+/* =============================================================================
+   easter-eggs.css — Easter Eggs Styles (Hacker Terminal & Floating Balloon)
+   ============================================================================= */
+
+/* ── 1. Hacker Mode Terminal Overlay ── */
+.hacker-terminal-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 99999 !important;
+  background: rgba(4, 5, 8, 0.94) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 16px !important;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.25s ease;
+  user-select: none;
+}
+.hacker-terminal-overlay.is-active {
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+/* CRT Scanline & Phosphor Radial Glow Effect */
+.hacker-terminal-scanlines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: 
+    radial-gradient(ellipse at center, rgba(0, 255, 102, 0.08) 0%, rgba(0, 0, 0, 0.65) 80%),
+    repeating-linear-gradient(rgba(0, 255, 102, 0.03) 0px, rgba(0, 255, 102, 0.03) 1px, transparent 2px, transparent 4px);
+  z-index: 1;
+}
+
+/* Terminal Window Frame */
+.hacker-terminal-window {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 680px;
+  background: #090c0a;
+  border: 1px solid rgba(0, 255, 102, 0.38);
+  border-radius: 12px;
+  box-shadow: 
+    0 24px 60px rgba(0, 0, 0, 0.8),
+    0 0 30px rgba(0, 255, 102, 0.16),
+    inset 0 1px 0 rgba(0, 255, 102, 0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: scale(0.94);
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+  font-family: 'Consolas', 'Courier New', 'Fira Code', monospace;
+}
+.hacker-terminal-overlay.is-active .hacker-terminal-window {
+  transform: scale(1);
+}
+
+/* Terminal Header Bar */
+.hacker-terminal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: rgba(0, 255, 102, 0.08);
+  border-bottom: 1px solid rgba(0, 255, 102, 0.2);
+}
+.hacker-terminal-dots {
+  display: flex;
+  gap: 6px;
+}
+.hacker-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.hacker-dot.red { background: #ff5f56; }
+.hacker-dot.yellow { background: #ffbd2e; }
+.hacker-dot.green { background: #27c93f; }
+
+.hacker-terminal-title {
+  font-size: 11.5px;
+  color: #00ff66;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  opacity: 0.9;
+  text-shadow: 0 0 8px rgba(0, 255, 102, 0.5);
+}
+.hacker-terminal-close {
+  background: transparent;
+  border: 1px solid rgba(0, 255, 102, 0.4);
+  color: #00ff66;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.hacker-terminal-close:hover {
+  background: #00ff66;
+  color: #090c0a;
+  box-shadow: 0 0 10px #00ff66;
+}
+
+/* Terminal Body & Text */
+.hacker-terminal-body {
+  padding: 18px 20px;
+  min-height: 280px;
+  max-height: 400px;
+  overflow-y: auto;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: #00ff66;
+  text-shadow: 0 0 7px rgba(0, 255, 102, 0.55);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.hacker-terminal-line {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.hacker-terminal-line.line-highlight {
+  color: #ffd700 !important;
+  font-weight: 700;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.7) !important;
+}
+.hacker-terminal-line.line-quote {
+  color: #67e8f9 !important;
+  font-style: italic;
+  text-shadow: 0 0 8px rgba(103, 232, 249, 0.6) !important;
+}
+.hacker-terminal-line.line-prompt {
+  color: #94a3b8 !important;
+  font-size: 12px;
+  margin-top: 10px;
+  text-shadow: none !important;
+}
+
+/* Green Blinking Block Cursor */
+.hacker-terminal-cursor {
+  display: inline-block;
+  color: #00ff66;
+  font-weight: 900;
+  animation: hackerCursorBlink 0.75s step-end infinite;
+  text-shadow: 0 0 8px #00ff66;
+}
+@keyframes hackerCursorBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* ── 2. Floating Balloon Pop ── */
+.easter-egg-balloon {
+  position: fixed !important;
+  bottom: -90px !important;
+  z-index: 9998 !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  user-select: none !important;
+  animation: balloonRise 16s linear forwards, balloonSway 3.2s ease-in-out infinite alternate !important;
+  transition: transform 0.15s ease;
+}
+.easter-egg-balloon:hover {
+  transform: scale(1.15) !important;
+  filter: drop-shadow(0 0 14px rgba(255, 255, 255, 0.55));
+}
+.easter-egg-balloon.is-popped {
+  transform: scale(2.2) !important;
+  opacity: 0 !important;
+  filter: blur(4px) !important;
+  transition: transform 0.18s ease-out, opacity 0.18s ease-out, filter 0.18s ease-out !important;
+  pointer-events: none !important;
+}
+
+.balloon-wrapper {
+  position: relative;
+  display: inline-block;
+}
+.balloon-svg {
+  display: block;
+}
+.balloon-glare {
+  position: absolute;
+  top: 8px;
+  left: 12px;
+  width: 9px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.65);
+  transform: rotate(-25deg);
+  pointer-events: none;
+}
+
+@keyframes balloonRise {
+  0% {
+    bottom: -90px;
+  }
+  100% {
+    bottom: calc(100vh + 100px);
+  }
+}
+@keyframes balloonSway {
+  0% {
+    margin-left: -14px;
+  }
+  100% {
+    margin-left: 14px;
+  }
+}
+
+/* ── Confetti Burst Particles ── */
+.easter-egg-confetti-container {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  overflow: hidden;
+}
+.easter-egg-confetti-particle {
+  position: absolute;
+  border-radius: 2px;
+  pointer-events: none;
+  animation: confettiBurst 0.9s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes confettiBurst {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0deg) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dest-x, 0px), var(--dest-y, 0px)) rotate(var(--dest-rot, 360deg)) scale(0.4);
+  }
+}
+
+@media (max-width: 600px) {
+  .hacker-terminal-window {
+    max-width: 95%;
+  }
+  .hacker-terminal-body {
+    font-size: 12px;
+    padding: 14px;
+    min-height: 240px;
+  }
+}
+
+/* ── Search Dropdown Easter Egg Command Item ── */
+.suggestion-item-easter-egg {
+  background: color-mix(in srgb, var(--preference-accent, #7b2cbf) 14%, rgba(20, 18, 30, 0.95)) !important;
+  border-left: 3px solid #00ff66 !important;
+  cursor: pointer !important;
+}
+.suggestion-item-easter-egg:hover,
+.suggestion-item-easter-egg.selected {
+  background: color-mix(in srgb, var(--preference-accent, #7b2cbf) 28%, rgba(20, 18, 30, 0.98)) !important;
+}
+.suggestion-easter-icon {
+  font-size: 20px !important;
+  line-height: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 26px !important;
+  height: 26px !important;
+  flex-shrink: 0 !important;
+}
+.easter-egg-tag {
+  display: inline-block !important;
+  background: linear-gradient(135deg, #00ff66 0%, #00d2ff 100%) !important;
+  color: #050806 !important;
+  font-size: 9px !important;
+  font-weight: 850 !important;
+  padding: 1.5px 5px !important;
+  border-radius: 4px !important;
+  margin-left: 6px !important;
+  letter-spacing: 0.5px !important;
+  vertical-align: middle !important;
+  line-height: 1.1 !important;
+}

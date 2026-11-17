@@ -1280,6 +1280,8 @@ html[data-theme="light"] .search-suggestions {
   min-width: 0;
   height: 100%;
   overflow: visible !important;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 320px;
 }
 
 /* Ensure expanded cards or animating cards calculate layout immediately */
@@ -6413,10 +6415,10 @@ html {
   }
   .clock-ms { display: none !important; }
   .header-right #theme-toggle-btn {
-    width: 40px !important;
-    min-width: 40px !important;
-    height: 40px !important;
-    min-height: 40px !important;
+    width: 42px !important;
+    min-width: 42px !important;
+    height: 42px !important;
+    min-height: 42px !important;
     border-radius: 50% !important;
   }
   body.admin-mode .header-left { flex: 0 0 100%; width: 100%; }
@@ -6457,11 +6459,11 @@ html {
   .search-bar-container {
     margin: 0 !important;
     padding: 0 !important;
-    height: 36px !important;
+    height: 42px !important;
     position: relative !important;
   }
-  .search-bar-wrapper { min-height: 36px !important; height: auto !important; border-radius: 999px !important; }
-  .search-bar-wrapper.is-multiline { border-radius: 18px !important; }
+  .search-bar-wrapper { min-height: 42px !important; height: 42px !important; max-height: 42px !important; border-radius: 999px !important; }
+  .search-bar-wrapper.is-multiline { border-radius: 16px !important; }
   .google-search-input { min-height: 0 !important; padding: 0 !important; }
 
   main.container {

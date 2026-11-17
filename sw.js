@@ -15,7 +15,7 @@
 //   The activate event will wipe all old caches automatically.
 // =====================================================
 
-const CACHE_VERSION = 'wo-v1176';
+const CACHE_VERSION = 'wo-v1190';
 const CACHE_NAME = `websiteorganiser-${CACHE_VERSION}`;
 const FAVICON_CACHE_NAME = 'websiteorganiser-favicons-v1';
 
@@ -29,8 +29,8 @@ const PRECACHE_URLS = [
   '/fonts/inter-latin-400.woff2',
   '/fonts/inter-latin-500.woff2',
   '/fonts/inter-latin-700.woff2',
-  '/bundle.min.css?v=1176',
-  '/bundle.min.js?v=1176',
+  '/bundle.min.css?v=1190',
+  '/bundle.min.js?v=1190',
 ];
 
 // ─── Install ──────────────────────────────────────────────────────────────────
@@ -77,8 +77,8 @@ self.addEventListener('fetch', (event) => {
   // Only handle GET requests
   if (req.method !== 'GET') return;
 
-  // ── Favicon IM Cache (external favicons) ──────────────────────────────────
-  if (url.hostname === 'favicon.im') {
+  // ── Favicon Cache (Google S2 & external favicons) ─────────────────────────
+  if ((url.hostname === 'www.google.com' && url.pathname.startsWith('/s2/favicons')) || url.hostname === 'favicon.im') {
     event.respondWith(staleWhileRevalidateFavicon(req));
     return;
   }
@@ -90,9 +90,9 @@ self.addEventListener('fetch', (event) => {
   const path = url.pathname;
   const search = url.search;
 
-  // ── 1. HTML pages → Network-First with Navigation Preload ─────────────────
+  // ── 1. HTML pages → Fast Network-First with Instant Cache Fallback ──────────
   if (req.headers.get('accept')?.includes('text/html') || path === '/' || path.endsWith('.html')) {
-    event.respondWith(networkFirst(req, event.preloadResponse));
+    event.respondWith(fastNetworkFirstHTML(req));
     return;
   }
 
@@ -149,6 +149,31 @@ async function cacheFirst(request) {
     console.warn('[SW] Cache-first fetch failed:', request.url, err);
     throw err;
   }
+}
+
+// ─── Strategy: Fast Network-First with Instant Cache Fallback for HTML ───────
+async function fastNetworkFirstHTML(request) {
+  const cache = await caches.open(CACHE_NAME);
+  const cached = await cache.match(request);
+
+  const fetchPromise = fetch(request).then((response) => {
+    if (response && response.ok) {
+      cache.put(request, response.clone());
+    }
+    return response;
+  }).catch(() => null);
+
+  if (cached) {
+    // If network answers within 1200ms, use fresh HTML. Otherwise serve cached instantly!
+    const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve(null), 1200));
+    const fastest = await Promise.race([fetchPromise, timeoutPromise]);
+    if (fastest) return fastest;
+    return cached;
+  }
+
+  const netResponse = await fetchPromise;
+  if (netResponse) return netResponse;
+  throw new Error('Offline and no cached HTML');
 }
 
 // ─── Strategy: Network-First ──────────────────────────────────────────────────
