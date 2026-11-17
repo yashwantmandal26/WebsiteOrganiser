@@ -444,12 +444,13 @@
         function autoResizeSearchInput() {
             if (!searchInput) return;
             const isMobile = window.innerWidth <= 800;
-            const singleLineH = isMobile ? 22 : 24;
+            const singleLineH = isMobile ? 20 : 22;
             const maxH = isMobile ? 120 : 150;
 
             if (!searchInput.value) {
                 searchInput.style.height = singleLineH + 'px';
                 searchInput.style.overflowY = 'hidden';
+                if (_searchBarWrapper) _searchBarWrapper.classList.remove('is-multiline');
                 updateSuggestionsPosition();
                 return;
             }
@@ -460,6 +461,9 @@
             const targetH = Math.max(singleLineH, Math.min(scrollH, maxH));
             searchInput.style.height = targetH + 'px';
             searchInput.style.overflowY = scrollH > maxH ? 'auto' : 'hidden';
+            if (_searchBarWrapper) {
+                _searchBarWrapper.classList.toggle('is-multiline', targetH > singleLineH + 6);
+            }
             updateSuggestionsPosition();
         }
         WO.autoResizeSearchInput = autoResizeSearchInput;
