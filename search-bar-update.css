@@ -92,16 +92,21 @@
   background: transparent;
   color: var(--text-color);
   font-size: 15px;
-  line-height: 1.45;
-  padding: 4px 0;
+  line-height: 1.4;
+  padding: 1px 0;
   outline: none;
   resize: none;
   overflow-y: hidden;
   box-sizing: border-box;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  height: 28px;
-  min-height: 28px;
+  height: 24px;
+  min-height: 0;
   max-height: 150px;
+}
+.google-search-input:placeholder-shown {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 [data-theme="solid-dark"] .google-search-input,

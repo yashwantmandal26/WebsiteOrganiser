@@ -235,12 +235,12 @@ html[data-show-clock="false"] .premium-header .live-clock { display:none !import
   transform:scale(0.92) !important;
 }
 .premium-header .google-search-input {
-  height: 28px;
-  min-height: 28px !important;
+  height: 24px;
+  min-height: 0 !important;
   max-height: 150px !important;
-  padding: 3px 0 !important;
+  padding: 1px 0 !important;
   font-size: 15px !important;
-  line-height: 1.45 !important;
+  line-height: 1.4 !important;
   resize: none !important;
   overflow-y: hidden;
   color: #32374c;
@@ -251,6 +251,11 @@ html[data-show-clock="false"] .premium-header .live-clock { display:none !import
   outline: none !important;
   box-sizing: border-box !important;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+}
+.premium-header .google-search-input:placeholder-shown {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 .premium-header .google-search-input::-webkit-scrollbar {
   width: 4px !important;
@@ -1322,7 +1327,7 @@ html[data-theme="solid-dark"] #preferences-close:active {
 html[data-reduced-motion="true"] *,html[data-reduced-motion="true"] *::before,html[data-reduced-motion="true"] *::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; }
 @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; } }
 @media(max-width:1150px) { .premium-header .header-row { gap:20px !important; } .premium-header .live-clock { display:none !important; } .premium-header .site-title { font-size:23px !important; } .premium-header .header-controls { gap:10px; } }
-@media(max-width:800px) { body { padding-top:calc(138px + env(safe-area-inset-top, 0px)) !important; } header.premium-header { height:126px; padding:max(10px, env(safe-area-inset-top, 10px)) 16px 10px !important; } .premium-header .header-row { grid-template-columns:minmax(0,1fr) auto !important; grid-template-rows:44px 48px !important; gap:12px !important; } .premium-header .header-controls { grid-column:2 !important; } .premium-header .search-bar-container { grid-column:1 / -1 !important; grid-row:2; max-width:none !important; height:46px !important; position:relative !important; } .premium-header .search-bar-wrapper { height:auto !important; min-height:46px !important; position:absolute !important; top:0 !important; left:0 !important; width:100% !important; } .premium-header .voice-search-btn { width:32px !important; height:32px !important; min-width:32px !important; min-height:32px !important; } .premium-header .header-left { gap:9px; } .premium-header .site-logo { width:36px !important; height:36px !important; } .premium-header .site-title { font-size:22px !important; letter-spacing:-.8px; } .premium-header .header-right { gap:8px !important; } body.admin-mode .premium-header { height:178px; } body.admin-mode { padding-top:190px !important; } body.admin-mode .premium-header .header-row { grid-template-rows:44px 36px 46px !important; } body.admin-mode .premium-header .header-controls { grid-column:1 / -1 !important; grid-row:2; } body.admin-mode .premium-header .search-bar-container { grid-row:3; } }
+@media(max-width:800px) { body { padding-top:calc(138px + env(safe-area-inset-top, 0px)) !important; } header.premium-header { height:126px; padding:max(10px, env(safe-area-inset-top, 10px)) 16px 10px !important; } .premium-header .header-row { grid-template-columns:minmax(0,1fr) auto !important; grid-template-rows:44px 48px !important; gap:12px !important; } .premium-header .header-controls { grid-column:2 !important; } .premium-header .search-bar-container { grid-column:1 / -1 !important; grid-row:2; max-width:none !important; height:44px !important; position:relative !important; } .premium-header .search-bar-wrapper { height:auto !important; min-height:44px !important; padding:4px 14px !important; border-radius:22px !important; position:absolute !important; top:0 !important; left:0 !important; width:100% !important; } .premium-header .google-search-input { height:22px; font-size:14.5px !important; line-height:1.35 !important; padding:1px 0 !important; } .premium-header .voice-search-btn { width:32px !important; height:32px !important; min-width:32px !important; min-height:32px !important; } .premium-header .header-left { gap:9px; } .premium-header .site-logo { width:36px !important; height:36px !important; } .premium-header .site-title { font-size:22px !important; letter-spacing:-.8px; } .premium-header .header-right { gap:8px !important; } body.admin-mode .premium-header { height:178px; } body.admin-mode { padding-top:190px !important; } body.admin-mode .premium-header .header-row { grid-template-rows:44px 36px 46px !important; } body.admin-mode .premium-header .header-controls { grid-column:1 / -1 !important; grid-row:2; } body.admin-mode .premium-header .search-bar-container { grid-row:3; } }
 @media(max-width:390px) { .premium-header .site-title { font-size:18px !important; } .premium-header .site-logo { width:30px !important; height:30px !important; } .premium-header #theme-toggle-btn,.premium-header #preferences-button { width:36px !important; height:36px !important; min-width:36px !important; min-height:36px !important; padding:8px !important; } .premium-header .voice-search-btn { width:28px !important; height:28px !important; min-width:28px !important; min-height:28px !important; } .premium-header .voice-search-btn svg { width:15px !important; height:15px !important; } header.premium-header { padding-inline:12px !important; } .search-shortcut { display:none; } }
 .premium-header .header-controls { align-items:center !important; }
 .premium-header .live-clock { margin:0 !important; align-self:center; line-height:1 !important; }
@@ -2997,6 +3002,14 @@ html[data-theme="light"] .preferences-credit-box {
   .premium-header .search-bar-wrapper {
     height: auto !important;
     min-height: 42px !important;
+    padding: 4px 12px !important;
+    border-radius: 21px !important;
+  }
+  .premium-header .google-search-input {
+    height: 22px;
+    font-size: 14px !important;
+    line-height: 1.35 !important;
+    padding: 1px 0 !important;
   }
 }
 

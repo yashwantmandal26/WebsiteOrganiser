@@ -6461,7 +6461,7 @@ html {
     position: relative !important;
   }
   .search-bar-wrapper { min-height: 42px !important; height: auto !important; border-radius: 14px !important; }
-  .google-search-input { min-height: 24px !important; padding: 2px 0 !important; }
+  .google-search-input { min-height: 0 !important; padding: 1px 0 !important; }
 
   main.container {
     padding: 8px !important;

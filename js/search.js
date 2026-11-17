@@ -443,11 +443,21 @@
         // ── Auto-expanding Multiline Search Input ─────────────────────────────
         function autoResizeSearchInput() {
             if (!searchInput) return;
-            searchInput.style.height = 'auto';
+            const isMobile = window.innerWidth <= 800;
+            const singleLineH = isMobile ? 22 : 24;
+            const maxH = isMobile ? 120 : 150;
+
+            if (!searchInput.value) {
+                searchInput.style.height = singleLineH + 'px';
+                searchInput.style.overflowY = 'hidden';
+                updateSuggestionsPosition();
+                return;
+            }
+
+            // Collapse to 0px before reading scrollHeight so Firefox/Chrome/Safari measure exact text height
+            searchInput.style.height = '0px';
             const scrollH = searchInput.scrollHeight;
-            const minH = 28;
-            const maxH = 150;
-            const targetH = Math.max(minH, Math.min(scrollH, maxH));
+            const targetH = Math.max(singleLineH, Math.min(scrollH, maxH));
             searchInput.style.height = targetH + 'px';
             searchInput.style.overflowY = scrollH > maxH ? 'auto' : 'hidden';
             updateSuggestionsPosition();

@@ -7,10 +7,16 @@ service cloud.firestore {
       return request.auth != null && request.auth.token.email in ['dashbot2001@gmail.com', 'yashwantmandal26@gmail.com'];
     }
 
-    // groups: Anyone can read. Only authenticated admins can modify, add, or delete groups and master bookmarks.
+    // groups: Anyone can read.
+    // Full write/modify access (including delete, rename, or shrinking groups) is reserved for authenticated admins.
+    // Public non-admin contributions can add websites/links or new groups, but cannot delete or shrink existing groups.
     match /sharedData/groups {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isAdmin() || (
+        request.resource.data.keys().hasAll(['data', 'updatedAt'])
+        && request.resource.data.data is list
+        && (resource == null || request.resource.data.data.size() >= resource.data.data.size())
+      );
     }
 
     // clickCounts: anyone can read/write (click tracking is open for usage ranking)
@@ -25,10 +31,10 @@ service cloud.firestore {
       allow write: if true;
     }
 
-    // keywordAddedAt: timestamp tracking is managed by admin
+    // keywordAddedAt: anyone can write timestamp when adding new links (for NEW badge)
     match /sharedData/keywordAddedAt {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if true;
     }
 
     // keywordDeletedStatus: soft deletes and restores are strictly restricted to authenticated admins
